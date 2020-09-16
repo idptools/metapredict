@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+#executing script for IDR predictor in command line.
+
+#import stuff for making CLI
+import os
+import sys
+import argparse
+
+import pandas as pd
+import protfasta
+
+from metapredict import meta
+
+#Parse command line arguments.
+parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
+parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
+parser.add_argument('output_path', help='Path for the returned disorder file.')
+parser.add_argument('output_name',
+					help='Name of the final output file. Do not add a file extension to output_name. The .csv file extension is added automatically.')
+parser.add_argument('--no_normalization', action='store_true', 
+		help='Use if you want to get raw values from predictor (not normalized from 0 to 1)')
+
+args = parser.parse_args()
+
+# Test to see if the data_file exists
+test_data_file = os.path.abspath(args.data_file)
+if not os.path.isfile(test_data_file):
+    raise FileNotFoundError('Datafile does not exist.')
+
+# Test to see that the output path is valid
+test_output_path = os.path.abspath(args.output_path)
+if not os.path.exists(test_output_path):
+    raise FileNotFoundError('Output path is not valid.')
+
+#if --no_normalization flag is set by user
+if args.no_normalization:
+	#set normalization to false
+	normalization = False
+else:
+	#otherwise normalize the predictor values from 0 to 1
+	normalization = True
+
+#Check if there is a .csv in output_name (which there shouldn't be)
+#set try_output_name = args.output_name
+try_output_name = args.output_name
+#if there is .csv in try_output_name
+if ".csv" in try_output_name:
+	#split try_output_name and set output_file_name equal to everything before .csv
+	output_file_name = try_output_name.split(".csv")[0]
+else:
+	#if .csv is not in try_output_name, set final output_final_name equal to args.output_name
+	output_file_name = args.output_name
+
+
+#run predict disorder fasta
+meta.predict_disorder_fasta(filepath = args.data_file, save=True, output_path = args.output_path, output_name = output_file_name, normalized=normalization)
+
