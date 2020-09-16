@@ -11,7 +11,7 @@ metapredict is currently only availabile through Github.
 To clone the GitHub repository and gain the ability to modify a local copy of the code, run
 
 	$ git clone https://github.com/idptools/metapredict.git
-	$ cd metapredict-master
+	$ cd metapredict
 	$ pip install .
 
 This will install metapredict locally.
