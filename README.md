@@ -16,7 +16,7 @@ metapredict is available through PyPI - to install simply run
 	$ pip install metapredict
 
 
-Alternatively, you can get metapredict directly from Github. 
+Alternatively, you can get metapredict directly from GitHub. 
 
 To clone the GitHub repository and gain the ability to modify a local copy of the code, run
 
