@@ -19,8 +19,8 @@ This will save a .csv file to the location specified by <Path where to save the 
 **Additional Usage:**
 
 **Get raw prediction values**
-
 ``--no_normalization``
+
 By default, this will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 and slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. However, if you want raw values, simply add the flag --no_normalization.
 
 **Example:**

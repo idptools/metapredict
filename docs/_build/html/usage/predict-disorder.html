@@ -165,9 +165,9 @@ Once metapredict is installed, the user can run <code class="docutils literal no
 </pre></div>
 </div>
 <p><strong>Additional Usage:</strong></p>
-<p><strong>Get raw prediction values</strong></p>
-<p><code class="docutils literal notranslate"><span class="pre">--no_normalization</span></code>
-By default, this will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 and slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. However, if you want raw values, simply add the flag –no_normalization.</p>
+<p><strong>Get raw prediction values</strong>
+<code class="docutils literal notranslate"><span class="pre">--no_normalization</span></code></p>
+<p>By default, this will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 and slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. However, if you want raw values, simply add the flag –no_normalization.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
 </pre></div>
