@@ -1,7 +1,11 @@
 """
-Code from Dan Griffith's parrot from the Holehouse lab.
+Code from Dan Griffith's IDP-Parrot tool from the Holehouse Lab.
 All credit for this code should go to Dan.
+See https://idptools-parrot.readthedocs.io/en/latest/api.html#module-parrot.encode_sequence
+for more information.
+"""
 
+"""
 File containing functions for encoding a string of amino acids into a numeric vector.
 .............................................................................
 parrot was developed by the Holehouse lab

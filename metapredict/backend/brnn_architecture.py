@@ -2,6 +2,8 @@
 """
 Code from Dan Griffith's IDP-Parrot tool from the Holehouse Lab.
 All credit for this code should go to Dan.
+See https://idptools-parrot.readthedocs.io/en/latest/api.html#module-parrot.encode_sequence
+for more information.
 """
 
 import torch 

@@ -1,23 +1,10 @@
 Module Documentation
 ====================
 
-brnn_architecture.py
---------------------
+meta_predict_disorder.py
+------------------------
 
-.. automodule:: metapredict.brnn_architecture
-   :noindex:
-   :members:
-
-encode_sequence.py
-------------------
-
-.. automodule:: metapredict.encode_sequence
-   :members:
-
-metapredict.py
----------------------
-
-.. automodule:: metapredict.meta
+.. automodule:: metapredict.meta_predict_disorder
    :members:
 
 meta_graph.py
@@ -26,9 +13,14 @@ meta_graph.py
 .. automodule:: metapredict.meta_graph
    :members:
 
-meta_predict_disorder.py
-------------------------
+brnn_architecture.py
+--------------------
 
-.. automodule:: metapredict.meta_predict_disorder
+.. automodule:: metapredict.brnn_architecture
    :members:
 
+encode_sequence.py
+------------------
+
+.. automodule:: metapredict.encode_sequence
+   :members:

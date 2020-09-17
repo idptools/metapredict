@@ -14,7 +14,6 @@ Welcome to metapredict's documentation!
    usage/graph-disorder
    usage/predict-disorder
    usage/using-in-python
-   getting_started
    api
 
 
