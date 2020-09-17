@@ -83,7 +83,10 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started with metapredict</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">graph-disorder</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">graph-disorder</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#command-line">command-line</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="predict-disorder.html">predict-disorder</a></li>
 <li class="toctree-l1"><a class="reference internal" href="using-in-python.html">metapredict in Python</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">Module Documentation</a></li>
@@ -153,6 +156,8 @@
             
   <div class="section" id="graph-disorder">
 <h1>graph-disorder<a class="headerlink" href="#graph-disorder" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="command-line">
+<h2>command-line<a class="headerlink" href="#command-line" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">graph-disorder</span></code> is a command from that takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of &gt;sp|Q8N6T3|ARFG1_HUMAN will return a file saved as <em>predicted_disorder_sp|Q8N6T3|.png</em>. Additionally, the title of each graph is automatically generated and will have the title Predicted Protein Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled <em>Predicted Protein Disorder sp|Q8N6T3|</em>.</p>
 <p>Once metapredict is installed, the user can run <code class="docutils literal notranslate"><span class="pre">graph-disorder</span></code> from the command line:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ graph-disorder &lt;Path to .fasta file&gt; &lt;Path where to save the output&gt; &lt;flags&gt;
@@ -178,6 +183,7 @@ This command will generate a .png file for <strong>*every*</strong> sequence in 
 <p><strong>Example:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ --remove_characters
 </pre></div>
+</div>
 </div>
 </div>
 

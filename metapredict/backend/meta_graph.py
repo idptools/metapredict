@@ -49,13 +49,13 @@ def graph(sequence, name = " ", line_color = "blue", DPI = 150, save_fig = False
 	#set yValues equal to the predicted disorder from the sequence (normalized)
 	yValues = predict(sequence)
 	#set title of figure to Predicted Protein Disorder followed by the name if given
-	Title = "Predicted Protein Disorder {}".format(name)
+	Title = "Predicted Consensus Disorder {}".format(name)
 	#if a name is set, the figure will hold that name as the identifier
 	fig = plt.figure(num = name, figsize = [8, 3], dpi = DPI, edgecolor = 'black')
 	axes = fig.add_axes([0.15, 0.15, 0.75, 0.75])
 	axes.set_title(Title)
 	axes.set_xlabel("Position Across Protein Sequence")
-	axes.set_ylabel("Ordered -----------> Disordered")
+	axes.set_ylabel("Consensus Disorder Score")
 	#make x values for each residue with predicted disorder
 	xValues = np.arange(0, len(yValues))
 	#graph the disorder values of each residue at each point along the x-axis

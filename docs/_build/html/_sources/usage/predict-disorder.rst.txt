@@ -1,8 +1,11 @@
 predict-disorder
 ================
 
+command-line
+-------------
+
 **predicting disorder**
-``predict-disorder`` is a commant that takes a .fasta file as input and returns a .csv file containing rows where the first column in the row is the uniprot header and all following rows are predicted disorder values for each residue in the amino acid sequence associated with the fasta header. 
+``predict-disorder`` is a command that takes a .fasta file as input and returns a .csv file containing rows where the first column in the row is the uniprot header and all following rows are predicted disorder values for each residue in the amino acid sequence associated with the fasta header. 
 Once metapredict is installed, the user can run ``predict-disorder`` from the command line:
 
 .. code-block:: bash

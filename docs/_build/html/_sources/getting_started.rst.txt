@@ -1,6 +1,19 @@
 Getting Started with metapredict
 ================================
 
+What is metapredict?
+--------------------
+metapredict is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on **consensus** values from MobiDB. These values are the percent of other disorders that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then *all 8 predictors predicted that residue to be disordered*. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximations of what other predictors would predict (things got pretty 'meta' there, hence the name metapredict).
+
+Why is metapredict useful?
+--------------------------
+A major drawback of consensus disorder databases is that they can only give you values of *previously predicted protein sequencecs*. Therefore, if your sequence of interest is not in their database, tough luck. Fortunately, metapredict gives you a way around this problem!
+
+How was metapredict made?
+--------------------------
+**metapredict** uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from MobiDB. The creation of metapredict was made possible by IDP-parrot.
+
+
 Installation
 ------------
 

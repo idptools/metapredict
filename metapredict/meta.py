@@ -232,21 +232,18 @@ def predict_disorder_fasta(filepath, save=False, output_path = "", output_name =
         final_output = "{}{}.csv".format(output_path, output_file_name)
         #try to export .csv to path
         try:
-            with open(final_output, 'w') as csvfile:
-                #set CSV columns
-                columns = ['fasta_headers', 'predictor_values']
-                #set output open to csv (reading the disorder_dict dictionary)
-                output = csv.DictWriter(csvfile, fieldnames=columns)
-                #for each header (key) and prediction (value) in the disorder_dict items
+            with open(final_output, 'w', newline='') as csvfile:
+                csvWriter=csv.writer(csvfile, dialect='excel')
                 for header, predictions in disorder_dict.items():
-                    #write a row to the .csv file where the first column is the header in the
-                    #disorder_dict item and the second row is the list of disorder values
-                    output.writerow({'fasta_headers': header, 'predictor_values': predictions})
+                    temp_predictions=[]
+                    temp_predictions.append(header)
+                    for i in predictions:
+                        temp_predictions.append(i)
+                    csvWriter.writerow(temp_predictions)
         #if this fails...
         except IOError:
             #print IO error
             print("IO error")
-
 
 def graph_disorder_fasta(filepath, DPI=150, save=True, output_path="", remove_characters=False):
     """

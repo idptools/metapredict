@@ -83,6 +83,9 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started with metapredict</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-is-metapredict">What is metapredict?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-is-metapredict-useful">Why is metapredict useful?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-was-metapredict-made">How was metapredict made?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example-datasets">Example datasets</a></li>
@@ -158,6 +161,18 @@
             
   <div class="section" id="getting-started-with-metapredict">
 <h1>Getting Started with metapredict<a class="headerlink" href="#getting-started-with-metapredict" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-is-metapredict">
+<h2>What is metapredict?<a class="headerlink" href="#what-is-metapredict" title="Permalink to this headline">¶</a></h2>
+<p>metapredict is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on <strong>consensus</strong> values from MobiDB. These values are the percent of other disorders that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then <em>all 8 predictors predicted that residue to be disordered</em>. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximations of what other predictors would predict (things got pretty ‘meta’ there, hence the name metapredict).</p>
+</div>
+<div class="section" id="why-is-metapredict-useful">
+<h2>Why is metapredict useful?<a class="headerlink" href="#why-is-metapredict-useful" title="Permalink to this headline">¶</a></h2>
+<p>A major drawback of consensus disorder databases is that they can only give you values of <em>previously predicted protein sequencecs</em>. Therefore, if your sequence of interest is not in their database, tough luck. Fortunately, metapredict gives you a way around this problem!</p>
+</div>
+<div class="section" id="how-was-metapredict-made">
+<h2>How was metapredict made?<a class="headerlink" href="#how-was-metapredict-made" title="Permalink to this headline">¶</a></h2>
+<p><strong>metapredict</strong> uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from MobiDB. The creation of metapredict was made possible by IDP-parrot.</p>
+</div>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>metapredict is available through GitHub or the Python Package Index (PyPI). To install through PyPI, run</p>

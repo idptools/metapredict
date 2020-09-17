@@ -84,7 +84,10 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started with metapredict</a></li>
 <li class="toctree-l1"><a class="reference internal" href="graph-disorder.html">graph-disorder</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">predict-disorder</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">predict-disorder</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#command-line">command-line</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="using-in-python.html">metapredict in Python</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">Module Documentation</a></li>
 </ul>
@@ -153,8 +156,10 @@
             
   <div class="section" id="predict-disorder">
 <h1>predict-disorder<a class="headerlink" href="#predict-disorder" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="command-line">
+<h2>command-line<a class="headerlink" href="#command-line" title="Permalink to this headline">¶</a></h2>
 <p><strong>predicting disorder</strong>
-<code class="docutils literal notranslate"><span class="pre">predict-disorder</span></code> is a commant that takes a .fasta file as input and returns a .csv file containing rows where the first column in the row is the uniprot header and all following rows are predicted disorder values for each residue in the amino acid sequence associated with the fasta header.
+<code class="docutils literal notranslate"><span class="pre">predict-disorder</span></code> is a command that takes a .fasta file as input and returns a .csv file containing rows where the first column in the row is the uniprot header and all following rows are predicted disorder values for each residue in the amino acid sequence associated with the fasta header.
 Once metapredict is installed, the user can run <code class="docutils literal notranslate"><span class="pre">predict-disorder</span></code> from the command line:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ predict-disorder &lt;Path to .fasta file&gt; &lt;Path where to save the output&gt; &lt;Output file name&gt; &lt;flags&gt;
 </pre></div>
@@ -171,6 +176,7 @@ Once metapredict is installed, the user can run <code class="docutils literal no
 <p><strong>Example:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
 </pre></div>
+</div>
 </div>
 </div>
 
