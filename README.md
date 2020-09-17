@@ -2,11 +2,21 @@
 
 **metapredict** uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from MobiDB. The creation of metapredict was made possible by IDP-parrot.
 
+
+For full documentation, please see:
+https://metapredict.readthedocs.io/en/latest/getting_started.html
+
+
 This package will allow for predicting disorder for any amino acid sequence, and predictions can be output as graphs or as raw values. Additionally, this package allows for predicting disorder values for protein sequences from .fasta files either from a Python IDE or from the command line.
 
 ## Installation:
 
-metapredict is currently only availabile through Github. 
+metapredict is available through PyPI - to install simply run
+
+	$ pip install metapredict
+
+
+Alternatively, you can get metapredict directly from Github. 
 
 To clone the GitHub repository and gain the ability to modify a local copy of the code, run
 

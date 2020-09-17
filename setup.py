@@ -21,12 +21,14 @@ except:
 
 setup(
     # Self-descriptive entries which should always be present
-    name='metapredict',
+    name='metapredict-remenecker',
+    version = '1.0',
     author='Ryan Emenecker - Holehouse Lab - WUSM',
     author_email='remenecker@wustl.edu',
     description=short_description[0],
     long_description=long_description,
     long_description_content_type="text/markdown",
+    url = 'https://github.com/idptools/metapredict.git',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     license='MIT',
