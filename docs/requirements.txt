@@ -6,7 +6,6 @@ numpy
 torch
 argparse
 matplotlib
-csv
 protfasta
 #
 ###### Requirements with Version Specifiers ######
