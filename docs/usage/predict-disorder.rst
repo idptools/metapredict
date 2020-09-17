@@ -10,7 +10,8 @@ Once metapredict is installed, the user can run ``predict-disorder`` from the co
 	$ predict-disorder <Path to .fasta file> <Path where to save the output> <Output file name> <flags>
 
 This will save a .csv file to the location specified by <Path where to save the output>. The name specified in <Output file name> will be the name of the output file followed by .csv. The .csv extension is automatically added to the output file name.
-**Example:**
+
+**Example:** 
 
 .. code-block:: bash
 	
