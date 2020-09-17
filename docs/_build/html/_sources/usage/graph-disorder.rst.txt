@@ -9,7 +9,7 @@ Once metapredict is installed, the user can run ``graph-disorder`` from the comm
 	
 	$ graph-disorder <Path to .fasta file> <Path where to save the output> <flags>
 
-**Example:**
+**Example:** 
 
 .. code-block:: bash
 	
@@ -27,7 +27,7 @@ This command will generate a .png file for ***every*** sequence in the .fasta fi
 
 By default, the output files have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flage -D followed by the wanted DPI value.
 
-**Example:**
+**Example:** 
 
 .. code-block:: bash
 	
@@ -38,7 +38,7 @@ By default, the output files have a DPI of 150. However, the user can change the
 
 By default, the output files contain characters that are non-alphabetic (example *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, while others do not allow files to have names that contain certain characters. To get around this, you can add the --remove_characters flag. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*.
 
-**Example:**
+**Example:** 
 
 .. code-block:: bash
 	

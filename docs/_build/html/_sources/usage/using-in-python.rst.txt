@@ -3,7 +3,7 @@ metapredict in Python
 
 In addition to using metapredict from the command line, you can also use it directly in Python.
 
-First import metapredict -
+First import metapredict - 
 
 .. code-block:: python
 
