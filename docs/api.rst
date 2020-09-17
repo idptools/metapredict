@@ -30,6 +30,5 @@ meta_predict_disorder.py
 ------------------------
 
 .. automodule:: metapredict.meta_predict_disorder
-   :noindex:
    :members:
 
