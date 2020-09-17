@@ -34,7 +34,7 @@ There are two ways you can use metapredict:
 
 ## Command line usage:
 
-### predicting disorder
+### Predicting Disorder
 The predict-disorder command from the command line takes a .fasta file as input and returns a .csv file containing rows where the first column in the row is the uniprot header and all following rows are predicted disorder values for each residue in the amino acid sequence associated with the fasta header. 
 
 	$ predict-disorder <Path to .fasta file> <Path where to save the output> <Output file name>
@@ -53,7 +53,7 @@ By default, this will output prediction values that are normalized between 0 and
 	$ predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
 
 
-### graphing disorder
+### Graphing Disorder
 The graph-disorder command from the command line takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Protein Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Protein Disorder sp|Q8N6T3|*.
 
 	$ graph-disorder <Path to .fasta file> <Path where to save the output>
@@ -91,7 +91,7 @@ First import metapredict -
 
 Once metapredict is imported you can work with individual sequences or .fasta files. 
 
-### predicting disorder
+### Predicting Disorder
 The predict_disorder function will return a list of predicted disorder value for each residue of the input sequence. The input sequence should be a string.
 
 	meta.predict_disorder("DAPTSQEHTQAEDKERDSKTHPQKKQSPS")
@@ -101,7 +101,7 @@ By default, the values are normalized between 1, but the user can get the raw pr
 	meta.predict_disorder("DAPTSQEHTQAEDKERDSKTHPQKKQSPS", normalized=False)
 
 
-### graphing disorder 
+### Graphing Disorder 
 The graph_disorder function will show a plot of the predicted disorder values across the input amino acid sequence.
 
 	meta.graph_disorder("DAPTSQEHTQAEDKERDSKTHPQKKQSPS")
@@ -122,7 +122,7 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 	meta.graph_disorder("DAPPTSQEHTQAEDKERD", DPI=300)
 
 
-### Calculating percent disorder
+### Calculating Percent Disorder
 The percent_disorder function will return the percent of disordered residues in a sequence (as a decimal value).
 
 **Example**
@@ -143,7 +143,7 @@ If you want to be more strict in what you consider to be disordered for calculat
 The higher the cutoff value, the higher the value for any given predicted residue must be greater than or equal to in order to be considered disordered when calculating the final percent disorder for the input sequence.
 
 
-### Predicting disorder from a .fasta file
+### Predicting Disorder From a .fasta File
 Similar to the command line, you can predict disorder values for the amino acid sequence in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
 
 **Example**
@@ -188,7 +188,7 @@ By default, this will output prediction values that are normalized between 0 and
 	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", normalized=False)
 
 
-### Generating graphs from a .fasta file
+### Generating Graphs From a .fasta File
 Similar to the command line, you can graph predicted disorder values for the amino acid sequence in a .fasta file. The graph_disorder_fasta function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Protein Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Protein Disorder sp|Q8N6T3|*.
 
 **WARNING**

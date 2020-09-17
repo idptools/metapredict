@@ -53,7 +53,7 @@ setup(
             'torch',
             'numpy',
             'matplotlib',
-            'pandas',
+            'csv',
             'protfasta'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',

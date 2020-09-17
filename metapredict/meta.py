@@ -11,7 +11,7 @@ import sys
 
 #import protfasta to read .fasta files
 import protfasta
-import pandas as pd
+import csv
 
 #import stuff for IDR predictor from backend
 from metapredict.backend import meta_predict_disorder
@@ -20,7 +20,6 @@ from metapredict.backend.meta_predict_disorder import meta_predict
 #import stuff for graphing from backend
 from metapredict.backend import meta_graph
 from metapredict.backend.meta_graph import graph
-
 
 
 def predict_disorder(sequence, normalized=True):
@@ -229,14 +228,24 @@ def predict_disorder_fasta(filepath, save=False, output_path = "", output_name =
                 #add in a \ to output path
                 output_path += "\\"
 
-        #make pandas dataframe from disorder_dict
-        df = pd.DataFrame.from_dict(disorder_dict, orient="index")
-        #set variable final_output equal to the output_path followed by output_name
-        #(by default output_name is equal to predicted_disorder_values).
+        #finalize output path
         final_output = "{}{}.csv".format(output_path, output_file_name)
-        #export the dataframe to a csv file at the location final_output
-        df.to_csv(final_output, header=False)
-
+        #try to export .csv to path
+        try:
+            with open(final_output, 'w') as csvfile:
+                #set CSV columns
+                columns = ['fasta_headers', 'predictor_values']
+                #set output open to csv (reading the disorder_dict dictionary)
+                output = csv.DictWriter(csvfile, fieldnames=columns)
+                #for each header (key) and prediction (value) in the disorder_dict items
+                for header, predictions in disorder_dict.items():
+                    #write a row to the .csv file where the first column is the header in the
+                    #disorder_dict item and the second row is the list of disorder values
+                    output.writerow({'fasta_headers': header, 'predictor_values': predictions})
+        #if this fails...
+        except IOError:
+            #print IO error
+            print("IO error")
 
 
 def graph_disorder_fasta(filepath, DPI=150, save=True, output_path="", remove_characters=False):
