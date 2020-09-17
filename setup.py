@@ -21,7 +21,7 @@ except:
 
 setup(
     # Self-descriptive entries which should always be present
-    name='metapredict-remenecker',
+    name='metapredict',
     author='Ryan Emenecker - Holehouse Lab - WUSM',
     author_email='remenecker@wustl.edu',
     description=short_description[0],
