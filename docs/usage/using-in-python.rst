@@ -15,7 +15,7 @@ Once metapredict is imported, you can work with individual sequences or .fasta f
 Predicting Disorder
 --------------------
 
-The predict_disorder function will return a list of predicted disorder consensus values for the residues of the input sequence. The input sequence should be a string. Running -
+The ``predict_disorder`` function will return a list of predicted disorder consensus values for the residues of the input sequence. The input sequence should be a string. Running -
 
 .. code-block:: python
 	
@@ -40,7 +40,7 @@ By default, output prediction values are normalized between 0 and 1. However, so
 Graphing Disorder
 ------------------
 
-The graph_disorder function will show a plot of the predicted disorder consensus values across the input amino acid sequence. Running - 
+The ``graph_disorder`` function will show a plot of the predicted disorder consensus values across the input amino acid sequence. Running - 
 
 .. code-block:: python
 	
@@ -78,7 +78,7 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 Calculating Percent Disorder:
 -----------------------------
 
-The percent_disorder function will return the percent of residues in a sequence that are have predicted consensus disorder values of 50% or more (as a decimal value). Running -
+The ``percent_disorder`` function will return the percent of residues in a sequence that  have predicted consensus disorder values of 50% or more (as a decimal value). Running -
 
 .. code-block:: python
 
@@ -115,7 +115,7 @@ The higher the cutoff value, the higher the value any given predicted residue mu
 Predicting Disorder From a .fasta File:
 ---------------------------------------
 
-Similar to the command line, you can predict disorder values for the amino acid sequence in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
+By using the ``predict_disorder_fasta`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
 
 **Example:**
 
@@ -133,7 +133,7 @@ An actual filepath would look something like:
 **Additional Usage:**
 
 **Save the output values -**
-By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *save=True* and *output_path* ="*location you want to save the file to*". This will save a file called *predicted_disorder_values.csv* to the location you specify for the output_path. The first cell of each row will contain a fasta header and the subsequent cells will contain predicted consensus disorder values for the protein associated with the fasta header.
+By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *save=True* and *output_path* ="*location you want to save the file to*". This will save a file called *predicted_disorder_values.csv* to the location you specify for the output_path. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
 
 **Example:**
 
@@ -148,7 +148,7 @@ An actual filepath would look something like:
 	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True output_path"/Users/thisUser/Desktop/")
 
 **Specifying the name of the output file -**
-By default, the generated .csv file will save as *predicted_disorder_values.csv*. However, you can change the default by specifing *output_name*="*my_cool_file*".
+By default, the generated .csv file will save as *predicted_disorder_values.csv*. However, you can change the default by specifing output_name="file_name".
 
 **Example:**
 
@@ -160,7 +160,7 @@ An actual filepath would look something like:
 
 .. code-block:: python
 
-	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True output_path"/Users/thisUser/Desktop/", output_name="my_predictions")
+	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True, output_path="/Users/thisUser/Desktop/", output_name="my_predictions")
 
 Importantly, you do not need to add the .csv file extension to your file name specified in output_name. However, if you do specify .csv as a file extension, everything should still work.
 
@@ -177,7 +177,7 @@ By default, this function will output prediction values that are normalized betw
 Generating Graphs From a .fasta File:
 -------------------------------------
 
-Similar to the command line, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted\_disorder\_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp*|Q8N6T3|.
+By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted\_disorder\_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled Predicted Consensus Disorder sp|Q8N6T3|.
 
 **WARNING:**
 

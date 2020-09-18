@@ -42,11 +42,11 @@ There are two ways you can use metapredict:
 ## Using metapredict from the command-line:
 
 ### Predicting Disorder
-The predict-disorder command from the command line takes a .fasta file as input and returns a .csv file containing rows where the first cell in the row is the fasta header and all subsequent cells in that row are predicted consensus disorder values for each residue in the amino acid sequence associated with the fasta header. 
+The ``predict-disorder`` command from the command line takes a .fasta file as input and returns a .csv file containing rows where the first cell in the row is the fasta header and all subsequent cells in that row are predicted consensus disorder values for each residue in the amino acid sequence associated with the fasta header. 
 
 	$ predict-disorder <Path to .fasta file> <Path where to save the output> <Output file name>
 
-This will save a .csv file to the location specified by <Path where to save the output>. The name specified in <Output file name> will be the name of the output file followed by .csv. The .csv extension is automatically added to the output file name.
+This will save a .csv file to the location specified by *Path where to save the output*. The name specified in *Output file name* will be the name of the output file followed by .csv. The .csv extension is automatically added to the output file name.
 
 **Example**
 
@@ -54,8 +54,8 @@ This will save a .csv file to the location specified by <Path where to save the 
 
 **Additional Usage**
 
-**Get raw prediction values**
-By default, the output prediction values are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 and slightly greater than 1. The negative values are replaced with 0 and the values greater than 1 are replaced with 1 by default. However, if you want raw values, simply add the flag ``--no_normalization``. There is not a very good reason to do this, and it is generally not recommended. However, I wanted to give users the maximum amount of flexibility when using metapredict, so I made it an option.
+**Get raw prediction values -**
+By default, the output prediction values are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are replaced with 0 and the values greater than 1 are replaced with 1 by default. However, if you want raw values, simply add the flag ``--no_normalization``. There is not a very good reason to do this, and it is generally not recommended. However, I wanted to give users the maximum amount of flexibility when using metapredict, so I made it an option.
 
 **Example**
 
@@ -71,19 +71,19 @@ The ``graph-disorder`` command from the command line takes a .fasta file as inpu
 
 	$ graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/
 
-**WARNING**
+**WARNING -**
 This command will generate a .png file for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop...).
 
 **Additional Usage**
 
-**Changing resolution of saved graphs**
+**Changing resolution of saved graphs -**
 By default, the output graphs have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` followed by the wanted DPI value. 
 
 **Example**
 
 	$ graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
 
-**Remove non-alphabetic characters from file names**
+**Remove non-alphabetic characters from file names -**
 By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, but others do not allow files to have names that contain certain characters. To get around this, you can add the ``--remove_characters`` flag. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*. 
 
 **Example**
@@ -102,7 +102,7 @@ First import metapredict -
 Once metapredict is imported you can work with individual sequences or .fasta files. 
 
 ### Predicting Disorder
-The predict_disorder function will return a list of predicted disorder value for each residue of the input sequence. The input sequence should be a string. Running -
+The ``predict_disorder`` function will return a list of predicted disorder value for each residue of the input sequence. The input sequence should be a string. Running -
 
 	meta.predict_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR")
 
@@ -116,20 +116,20 @@ By default, output prediction values are normalized between 0 and 1. However, so
 
 
 ### Graphing Disorder 
-The graph_disorder function will show a plot of the predicted disorder consensus values across the input amino acid sequence.
+The ``graph_disorder`` function will show a plot of the predicted disorder consensus values across the input amino acid sequence.
 
 	meta.graph_disorder("DAPTSQEHTQAEDKERDSKTHPQKKQSPS")
 
 **Additional Usage**
 
-**Changing title of generated graph**
+**Changing the title of the generated graph -**
 There are two parameters that the user can change for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted Consensus Disorder*. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing name = "- PAB1" would result in a title of *Predicted Consensus Disorder - PAB1*.
 
 **Example**
 
 	meta.graph_disorder("DAPPTSQEHTQAEDKERD", name="Name of this nonexistant protein")
 
-**Changing the resolution of the generated graph**
+**Changing the resolution of the generated graph -**
 By default, the output graph has a DPI of 150. However, the user can change the DPI of the generated graph (higher values have greater resolution). To do so, simply specify *DPI="Number"* where the number is an integer.
 
 **Example**
@@ -138,7 +138,7 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 
 
 ### Calculating Percent Disorder
-The percent_disorder function will return the percent of residues in a sequence that are have predicted consensus disorder values of 50% or more (as a decimal value).
+The ``percent_disorder`` function will return the percent of residues in a sequence that  have predicted consensus disorder values of 50% or more (as a decimal value).
 
 **Example**
 
@@ -148,7 +148,7 @@ By default, this function uses a cutoff value of equal to or greater than 0.5 fo
 
 **Additional Usage**
 
-**Changing the cutoff value**
+**Changing the cutoff value -**
 If you want to be more strict in what you consider to be disordered for calculating percent disorder of an input sequence, you can simply specify the cutoff value by adding the argument *cutoff=decimal* where the decimal corresponds to the percent you would like to use as the cutoff (for example, 0.8 would be 80%).
 
 
@@ -160,7 +160,7 @@ The higher the cutoff value, the higher the value any given predicted residue mu
 
 
 ### Predicting Disorder From a .fasta File
-Similar to the command line, you can predict disorder values for the amino acid sequence in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
+By using the ``predict_disorder_fasta`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
 
 **Example**
 
@@ -173,8 +173,8 @@ An actual filepath would look something like:
 
 **Additional Usage**
 
-**Save the output values**
-By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *save=True* and *output_path = "location you want to save the file to*". This will save a file called *predicted_disorder_values.csv* to the location you specify for the output_path. The first cell of each row will contain a fasta header and the subsequent cells will contain predicted consensus disorder values for the protein associated with the fasta header.
+**Save the output values -**
+By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *save=True* and *output_path = "location you want to save the file to*". This will save a file called *predicted_disorder_values.csv* to the location you specify for the output_path. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
 
 **Example**
 
@@ -182,10 +182,10 @@ By default the predict_disorder_fasta function will immediately return a diction
 
 An actual filepath would look something like:
 
-	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True output_path"/Users/thisUser/Desktop/")
+	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True, output_path="/Users/thisUser/Desktop/")
 
-**Specifying the name of the output file**
-By default, the generated .csv file will save as *predicted_disorder_values.csv*. However, you can change the default by specifing *output_name="my_cool_file*".
+**Specifying the name of the output file -**
+By default, the generated .csv file will save as *predicted_disorder_values.csv*. However, you can change the default by specifing *output_name="file_name*".
 
 **Example**
 
@@ -197,7 +197,7 @@ An actual filepath would look something like:
 
 Importantly, you do not need to add the .csv file extension to your file name specified in output_name. However, if you do specify .csv as a file extension, everything should still work.
 
-**Get raw prediction values**
+**Get raw prediction values -**
 By default, this function will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. If you want the raw values simply specify *normalized=False*. There is not a very good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.
 
 **Example**
@@ -206,9 +206,9 @@ By default, this function will output prediction values that are normalized betw
 
 
 ### Generating Graphs From a .fasta File
-Similar to the command line, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp|Q8N6T3|*.
+By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp|Q8N6T3|*.
 
-**WARNING**
+**WARNING -**
 This command will generate a .png file for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop...).
 
 **Example**
@@ -223,21 +223,21 @@ An actual filepath would look something like:
 
 **Additional Usage**
 
-**Changing resolution of saved graphs**
+**Changing resolution of saved graphs -**
 By default, the output files have a DPI of 150. However, the user can change the DPI of the output files (higher values have greater resolution but take up more space). To change the DPI, specify *DPI=Number* where Number is an integer.
 
 **Example**
 
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_path="/Users/thisUser/Desktop/folderForGraphs")
 
-**Remove non-alphabetic characters from file name**
+**Remove non-alphabetic characters from file name -**
 By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, while others do not allow files to have names that contain certain characters. To get around this, you can add an additional argument *remove_characters=True*. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*. 
 
 **Example**
 
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_path="/Users/thisUser/Desktop/folderForGraphs", remove_characters=True)
 
-**Viewing generated graphs without saving**
+**Viewing generated graphs without saving -**
 The default behavior for the graph_disorder_fasta function is to save the generated graphs for viewing elsewhere. However, the user can choose to view the generated graphs without saving them by specifying *save=False*. 
 
 **WARNING**
