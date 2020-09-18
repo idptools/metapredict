@@ -39,7 +39,7 @@ There are two ways you can use metapredict:
 1. Directly from the command-line
 2. From within Python
 
-## Command line usage:
+## Using metapredict from the command-line:
 
 ### Predicting Disorder
 The predict-disorder command from the command line takes a .fasta file as input and returns a .csv file containing rows where the first cell in the row is the fasta header and all subsequent cells in that row are predicted consensus disorder values for each residue in the amino acid sequence associated with the fasta header. 
@@ -89,7 +89,7 @@ By default, the output files contain characters that are non-alphabetic (for exa
 	$ graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ --remove_characters
 
 
-## Using in Python:
+## Using metapredict in Python:
 In addition to using metapredict from the command line, you can also use metapredict directly in Python.
 
 First import metapredict -
