@@ -11,10 +11,10 @@ Welcome to metapredict's documentation!
    :caption: Contents:
 
    getting_started
-   usage/graph-disorder
-   usage/predict-disorder
+   usage/command-line
    usage/using-in-python
    api
+   usage/acknowledgements
 
 
 
