@@ -145,7 +145,7 @@ An actual filepath would look something like:
 
 .. code-block:: python
 
-	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True output_path"/Users/thisUser/Desktop/")
+	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True, output_path"/Users/thisUser/Desktop/")
 
 **Specifying the name of the output file -**
 By default, the generated .csv file will save as *predicted_disorder_values.csv*. However, you can change the default by specifing output_name="file_name".

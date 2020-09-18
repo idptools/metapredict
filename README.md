@@ -4,7 +4,7 @@
 
 ## What is metapredict?
 
-metapredict is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on **consensus** values from MobiDB. These values are the percent of other disorder predictors that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then *all disorder predictors predicted that residue to be disordered*. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximations of what other predictors would predict (things got pretty 'meta' there, hence the name metapredict).
+**metapredict** is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on **consensus** values from MobiDB. These values are the percent of other disorder predictors that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then *all disorder predictors predicted that residue to be disordered*. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximations of what other predictors would predict (things got pretty 'meta' there, hence the name metapredict).
  
 ## Why is metapredict useful?
 
@@ -14,7 +14,7 @@ For full documentation, please see:
 https://metapredict.readthedocs.io/en/latest/getting_started.html
 
 
-metapredict allows for predicting disorder for any amino acid sequence, and predictions can be output as graphs or as raw values. Additionally, metapredict allows for predicting disorder values for protein sequences from .fasta files either directly in Python or from the command-line.
+**metapredict** allows for predicting disorder for any amino acid sequence, and predictions can be output as graphs or as raw values. Additionally, metapredict allows for predicting disorder values for protein sequences from .fasta files either directly in Python or from the command-line.
 
 ## Installation:
 
