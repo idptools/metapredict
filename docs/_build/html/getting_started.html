@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="graph-disorder" href="usage/graph-disorder.html" />
+    <link rel="next" title="metapredict from the command-line" href="usage/command-line.html" />
     <link rel="prev" title="Welcome to metapredict’s documentation!" href="index.html" /> 
 </head>
 
@@ -91,10 +91,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#example-datasets">Example datasets</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="usage/graph-disorder.html">graph-disorder</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage/predict-disorder.html">predict-disorder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage/command-line.html">metapredict from the command-line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage/using-in-python.html">metapredict in Python</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Module Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage/acknowledgements.html">Acknowledgements</a></li>
 </ul>
 
             
@@ -163,7 +163,7 @@
 <h1>Getting Started with metapredict<a class="headerlink" href="#getting-started-with-metapredict" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="what-is-metapredict">
 <h2>What is metapredict?<a class="headerlink" href="#what-is-metapredict" title="Permalink to this headline">¶</a></h2>
-<p>metapredict is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on <strong>consensus</strong> values from MobiDB. These values are the percent of other disorders that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then <em>all 8 predictors predicted that residue to be disordered</em>. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximations of what other predictors would predict (things got pretty ‘meta’ there, hence the name metapredict).</p>
+<p><strong>metapredict</strong> is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on <strong>consensus</strong> values from MobiDB. These values are the percent of other disorders that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then <em>all 8 predictors predicted that residue to be disordered</em>. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximations of what other predictors would predict (things got pretty ‘meta’ there, hence the name metapredict).</p>
 </div>
 <div class="section" id="why-is-metapredict-useful">
 <h2>Why is metapredict useful?<a class="headerlink" href="#why-is-metapredict-useful" title="Permalink to this headline">¶</a></h2>
@@ -208,7 +208,7 @@ $ pip install .
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="usage/graph-disorder.html" class="btn btn-neutral float-right" title="graph-disorder" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="usage/command-line.html" class="btn btn-neutral float-right" title="metapredict from the command-line" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to metapredict’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

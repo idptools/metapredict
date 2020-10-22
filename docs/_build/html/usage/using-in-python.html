@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Module Documentation" href="../api.html" />
-    <link rel="prev" title="predict-disorder" href="predict-disorder.html" /> 
+    <link rel="prev" title="metapredict from the command-line" href="command-line.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,8 +83,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started with metapredict</a></li>
-<li class="toctree-l1"><a class="reference internal" href="graph-disorder.html">graph-disorder</a></li>
-<li class="toctree-l1"><a class="reference internal" href="predict-disorder.html">predict-disorder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="command-line.html">metapredict from the command-line</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">metapredict in Python</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#predicting-disorder">Predicting Disorder</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#graphing-disorder">Graphing Disorder</a></li>
@@ -94,6 +93,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">Module Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
 </ul>
 
             
@@ -166,33 +166,42 @@
 <span class="kn">from</span> <span class="nn">metapredict</span> <span class="kn">import</span> <span class="n">meta</span>
 </pre></div>
 </div>
-<p>Once metapredict is imported you can work with individual sequences or .fasta files.</p>
+<p>Once metapredict is imported, you can work with individual sequences or .fasta files.</p>
 <div class="section" id="predicting-disorder">
 <h2>Predicting Disorder<a class="headerlink" href="#predicting-disorder" title="Permalink to this headline">¶</a></h2>
-<p>The predict_disorder function will return a list of predicted disorder value for each residue of the input sequence. The input sequence should be a string.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder</span><span class="p">(</span><span class="s2">&quot;DAPTSQEHTQAEDKERDSKTHPQKKQSPS&quot;</span><span class="p">)</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">predict_disorder</span></code> function will return a list of predicted disorder consensus values for the residues of the input sequence. The input sequence should be a string. Running -</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder</span><span class="p">(</span><span class="s2">&quot;DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>By default, the values are normalized between 1, but the user can get the raw prediction values by specifying</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder</span><span class="p">(</span><span class="s2">&quot;DAPTSQEHTQAEDKERDSKTHPQKKQSPS&quot;</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<p>would output -</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.958249</span><span class="p">,</span> <span class="mf">0.915786</span><span class="p">,</span> <span class="mf">0.845275</span><span class="p">,</span> <span class="mf">0.75202</span><span class="p">,</span> <span class="mf">0.687313</span><span class="p">,</span> <span class="mf">0.588148</span><span class="p">,</span> <span class="mf">0.603413</span><span class="p">,</span> <span class="mf">0.506673</span><span class="p">,</span> <span class="mf">0.476576</span><span class="p">,</span> <span class="mf">0.407988</span><span class="p">,</span> <span class="mf">0.432979</span><span class="p">,</span> <span class="mf">0.286987</span><span class="p">,</span> <span class="mf">0.160754</span><span class="p">,</span> <span class="mf">0.102596</span><span class="p">,</span> <span class="mf">0.094578</span><span class="p">,</span> <span class="mf">0.073396</span><span class="p">,</span> <span class="mf">0.140863</span><span class="p">,</span> <span class="mf">0.27831</span><span class="p">,</span> <span class="mf">0.327464</span><span class="p">,</span> <span class="mf">0.336405</span><span class="p">,</span> <span class="mf">0.351597</span><span class="p">,</span> <span class="mf">0.356424</span><span class="p">,</span> <span class="mf">0.354656</span><span class="p">,</span> <span class="mf">0.379971</span><span class="p">,</span> <span class="mf">0.351955</span><span class="p">,</span> <span class="mf">0.456596</span><span class="p">,</span> <span class="mf">0.365483</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Additional Usage:</strong></p>
+<p><strong>Disabling prediction value normalization -</strong>
+By default, output prediction values are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. However, the user can get the raw prediction values by specifying <em>normalized=False</em> as a second argument in meta.predict_disorder. There is not a very good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder</span><span class="p">(</span><span class="s2">&quot;DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR&quot;</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="graphing-disorder">
 <h2>Graphing Disorder<a class="headerlink" href="#graphing-disorder" title="Permalink to this headline">¶</a></h2>
-<p>The graph_disorder function will show a plot of the predicted disorder values across the input amino acid sequence.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder</span><span class="p">(</span><span class="s2">&quot;DAPTSQEHTQAEDKERDSKTHPQKKQSPS&quot;</span><span class="p">)</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">graph_disorder</span></code> function will show a plot of the predicted disorder consensus values across the input amino acid sequence. Running -</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder</span><span class="p">(</span><span class="s2">&quot;GHPGKQRNPGEHHSSRNVKRNWNNSPSGPNEGRESQEERKTPPRRGGQQSGESHNQDETNKPNPSDNHHEEEKADDNAHRGNDSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLRAKRVLRENFVQCEKAWHRRRLAHPYNRINMQWLDVFDGDCWLAPQLCFGFQFGHDRPVWKIFWYHERGDLRYKLILKDHANVLNKPAHSRNARCESSAPSHDPHGNANSYDKKVTTPDPTEIKSSQESGNSNPDHSPHMPGRDMQEQPGEEPGGHPEKRLIRSKGKTDYKDNRSPRNNPSTDPEWESAHFQWSHDPNEQWLHNLGWPMRWMWQLPNPGIEPFSLNTRKKAPSWINLLYNADPCKTQDDERDCEHHMYQIQPIAPVPKIAMHYCTCFPRVHRIPC&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>would output -</p>
+<a class="reference internal image-reference" href="../_images/meta_predict_disorder.png"><img alt="../_images/meta_predict_disorder.png" src="../_images/meta_predict_disorder.png" style="width: 400px;" /></a>
 <p><strong>Additional Usage:</strong></p>
 <p><strong>Changing title of generated graph -</strong>
-There are two parameters that the user can change easily for graphing disorder. The first is the name of the title for the generate graph. The name by default is blank and the title of the graph is simply <em>Predicted Protein Disorder</em>. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing name = “- PAB1” would result in a title of <em>Predicted Protein Disorder - PAB1</em>.</p>
-<p><strong>Example:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder</span><span class="p">(</span><span class="s2">&quot;DAPPTSQEHTQAEDKERD&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Name of this nonexistant protein&quot;</span><span class="p">)</span>
+There are two parameters that the user can change easily for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply <em>Predicted Consensus Disorder</em>. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing <em>name</em> = ” - <em>MadeUpProtein</em>” would result in a title of <em>Predicted Consensus Disorder - MadeUpProtein</em>. Running -</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder</span><span class="p">(</span><span class="s2">&quot;GHPGKQRNPGEHHSSRNVKRNWNNSPSGPNEGRESQEERKTPPRRGGQQSGESHNQDETNKPNPSDNHHEEEKADDNAHRGNDSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLRAKRVLRENFVQCEKAWHRRRLAHPYNRINMQWLDVFDGDCWLAPQLCFGFQFGHDRPVWKIFWYHERGDLRYKLILKDHANVLNKPAHSRNARCESSAPSHDPHGNANSYDKKVTTPDPTEIKSSQESGNSNPDHSPHMPGRDMQEQPGEEPGGHPEKRLIRSKGKTDYKDNRSPRNNPSTDPEWESAHFQWSHDPNEQWLHNLGWPMRWMWQLPNPGIEPFSLNTRKKAPSWINLLYNADPCKTQDDERDCEHHMYQIQPIAPVPKIAMHYCTCFPRVHRIPC&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;- MadeUpProtein&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Changing the resolution of the generate graph -</strong>
-By default, the output graph has a DPI of 150. However, the user can change the DPI of the generated graph (higher values have greater resolution). To do so, simply specify DPI=”Number” where the number is an integer.</p>
+<p>would output -</p>
+<a class="reference internal image-reference" href="../_images/python_meta_predict_MadeUpProtein.png"><img alt="../_images/python_meta_predict_MadeUpProtein.png" src="../_images/python_meta_predict_MadeUpProtein.png" style="width: 400px;" /></a>
+<p><strong>Changing the resolution of the generated graph -</strong>
+By default, the output graph has a DPI of 150. However, the user can change the DPI of the generated graph (higher values have greater resolution). To do so, simply specify <em>DPI=Number</em> where the number is an integer.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder</span><span class="p">(</span><span class="s2">&quot;DAPPTSQEHTQAEDKERD&quot;</span><span class="p">,</span> <span class="n">DPI</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
 </pre></div>
@@ -200,24 +209,31 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 </div>
 <div class="section" id="calculating-percent-disorder">
 <h2>Calculating Percent Disorder:<a class="headerlink" href="#calculating-percent-disorder" title="Permalink to this headline">¶</a></h2>
-<p>The percent_disorder function will return the percent of disordered residues in a sequence (as a decimal value).</p>
-<p><strong>Example:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">percent_disorder</span><span class="p">(</span><span class="s2">&quot;DAPPTSQEHTQAEDKERD&quot;</span><span class="p">)</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">percent_disorder</span></code> function will return the percent of residues in a sequence that  have predicted consensus disorder values of 50% or more (as a decimal value). Running -</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">percent_disorder</span><span class="p">(</span><span class="s2">&quot;DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>would output -</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="mf">0.4411764705882353</span>
 </pre></div>
 </div>
 <p>By default, this uses a cutoff predicted value of equal to or greater than 0.5 for a residue to be considered disordered.</p>
 <p><strong>Additional Usage:</strong></p>
-<p><strong>Changing cutoff value -</strong>
-If you want to be more strict in what you consider to be disordered for calculating percent disorder of an input sequence, you can simply specify the cutoff value.</p>
+<p><strong>Changing the cutoff value -</strong>
+If you want to be more strict in what you consider to be disordered for calculating percent disorder of an input sequence, you can simply specify the cutoff value by adding the argument <em>cutoff=decimal</em> where the decimal corresponds to the percent you would like to use as the cutoff (for example, 0.8 would be 80%).</p>
 <p><strong>Example:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">percent_disorder</span><span class="p">(</span><span class="s2">&quot;DAPPTSQEHTQAEDKERD&quot;</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">percent_disorder</span><span class="p">(</span><span class="s2">&quot;DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR&quot;</span><span class="p">,</span> <span class="n">cutoff</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The higher the cutoff value, the higher the value for any given predicted residue must be greater than or equal to in order to be considered disordered when calculating the final percent disorder for the input sequence.</p>
+<p>would output</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="mf">0.29411764705882354</span>
+</pre></div>
+</div>
+<p>The higher the cutoff value, the higher the value any given predicted residue must be greater than or equal to in order to be considered disordered when calculating the final percent disorder for the input sequence.</p>
 </div>
 <div class="section" id="predicting-disorder-from-a-fasta-file">
 <h2>Predicting Disorder From a .fasta File:<a class="headerlink" href="#predicting-disorder-from-a-fasta-file" title="Permalink to this headline">¶</a></h2>
-<p>Similar to the command line, you can predict disorder values for the amino acid sequence in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.</p>
+<p>By using the <code class="docutils literal notranslate"><span class="pre">predict_disorder_fasta</span></code> function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;file path to .fasta file/fileName.fasta&quot;</span><span class="p">)</span>
 </pre></div>
@@ -228,28 +244,28 @@ If you want to be more strict in what you consider to be disordered for calculat
 </div>
 <p><strong>Additional Usage:</strong></p>
 <p><strong>Save the output values -</strong>
-By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save them to a .csv file by specifying <em>save=True</em> and output_path=”location you want to save the file to”. This will save a file called <em>predicted_disorder_values.csv</em> to the location you specify for the output_path</p>
+By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying <em>save=True</em> and <em>output_path</em> =”<em>location you want to save the file to</em>”. This will save a file called <em>predicted_disorder_values.csv</em> to the location you specify for the output_path. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;file path to .fasta file/fileName.fasta&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;file path where the output .csv should be saved&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>An actual filepath would look something like:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span> <span class="n">output_path</span><span class="s2">&quot;/Users/thisUser/Desktop/&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_path</span><span class="s2">&quot;/Users/thisUser/Desktop/&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Specifying the name of the output file -</strong>
-By default, the generated .csv file will save as <em>predicted_disorder_values.csv</em>. However, you can change the default by specifing output_name=”my_cool_file”.</p>
+By default, the generated .csv file will save as <em>predicted_disorder_values.csv</em>. However, you can change the default by specifing output_name=”file_name”.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;file path to .fasta file/fileName.fasta&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;file path where the output .csv should be saved&quot;</span><span class="p">,</span> <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;name of file&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>An actual filepath would look something like:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span> <span class="n">output_path</span><span class="s2">&quot;/Users/thisUser/Desktop/&quot;</span><span class="p">,</span> <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;my_predictions&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;/Users/thisUser/Desktop/&quot;</span><span class="p">,</span> <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;my_predictions&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Importantly, you do not need to add the .csv file extension to your file name specified in output_name. However, if you do specify .csv as a file extension, everything should still work.</p>
 <p><strong>Get raw prediction values -</strong>
-By default, this will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 and slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. If you want the raw values simply specify normalized=False.</p>
+By default, this function will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. If you want the raw values simply specify <em>normalized=False</em>. There is not a very good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">predict_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
@@ -257,9 +273,9 @@ By default, this will output prediction values that are normalized between 0 and
 </div>
 <div class="section" id="generating-graphs-from-a-fasta-file">
 <h2>Generating Graphs From a .fasta File:<a class="headerlink" href="#generating-graphs-from-a-fasta-file" title="Permalink to this headline">¶</a></h2>
-<p>Similar to the command line, you can graph predicted disorder values for the amino acid sequence in a .fasta file. The graph_disorder_fasta function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of &gt;sp|Q8N6T3|ARFG1_HUMAN will return a file saved as <em>predicted_disorder_sp|Q8N6T3|.png</em>. Additionally, the title of each graph is automatically generated and will have the title Predicted Protein Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled <em>Predicted Protein Disorder sp|Q8N6T3|</em>.</p>
+<p>By using the <code class="docutils literal notranslate"><span class="pre">graph_disorder_fasta</span></code> function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The <em>graph_disorder_fasta</em> function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of &gt;sp|Q8N6T3|ARFG1_HUMAN will return a file saved as <em>predicted_disorder_sp|Q8N6T3|.png</em>. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled Predicted Consensus Disorder sp|Q8N6T3|.</p>
 <p><strong>WARNING:</strong></p>
-<p>This command will generate a .png file for <strong>*every*</strong> sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate <strong>1,000</strong> files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop…).</p>
+<p>This command will generate a .png file for <strong>every</strong> sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate <strong>1,000</strong> files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop…).</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;file path to .fasta file/fileName.fasta&quot;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;file path of where to save output graphs&quot;</span><span class="p">)</span>
 </pre></div>
@@ -269,22 +285,22 @@ By default, this will output prediction values that are normalized between 0 and
 </pre></div>
 </div>
 <p><strong>Additional Usage:</strong></p>
-<p><strong>Changing resolution of save graphs -</strong>
-By default, the output files have a DPI of 150. However, the user can change the DPI of the output files (higher values have greater resolution but take up more space). To change the DPI, specify DPI=# where # is an whole integer number.</p>
+<p><strong>Changing resolution of saved graphs -</strong>
+By default, the output files have a DPI of 150. However, the user can change the DPI of the output files (higher values have greater resolution but take up more space). To change the DPI, specify <em>DPI=Number</em> where Number is an integer.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">DPI</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;/Users/thisUser/Desktop/folderForGraphs&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Remove non-alphabetic characters from file name -</strong>
-By default, the output files contain characters that are non-alphabetic (example <em>predicted_disorder_sp|Q8N6T3|.png</em>). This is not a problem on some operating systems, while others do not allow files to have names that contain certain characters. To get around this, you can add the –remove_characters flag. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header &gt;sp|Q8N6T3|ARFG1_HUMAN would now save as <em>predicted_disorder_spQ8N726AR.png</em>.</p>
+<p><strong>Remove non-alphabetic characters from file names -</strong>
+By default, the output files contain characters that are non-alphabetic (for example, <em>predicted_disorder_sp|Q8N6T3|.png</em>). This is not a problem on some operating systems, but others do not allow files to have names that contain certain characters. To get around this, you can add an additional argument <em>remove_characters=True</em>. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header &gt;sp|Q8N6T3|ARFG1_HUMAN would now save as <em>predicted_disorder_spQ8N726AR.png</em>.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">DPI</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;/Users/thisUser/Desktop/folderForGraphs&quot;</span><span class="p">,</span> <span class="n">remove_characters</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Viewing generated graphs without saving -</strong>
-The default behavior for the graph_disorder_fasta function is to save the generated graphs for viewing elsewhere. However, the user can choose to view the generated graphs without saving them.</p>
+The default behavior for the graph_disorder_fasta function is to save the generated graphs for viewing elsewhere. However, the user can choose to view the generated graphs without saving them by specifying <em>save=False</em>.</p>
 <p><strong>WARNING:</strong></p>
-<p>If you choose to view the generated graphs instead of saving them, you can only view one at a time and each must be closed before the next will open. This is not a problem if you only have around 10 sequences in your .fasta file. However, if you have 1,000 sequences in a .fasta file, you will have to close out <strong>1,000</strong> graphs. This isn’t a problem if you don’t mind clicking… a lot.</p>
+<p>If you choose to view the generated graphs instead of saving them, you can only view one at a time and each graph must be closed before the next will open. This is not a problem if you only have around 10 sequences in your .fasta file. However, if you have 1,000 sequences in a .fasta file, you will have to close out <strong>1,000</strong> graphs. This isn’t a problem if you don’t mind clicking… a lot.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span><span class="o">.</span><span class="n">graph_disorder_fasta</span><span class="p">(</span><span class="s2">&quot;/Users/thisUser/Desktop/coolSequences.fasta&quot;</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
@@ -303,7 +319,7 @@ The default behavior for the graph_disorder_fasta function is to save the genera
         <a href="../api.html" class="btn btn-neutral float-right" title="Module Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="predict-disorder.html" class="btn btn-neutral float-left" title="predict-disorder" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="command-line.html" class="btn btn-neutral float-left" title="metapredict from the command-line" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
