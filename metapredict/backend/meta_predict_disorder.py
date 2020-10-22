@@ -97,7 +97,7 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
 				if cur_value < 0:	
 					normalized_IDR_values.append(0)
 				else:
-					normalized_IDR_values.append(round(cur_value, 6))
+					normalized_IDR_values.append(round(cur_value, 3))
 			#overwrite output_values with normalized_IDR_values (which are now all non-negative).
 			output_values = normalized_IDR_values
 		#overwrite normalized_IDR_values with an empty list
@@ -111,7 +111,7 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
 				if cur_value > 1:
 					normalized_IDR_values.append(1)
 				else:
-					normalized_IDR_values.append(round(cur_value, 6))
+					normalized_IDR_values.append(round(cur_value, 3))
 			#overwrite output_values with normalized_IDR_values (which are now all less than or equal to 1).
 			output_values = normalized_IDR_values
 		#return output_values

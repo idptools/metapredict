@@ -238,7 +238,8 @@ def predict_disorder_fasta(filepath, save=False, output_path = "", output_name =
                     temp_predictions=[]
                     temp_predictions.append(header)
                     for i in predictions:
-                        temp_predictions.append(i)
+                        predicted_space = "{} ".format(i)
+                        temp_predictions.append(predicted_space)
                     csvWriter.writerow(temp_predictions)
         #if this fails...
         except IOError:

@@ -42,15 +42,15 @@ There are two ways you can use metapredict:
 ## Using metapredict from the command-line:
 
 ### Predicting Disorder
-The ``predict-disorder`` command from the command line takes a .fasta file as input and returns a .csv file containing rows where the first cell in the row is the fasta header and all subsequent cells in that row are predicted consensus disorder values for each residue in the amino acid sequence associated with the fasta header. 
+The ``metapredict-predict-disorder`` command from the command line takes a .fasta file as input and returns a .csv file containing rows where the first cell in the row is the fasta header and all subsequent cells in that row are predicted consensus disorder values for each residue in the amino acid sequence associated with the fasta header. 
 
-	$ predict-disorder <Path to .fasta file> <Path where to save the output> <Output file name>
+	$ metapredict-predict-disorder <Path to .fasta file> <Path where to save the output> <Output file name>
 
 This will save a .csv file to the location specified by *Path where to save the output*. The name specified in *Output file name* will be the name of the output file followed by .csv. The .csv extension is automatically added to the output file name.
 
 **Example**
 
-	$ predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions
+	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions
 
 **Additional Usage**
 
@@ -59,17 +59,17 @@ By default, the output prediction values are normalized between 0 and 1. However
 
 **Example**
 
-	$ predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
+	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
 
 
 ### Graphing Disorder
-The ``graph-disorder`` command from the command line takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png file for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp|Q8N6T3|*.
+The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png file for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp|Q8N6T3|*.
 
-	$ graph-disorder <Path to .fasta file> <Path where to save the output>
+	$ metapredict-graph-disorder <Path to .fasta file> <Path where to save the output>
 
 **Example**
 
-	$ graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/
+	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/
 
 **WARNING -**
 This command will generate a .png file for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop...).
@@ -77,18 +77,18 @@ This command will generate a .png file for ***every*** sequence in the .fasta fi
 **Additional Usage**
 
 **Changing resolution of saved graphs -**
-By default, the output graphs have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` followed by the wanted DPI value. 
+By default, the output graphs have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` or ``-dpi`` followed by the wanted DPI value. 
 
 **Example**
 
-	$ graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
+	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
 
 **Remove non-alphabetic characters from file names -**
 By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, but others do not allow files to have names that contain certain characters. To get around this, you can add the ``--remove_characters`` flag. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*. 
 
 **Example**
 
-	$ graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ --remove_characters
+	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ --remove_characters
 
 
 ## Using metapredict in Python:
@@ -247,6 +247,17 @@ If you choose to view the generated graphs instead of saving them, you can only 
 
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=False)
 
+### metapredict isn't working!
+I have recieved occassional feedback that metapredict is not working for a user. A common problem is that the user is using a different version of Python than metapredict was made on. metapredict was made using Python version 3.7, and I recommend using this version while using metapredict to avoid problems (I haven't done extensive testing using other versions of Python, so if you're not using 3.7, do so at your own risk). A convenient workaround is to use a conda environment that has Python 3.7 set as the default version of Python. For more info on conda, please see https://docs.conda.io/projects/conda/en/latest/index.html
+
+Once you have conda installed, simply use the command 
+
+	conda create --name my_env python=3.7
+
+where you can replace the name of your environment with whatever you'd like. Then, use metapredict from within this conda environment.
+
+If you are having other problems, please report them to the **issues** section on the metapredict Github page at
+https://github.com/idptools/metapredict/issues
 
 
 ### Copyright
