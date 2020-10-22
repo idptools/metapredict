@@ -44,8 +44,8 @@ setup(
 
     # Allows `setup.py test` to work correctly with pytest
     setup_requires=[] + pytest_runner,
-    scripts=['scripts/graph-disorder',
-             'scripts/predict-disorder'],
+    scripts=['scripts/metapredict-graph-disorder',
+             'scripts/metapredict-predict-disorder'],
 
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='http://www.my_package.com',  # Website
