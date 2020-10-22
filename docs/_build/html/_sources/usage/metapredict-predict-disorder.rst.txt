@@ -1,5 +1,5 @@
-predict-disorder
-================
+metapredict-predict-disorder
+=============================
 
 command-line
 -------------

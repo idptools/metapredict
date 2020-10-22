@@ -1,5 +1,5 @@
-graph-disorder
-==============
+metapredict-graph-disorder
+===========================
 
 command-line
 -------------

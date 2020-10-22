@@ -26,7 +26,7 @@ parser.add_argument('--remove_characters', action='store_true',
 
 args = parser.parse_args()
 
-DPI=args.DPI
+DPI=args.dpi
 
 if args.output_path == 'curdir':
 	current_dirrectory = os.getcwd()

@@ -15,6 +15,7 @@ Welcome to metapredict's documentation!
    usage/using-in-python
    api
    usage/acknowledgements
+   usage/troubleshooting
 
 
 
