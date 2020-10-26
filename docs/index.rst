@@ -16,6 +16,7 @@ Welcome to metapredict's documentation!
    api
    usage/acknowledgements
    usage/troubleshooting
+   changes
 
 
 

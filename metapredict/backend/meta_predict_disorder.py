@@ -82,7 +82,7 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
 	for i in outputs:
 		#append each value (which is the predicted disorder value) to output values as a float.
 		#round each value to six digits.
-		output_values.append(round(float(i),6))
+		output_values.append(round(float(i),3))
 
 	#if normalized=True (defualt)
 	if normalized == True:

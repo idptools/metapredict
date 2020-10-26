@@ -298,12 +298,19 @@ def graph_disorder_fasta(filepath, DPI=150, save=True, output_path="", remove_ch
 
     #for key, value in sequences.items (which are the items in the dict returned by protfasta)
     for i, v in sequences.items():
-        #set title of graph equal to the first 10 characters of the fasta header after >
-        title = i[0:10]
+        #set title of graph equal to the first 14 characters of the fasta header after >
+        #if the title is long enough to suppor that. Otherwise, use longest possible title
+        if len(i) >= 14:
+            title = i[0:14]
+        else:
+            title = i[0:]
         #if remove_characters is False:
         if remove_characters == False:
-            #set name equal to the first 10 characters of the fasta header after >
-            name = (i[0:10])
+            #set name equal to the first 14 characters of the fasta header after >
+            if len (i) >= 14:
+                name = (i[0:14])
+            else:
+                name = i[0:]
         else:
             #initializing empty string
             empty_name = ""
@@ -321,9 +328,12 @@ def graph_disorder_fasta(filepath, DPI=150, save=True, output_path="", remove_ch
                     continue
                 else:
                     empty_name += j
-            #set final name equal to the first 10 characters from the fasta header with
+            #set final name equal to the first 14 characters from the fasta header with
             #the various characters removed.
-            name = empty_name[0:10]
+            if len(empty_name)>=14:
+                name = empty_name[0:14]
+            else:
+                name = empty_name[0:]
 
         #set the sequence equal to the amino acid sequence associated with
         #the fasta header and make all amino acids uppercase.
