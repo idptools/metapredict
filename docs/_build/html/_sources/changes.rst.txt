@@ -1,0 +1,34 @@
+Recent changes
+================================
+
+About
+------
+This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
+
+
+V0.56
+--------------------
+Change:
+Number of decimals in predictions was reduced from 6 to 3.
+Reason:
+It is not necessary to have accuracy out to 6 decimal places.
+
+Change:
+Added functionality to use . to specify current directory from command line.
+Reason:
+Improve functionality.
+
+Change:
+-DPI flag changed to -dpi in command line graphing function
+Reason:
+It was annoying to have to do all caps for this flag.
+
+Change:
+The ``predict-disorder`` command is now ``metapredict-predict-disorder`` and the ``graph-disorder`` command is now ``metapredict-graph-disorder``
+Reason:
+This will help users be able to use auto complete functionality from the command line using tab to pull up the graph or predict disorder commands while only having to remember metapredict.
+
+Change:
+The output for .csv files will now have a comma space between each value instead of just a comma.
+Reason:
+Improve readability.
