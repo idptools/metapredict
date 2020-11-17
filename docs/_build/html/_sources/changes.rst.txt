@@ -5,6 +5,14 @@ About
 ------
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
 
+V0.58
+------
+
+Change:
+Updated the network with a newly trained network (using the same dataset as the original) that is slightly more accurate.
+
+Reason:
+I am always trying to find ways to make metapredict more accurate. When I manage to make the predictor better, I will update it.
 
 V0.57
 -------
