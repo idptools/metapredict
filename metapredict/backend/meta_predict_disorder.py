@@ -24,7 +24,7 @@ from metapredict.backend import brnn_architecture
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 #Setting predictor equal to location of weighted values.
-predictor = "{}/metaDisorder.pt".format(PATH)
+predictor = "{}/meta_predict_disorder_100e.pt".format(PATH)
 
 ##################################################################################################
 #hyperparameters used by when metapredict was trained. Manually setting them here for clarity.
