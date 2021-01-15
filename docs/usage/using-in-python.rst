@@ -76,7 +76,6 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 
 
 **Specify the lines across a graph:**
-``-lines`` / ``--line_intervals``
 
 By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using specifying *line_intervals*
 
