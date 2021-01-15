@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from metapredict.backend import meta_predict_disorder
 from metapredict.backend.meta_predict_disorder import meta_predict as predict
 
-def graph(sequence, name = " ", line_color = "blue", DPI = 150, save_fig = False, output_file = "./predicted_disorder.png"):
+def graph(sequence, name = " ", line_color = "blue", cutoffLines=[], DPI = 150, save_fig = False, output_file = "./predicted_disorder.png"):
 	"""
 	Function for graphing predicted disorder. By default, this function will show a graph.
 	However, if saveFig = True, then it will save the figure (by default) to the location
@@ -70,8 +70,9 @@ def graph(sequence, name = " ", line_color = "blue", DPI = 150, save_fig = False
 	for i in range(0, len(yValues)):
 		disorderValues.append(0.5)
 	axes.plot(xValues, disorderValues, color = "black", linewidth = "1.25")
-	#add dashed lines at 0.2 intervals
-	cutoffLines = [0.2, 0.4, 0.6, 0.8]
+	#add dashed lines at 0.2 intervals if cutoff lines not specified
+	if cutoffLines == []:
+		cutoffLines = [0.2, 0.4, 0.6, 0.8]
 	for i in cutoffLines:
 		tempList = []
 		for j in range(0, len(yValues)):

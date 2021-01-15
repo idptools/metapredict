@@ -41,7 +41,7 @@ def predict_disorder(sequence, normalized=True):
     return meta_predict(sequence, normalized=normalized)
 
 
-def graph_disorder(sequence, name = " ", DPI=150):
+def graph_disorder(sequence, line_intervals=[], name = " ", DPI=150):
     """
     Function to plot the disorder of an input sequece. Displays immediately.
 
@@ -54,6 +54,11 @@ def graph_disorder(sequence, name = " ", DPI=150):
     for example set name = "- PAB1", the title on the graph will be "Predicted
     Protein Disorder - PAB1". 
 
+    line_intervals (optional) : List
+        A list of values that you would like to have for lines across the X-axis.
+        The default puts lines at intervals of 0.2.
+            Example: line_intervals = [0.1, 0.2, 0.3, 0.4, 0.5]
+
     DPI (optional) - default value is 150. Increasing this value will increase
     the resolution of the output graph. Decreasing this value will decrease
     the resolution.
@@ -61,7 +66,7 @@ def graph_disorder(sequence, name = " ", DPI=150):
     #make all residues upper case 
     sequence=sequence.upper()
     #graph sequence
-    graph(sequence = sequence, name = name, DPI=DPI)
+    graph(sequence = sequence, name = name, cutoffLines=line_intervals, DPI=DPI)
 
 
 
@@ -246,7 +251,7 @@ def predict_disorder_fasta(filepath, save=False, output_path = "", output_name =
             #print IO error
             print("IO error")
 
-def graph_disorder_fasta(filepath, DPI=150, save=True, output_path="", remove_characters=False):
+def graph_disorder_fasta(filepath, DPI=150, line_intervals=[], save=True, output_path="", remove_characters=False):
     """
     Function to make graphs of predicted disorder from the sequences
     in a specified .fasta file. By default will save the generated
@@ -254,13 +259,20 @@ def graph_disorder_fasta(filepath, DPI=150, save=True, output_path="", remove_ch
     
     Arguments:
     ----------
-    filepath - the path to where the .fasta file is located. The filepath
-    should end in the file name. For example (on MacOS):
-    filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
+    filepath : String
+        the path to where the .fasta file is located. The filepath
+        should end in the file name. For example (on MacOS):
+        filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
     
-    DPI (optional) - default value is 150. Increasing this value will increase
-    the resolution of the output graph. Decreasing this value will decrease
-    the resolution. 
+    DPI (optional) : Int
+        default value is 150. Increasing this value will increase
+        the resolution of the output graph. Decreasing this value will decrease
+        the resolution. 
+
+    line_intervals (optional) : List
+        A list of values that you would like to have for lines across the X-axis.
+        The default puts lines at intervals of 0.2.
+            Example: line_intervals = [0.1, 0.2, 0.3, 0.4, 0.5]
 
     save (optional) - by default, the generated graphs are saved. This can be set
     to False, which will result in the graphs being sequentially shown.
@@ -375,8 +387,8 @@ def graph_disorder_fasta(filepath, DPI=150, save=True, output_path="", remove_ch
             #of the fasta header either as is or with characters removed if remove_characters is set to true).
             output = "{}predicted_disorder_{}.png".format(output_path, name)
             #use the graph function (specified in meta_graph from the backend) to save the graph.
-            graph(sequence = sequence, name = title, DPI = DPI, save_fig = True, output_file = output)
+            graph(sequence = sequence, name = title, cutoffLines=line_intervals, DPI = DPI, save_fig = True, output_file = output)
         else:
             #if save was set to False, then just graph the sequences from the .fasta file and show them immediately.
-            graph(sequence = sequence, name = title, DPI = DPI)
+            graph(sequence = sequence, name = title, cutoffLines=line_intervals, DPI = DPI)
 

@@ -76,6 +76,7 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
 	#get output values from the seq_vector based on the network (brnn_network)
 	outputs = network(seq_vector.float()).detach().numpy()[0]
 	
+
 	#make empty list to add in outputs
 	output_values = []
 	#for the values 'i' in outputs

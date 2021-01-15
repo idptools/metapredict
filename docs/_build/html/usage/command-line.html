@@ -92,6 +92,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../api.html">Module Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Metapredict isn’t working!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Recent changes</a></li>
 </ul>
 
             
@@ -200,6 +201,12 @@ This command will generate a .png file for <strong>every</strong> sequence in th
 <p>By default, the output files have a DPI of 150. However, the user can change the DPI of the output graphs (higher values have greater resolution but take up more space). To change the DPI simply add the flag <code class="docutils literal notranslate"><span class="pre">-D</span></code> followed by the wanted DPI value.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D <span class="m">300</span>
+</pre></div>
+</div>
+<p><strong>Specify the lines across a graph:</strong>
+<code class="docutils literal notranslate"><span class="pre">-lines</span></code> / <code class="docutils literal notranslate"><span class="pre">--line_intervals</span></code></p>
+<p>By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using the <code class="docutils literal notranslate"><span class="pre">-lines</span></code> / <code class="docutils literal notranslate"><span class="pre">--line_intervals</span></code> argument</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -lines <span class="m">0</span>.1 <span class="m">0</span>.2 <span class="m">0</span>.3 <span class="m">0</span>.4 <span class="m">0</span>.5
 </pre></div>
 </div>
 <p><strong>Remove non-alphabetic characters from file name:</strong>

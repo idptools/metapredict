@@ -75,6 +75,18 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 	meta.graph_disorder("DAPPTSQEHTQAEDKERD", DPI=300)
 
 
+**Specify the lines across a graph:**
+``-lines`` / ``--line_intervals``
+
+By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using specifying *line_intervals*
+
+**Example**
+
+.. code-block:: python
+
+	meta.graph_disorder("DAPPTSQEHTQAEDKERD", line_intervals = [0.1, 0.2, 0.3])
+
+
 Calculating Percent Disorder:
 -----------------------------
 

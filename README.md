@@ -83,6 +83,14 @@ By default, the output graphs have a DPI of 150. However, the user can change th
 
 	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
 
+**Specify the lines across a graph:**
+``-lines`` / ``--line_intervals``
+
+By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using the ``-lines`` / ``--line_intervals`` argument
+
+	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -lines 0.1 0.2 0.3 0.4 0.5
+
+
 **Remove non-alphabetic characters from file names -**
 By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, but others do not allow files to have names that contain certain characters. To get around this, you can add the ``--remove_characters`` flag. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*. 
 
@@ -135,6 +143,14 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 **Example**
 
 	meta.graph_disorder("DAPPTSQEHTQAEDKERD", DPI=300)
+
+
+**Specify the lines across a graph -**
+By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using specifying *line_intervals*
+
+**Example**
+
+	meta.graph_disorder("DAPPTSQEHTQAEDKERD", line_intervals = [0.1, 0.2, 0.3]
 
 
 ### Calculating Percent Disorder
@@ -262,6 +278,11 @@ https://github.com/idptools/metapredict/issues
 
 ### Recent changes
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+
+#### V0.60
+Change:
+Added functionality to specify the horizontal lines that appear across the graphs rather than only having the option of having the dashed lines appear at intervals of 0.2.
+    This functionality is in both Python and the command line.
 
 #### V0.58
 Change:

@@ -72,6 +72,17 @@ By default, the output files have a DPI of 150. However, the user can change the
 	
 	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
 
+
+**Specify the lines across a graph:**
+``-lines`` / ``--line_intervals``
+
+By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using the ``-lines`` / ``--line_intervals`` argument
+
+.. code-block:: bash
+	
+	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -lines 0.1 0.2 0.3 0.4 0.5
+
+
 **Remove non-alphabetic characters from file name:**
 ``--remove_characters``
 
