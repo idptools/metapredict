@@ -3,14 +3,22 @@ Recent changes
 
 About
 ------
+
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
+
+V.061
+------
+
+Change:
+Added functionality to predict or graph a disordered sequence from the command line by directly inputting the sequence. This can only do one sequence at a time and does not save the disorder values or graph. It is meant to provide a very quick and easy way to check something out.
+
 
 V.060
 ------
 
 Change:
 Added functionality to specify the horizontal lines that appear across the graphs rather than only having the option of having the dashed lines appear at intervals of 0.2.
-    This functionality is in both Python and the command line.
+This functionality is in both Python and the command line.
 
 V0.58
 ------

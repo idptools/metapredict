@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+#executing script allowing direct input of a sequence in command line and getting disorder values back
+#import stuff for making CLI
+
+import os
+import sys
+import argparse
+
+import csv
+import protfasta
+
+from metapredict import meta
+
+#Parse command line arguments.
+parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
+parser.add_argument('sequence', help='The amino acid sequence to predict disorder for.')
+
+
+args = parser.parse_args()
+
+#graph the sequence
+print(meta.predict_disorder(sequence = args.sequence, normalized=True))
