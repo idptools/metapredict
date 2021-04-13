@@ -263,9 +263,11 @@ def __build_domains_from_values(values,
         else:
             valid_vals.append(tmp[i])
             i=i+1
-    valid_vals.append(tmp[-1])
-            
 
+    if len(tmp)>0:
+        valid_vals.append(tmp[-1])
+            
+        
     local_domains = []
     for i in range(0, len(valid_vals),2):
         local_domains.append([valid_vals[i], valid_vals[i+1]])
