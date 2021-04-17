@@ -354,6 +354,9 @@ def get_domains(sequence,
     if window_size % 2 == 0:
         window_size = window_size - 1
 
+    if polynomial_order >= window_size:
+        polynomial_order = window_size - 1
+
     # smoothe!!!!
     smoothed_disorder = savgol_filter(disorder, window_size, polynomial_order)
 
