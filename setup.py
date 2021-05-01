@@ -47,7 +47,9 @@ setup(
     scripts=['scripts/metapredict-graph-disorder',
              'scripts/metapredict-predict-disorder',
              'scripts/metapredict-quick-graph',
-             'scripts/metapredict-quick-predict'],
+             'scripts/metapredict-quick-predict',
+             'scripts/metapredict-uniprot'],
+         
 
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='http://www.my_package.com',  # Website

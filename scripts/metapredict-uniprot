@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+#executing script allowing direct input of a sequence in command line and getting graphed disorder values back
+#import stuff for making CLI
+
+import os
+import sys
+import argparse
+import urllib3
+
+import csv
+import protfasta
+
+from metapredict import meta
+
+def fetch_sequence(uniprot_id):
+    """
+    Function that returns the amino acid sequence by polling UniProt.com
+    
+    Parameters
+    --------------
+    uniprot_id : str
+        Uniprot accession number
+
+    Returns
+    -----------
+    
+    """
+
+    http = urllib3.PoolManager()
+    r = http.request('GET', 'https://www.uniprot.org/uniprot/%s.fasta'%(uniprot_id))
+    
+    s = "".join(str(r.data).split('\\n')[1:]).replace("'","")
+
+
+    if s.find('Sorry') > -1:
+        return None
+
+    return s
+
+
+
+if __name__=="__main__":
+
+
+    #Parse command line arguments.
+    parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
+    parser.add_argument('uniprot', help='The uniprot accession.')
+    parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI', help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
+                        
+    args = parser.parse_args()
+
+    s = fetch_sequence(args.uniprot)
+
+    if s is None:
+        print('Error: Unable to fetch accession %s'%(args.uniprot))
+    else:
+        meta.graph_disorder(sequence = s, DPI=args.dpi)

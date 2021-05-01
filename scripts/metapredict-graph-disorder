@@ -15,44 +15,46 @@ import protfasta
 #from metapredict import meta 
 from metapredict import meta
 
-#Parse command line arguments.
-parser = argparse.ArgumentParser(description='Graph predicted disorder of amino acid sequences.')
-parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
-parser.add_argument('output_path', default = 'curdir', help='Path for the returned disorder graphs.')
-parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI',
-					help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
-parser.add_argument('-lines', '--line_intervals', default=[], nargs='+', type=float, metavar='line_intervals',
-					help = 'Optional. Will set the lines going across the x-axis on the graph.')
-parser.add_argument('--remove_characters', action='store_true', 
-		help='Use if you want to avoid using any non-alphabetic characters in the fasta headers as file names')
 
-args = parser.parse_args()
+if __name__=="__main__":
+        #Parse command line arguments.
+        parser = argparse.ArgumentParser(description='Graph predicted disorder of amino acid sequences.')
+        parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
+        parser.add_argument('output_path', default = 'curdir', help='Path for the returned disorder graphs.')
+        parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI',
+                            help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
+        parser.add_argument('-lines', '--line_intervals', default=[], nargs='+', type=float, metavar='line_intervals',
+                            help = 'Optional. Will set the lines going across the x-axis on the graph.')
+        parser.add_argument('--remove_characters', action='store_true', 
+                            help='Use if you want to avoid using any non-alphabetic characters in the fasta headers as file names')
+
+        args = parser.parse_args()
 
 
-DPI=args.dpi
+        DPI=args.dpi
+        
+        if args.output_path == 'curdir':
+                current_dirrectory = os.getcwd()
+                args.output_path = current_dirrectory
 
-if args.output_path == 'curdir':
-	current_dirrectory = os.getcwd()
-	args.output_path = current_dirrectory
+        if args.output_path == '.':
+                current_dirrectory = os.getcwd()
+                args.output_path = current_dirrectory	
 
-if args.output_path == '.':
-	current_dirrectory = os.getcwd()
-	args.output_path = current_dirrectory	
+        # Test to see if the data_file exists
+        test_data_file = os.path.abspath(args.data_file)
+        if not os.path.isfile(test_data_file):
+                raise FileNotFoundError('Datafile does not exist.')
 
-# Test to see if the data_file exists
-test_data_file = os.path.abspath(args.data_file)
-if not os.path.isfile(test_data_file):
-    raise FileNotFoundError('Datafile does not exist.')
+        # Test to see that the output path is valid
+        test_output_path = os.path.abspath(args.output_path)
+        if not os.path.exists(test_output_path):
+                raise FileNotFoundError('Output path is not valid.')
 
-# Test to see that the output path is valid
-test_output_path = os.path.abspath(args.output_path)
-if not os.path.exists(test_output_path):
-    raise FileNotFoundError('Output path is not valid.')
+        if args.remove_characters:
+                remove_char = True
+        else:
+                remove_char = False
 
-if args.remove_characters:
-	remove_char = True
-else:
-	remove_char = False
-
-#run graph_disorder_fasta. For more info, see the graph_disorder_fasta function in meta.py.
-meta.graph_disorder_fasta(filepath = args.data_file, line_intervals=args.line_intervals, DPI=DPI, output_path = args.output_path, remove_characters=remove_char)
+        #run graph_disorder_fasta. For more info, see the graph_disorder_fasta function in meta.py.
+        meta.graph_disorder_fasta(filepath = args.data_file, line_intervals=args.line_intervals, DPI=DPI, output_path = args.output_path, remove_characters=remove_char)

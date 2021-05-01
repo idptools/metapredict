@@ -12,12 +12,14 @@ import protfasta
 
 from metapredict import meta
 
-#Parse command line arguments.
-parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
-parser.add_argument('sequence', help='The amino acid sequence to predict disorder for.')
+
+if __name__=="__main__":
+    #Parse command line arguments.
+    parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
+    parser.add_argument('sequence', help='The amino acid sequence to predict disorder for.')
 
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-#graph the sequence
-print(meta.predict_disorder(sequence = args.sequence, normalized=True))
+    #graph the sequence
+    print(meta.predict_disorder(sequence = args.sequence, normalized=True))
