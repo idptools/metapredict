@@ -29,9 +29,8 @@ def predict_disorder_domains(sequence,
                              gap_closure=10, 
                              normalized=True):
     """
-    Function that takes in an amino acid sequence and returns both the per-residue disorder score
 
-    This function takes an amino acid sequence, a disorder score, and returns a 4-position tiple with
+    This function takes an amino acid sequence, a disorder score, and returns a 4-position tuple with
     the following information:
 
     [0] - 'Raw' disorder score; i.e. disorder propensity as predicted by metapredict
@@ -125,7 +124,7 @@ def predict_disorder(sequence, normalized=True):
     return meta_predict(sequence, normalized=normalized)
 
 
-def graph_disorder(sequence, line_intervals=[], name = " ", DPI=150):
+def graph_disorder(sequence, line_intervals=[], name = " ", DPI=150, save=False, output="."):
     """
     Function to plot the disorder of an input sequece. Displays immediately.
 
@@ -150,7 +149,7 @@ def graph_disorder(sequence, line_intervals=[], name = " ", DPI=150):
     #make all residues upper case 
     sequence=sequence.upper()
     #graph sequence
-    graph(sequence = sequence, name = name, cutoffLines=line_intervals, DPI=DPI)
+    graph(sequence = sequence, name = name, cutoffLines=line_intervals, DPI=DPI, save_fig=save, output_file=output)
 
 
 

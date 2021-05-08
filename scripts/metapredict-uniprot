@@ -47,12 +47,60 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
     parser.add_argument('uniprot', help='The uniprot accession.')
     parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI', help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
-                        
+    parser.add_argument('-s', '--save', action='store_true', 
+        help='Use this flag to save the file. If this flag is called, specify file path using -p or -path. Otherwise saves to curdir.')
+    parser.add_argument('-p', '--path', default='curdir', help='Path for where to save the returned graph.')
+    parser.add_argument('-t', '--title', help='Title to put on graph')
+
     args = parser.parse_args()
+
+    # set title
+    if args.title:
+        graph_title = args.title
+    else:
+        graph_title = args.uniprot
 
     s = fetch_sequence(args.uniprot)
 
     if s is None:
         print('Error: Unable to fetch accession %s'%(args.uniprot))
+    
     else:
-        meta.graph_disorder(sequence = s, DPI=args.dpi)
+        if args.save:
+            if args.path == 'curdir':
+                current_dirrectory = os.getcwd()
+                args.path = current_dirrectory
+
+            if args.path == '.':
+                current_dirrectory = os.getcwd()
+                args.path = current_dirrectory
+
+            # Test to see that the output path is valid
+            test_output_path = os.path.abspath(args.path)
+            if not os.path.exists(test_output_path):
+                    raise FileNotFoundError('Output path is not valid.')
+
+            #set name of saved chart to the uniprot ID + "./predicted_disorder.png"
+            # make sure that the path is properly formatted
+            if args.path[-1]=="/":
+                if args.title:
+                    final_output = "{}{}.png".format(args.path, args.title)
+                else:
+                    final_output = "{}{}.png".format(args.path, args.uniprot)
+            else:
+                if args.title:
+                    final_output = "{}/{}.png".format(args.path, args.title)
+                else:
+                    final_output = "{}/{}.png".format(args.path, args.uniprot)
+
+            meta.graph_disorder(sequence = s, DPI=args.dpi, name=graph_title, save=True, output=final_output)
+
+        else:
+            meta.graph_disorder(sequence = s, DPI=args.dpi, name=graph_title)
+
+
+
+
+
+
+

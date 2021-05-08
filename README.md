@@ -119,6 +119,32 @@ By default, the output files contain characters that are non-alphabetic (for exa
 	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -D 200
 
 
+**metapredict-uniprot**
+
+``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optinonal* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. DPI ``-s``  or ``--save`` will save the plot. The default behavior *if a file path is not specified using the -p flag* is to save the graph to the current directory. The plot will save as the uniprot ID followed by .png, 3. ``-p``  or ``--path`` will let you specify the path to where to save the plot, and 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Predicted Consensus Disorder* followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.
+
+**Example:**
+
+	$ metapredict-uniprot Q8RYC8
+
+**Example:**
+
+	$ metapredict-uniprot Q8RYC8 -D 300
+
+**Example:**
+
+	$ metapredict-uniprot Q8RYC8 -t ARF19
+
+**Example:**
+
+	$ metapredict-uniprot Q8RYC8 -s
+
+**Example:**
+
+	$ metapredict-uniprot Q8RYC8 -s -p /Users/ThisUser/Desktop/MyFolder/DisorderGraphs
+
+
+
 ## Using metapredict in Python:
 In addition to using metapredict from the command line, you can also use metapredict directly in Python.
 
@@ -141,6 +167,61 @@ would output -
 By default, output prediction values are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. However, the user can get the raw prediction values by specifying *normalized=False* as a second argument in meta.predict_disorder. There is not a very good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.
 
 	meta.predict_disorder("DAPTSQEHTQAEDKERDSKTHPQKKQSPS", normalized=False)
+
+### Predicting Disorder Domains
+The ``predict_disorder_domains`` function takes in an amino acid function and returns a 4-position tuple with: 0. the raw disorder scores from 0 to 1 where 1 is the highest probability that a residue is disordered, 1. the smoothed disorder score used for boundary identification, 2. a list of elements where each element is a list where 0 and 1 define the IDR location and 2 gives the actual sequence, and 3. a list of elements where each element is a list where 0 and 1 define the folded domain location and 2 gives the actual sequence
+
+	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHS")
+
+would output - 
+
+	[[0.828, 0.891, 0.885, 0.859, 0.815, 0.795, 0.773, 0.677, 0.66, 0.736, 0.733, 0.708, 0.66, 0.631, 0.601, 0.564, 0.532, 0.508, 0.495, 0.458, 0.383, 0.373, 0.398, 0.36, 0.205, 0.158, 0.135, 0.091, 0.09, 0.102, 0.126, 0.129, 0.114, 0.106, 0.097, 0.085, 0.099, 0.114, 0.093, 0.119, 0.117, 0.043, 0.015, 0.05, 0.139, 0.172, 0.144, 0.121, 0.124, 0.128, 0.147, 0.173, 0.129, 0.152, 0.169, 0.2, 0.172, 0.22, 0.216, 0.25, 0.272, 0.308, 0.248, 0.255, 0.301, 0.274, 0.264, 0.28, 0.25, 0.235, 0.221, 0.211, 0.235, 0.185, 0.14, 0.168, 0.307, 0.509, 0.544, 0.402], array([0.87596856, 0.86139124, 0.84596224, 0.82968293, 0.81255466,
+       0.79457882, 0.77575677, 0.75608988, 0.73557951, 0.71422703,
+       0.69203382, 0.66900124, 0.63956894, 0.62124099, 0.60188696,
+       0.57893168, 0.55241615, 0.52131925, 0.4859528 , 0.44109689,
+       0.39353789, 0.35264348, 0.31495776, 0.28      , 0.24661615,
+       0.21469814, 0.18500621, 0.15963478, 0.13604845, 0.1172087 ,
+       0.10798882, 0.1026882 , 0.09419503, 0.08462484, 0.08256398,
+       0.08832671, 0.0908559 , 0.09263851, 0.09438758, 0.09309938,
+       0.09102733, 0.09338137, 0.09665342, 0.10073913, 0.10392671,
+       0.11010311, 0.11402981, 0.11898634, 0.12430683, 0.13169441,
+       0.1381764 , 0.15245093, 0.16746957, 0.17518385, 0.18167578,
+       0.18893043, 0.20013416, 0.21581491, 0.23015652, 0.2420559 ,
+       0.25209814, 0.25817391, 0.26588944, 0.27456894, 0.27429068,
+       0.26411925, 0.24452671, 0.23076894, 0.22834783, 0.21689842,
+       0.20887549, 0.20564427, 0.20856996, 0.21901779, 0.23835296,
+       0.26794071, 0.30914625, 0.36333478, 0.43187154, 0.51612174]), [[0, 20, 'MKAPSNGFLPSSNEGEKKPI']], [[20, 80, 'NSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHS']]]
+
+
+**Additional Usage**
+
+**Altering the disorder theshhold -**
+To alter the disorder theshhold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher then treshold value, the more stringent the conservative metapredict will be for designating a region to be considered disordered. Default = 0.42
+
+**Example**
+
+	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", disorder_threshold=0.3)
+
+**Altering minimum IDR size -**
+The minimum IDR size will define the smallest possible region that could be considered an IDR. In other words, you will not be able to get back an IDR smaller than the defined size. Default is 12.
+
+**Example**
+
+	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
+
+**Altering the minimum folded domain size -**
+The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs, and but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
+
+**Example**
+
+	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_folded_domain = 60)
+
+**Altering gap_closure -**
+The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
+
+**Example**
+
+	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", gap_closure = 5)
 
 
 ### Graphing Disorder 
@@ -298,6 +379,11 @@ https://github.com/idptools/metapredict/issues
 
 ### Recent changes
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+
+#### V1.0
+Change:
+Added functionality to generate graphs using a Uniprot ID as the input. Added functionality to predict disorder domains. 
+
 
 #### V0.61
 Change:
