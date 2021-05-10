@@ -185,6 +185,18 @@ By default, this function will output prediction values that are normalized betw
 	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", normalized=False)
 
 
+Predict Disorder Using Uniprot ID
+-----------------------------------
+
+By using the ``predict_disorder_uniprot`` function, you can return predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+
+**Example**
+
+.. code-block:: python
+
+    meta.predict_disorder_uniprot("Q8N6T3")
+
+
 Generating Graphs From a .fasta File:
 -------------------------------------
 
@@ -240,6 +252,27 @@ If you choose to view the generated graphs instead of saving them, you can only 
 .. code-block:: python
 
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=False)
+
+
+Generating Graphs Using Uniprot ID
+------------------------------------
+
+By using the ``graph_disorder_uniprot`` function, you can graph predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder_uniprot("Q8N6T3")
+
+This function carries all of the same functionality as ``graph_disorder`` including specifying line intervals, name of the graph, the DPI, and whether or not to save the output.
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder_uniprot("Q8N6T3", line_intervals=[0.1, 0.2], name="my protein", DPI=300, save=True, output="/Users/thisUser/Desktop")
+
 
 
 Predicting Disorder Domains:
@@ -310,3 +343,17 @@ The gap closure defines the largest gap that would be closed. Gaps here refer to
 .. code-block:: python
 
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", gap_closure = 5)
+
+
+Predicting Disorder Domains using a Uniprot ID:
+-------------------------------------------------
+
+In addition to inputting a sequence, you can predict disorder domains by inputting a Uniprot ID by usign the ``predict_disorder_domains_uniprot`` function. This function has the exact same functionality as ``predict_disorder_domains`` except you can now input a Uniprot ID. 
+
+**Example**
+
+.. code-block:: python
+
+    meta.predict_disorder_domains_uniprot('Q8N6T3')
+
+

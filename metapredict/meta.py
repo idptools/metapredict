@@ -22,6 +22,10 @@ from metapredict.backend import meta_graph
 from metapredict.backend.meta_graph import graph
 from metapredict.backend import domain_definition
 
+# stuff for uniprot from backend
+import metapredict.backend.uniprot_predictions
+from metapredict.backend.uniprot_predictions import fetch_sequence
+
 def predict_disorder_domains(sequence, 
                              disorder_threshold=0.42, 
                              minimum_IDR_size=12, 
@@ -184,15 +188,12 @@ def percent_disorder(sequence, cutoff=0.5):
         #if predicted value is greater than cutoff, add one to n
         if i >= cutoff:
             n += 1
-        #else continue through the values.
-        else:
-            continue
     """
     percent disorder is equal to n (number of residues with predicted
     value >= cutoff) divided by the total number of residues in the
     input sequence.
     """
-    percent_disordered = (n / len(dis))
+    percent_disordered = round((n / len(dis)), 5)
     #return percent_disordered
     return(percent_disordered)
 
@@ -474,4 +475,140 @@ def graph_disorder_fasta(filepath, DPI=150, line_intervals=[], save=True, output
         else:
             #if save was set to False, then just graph the sequences from the .fasta file and show them immediately.
             graph(sequence = sequence, name = title, cutoffLines=line_intervals, DPI = DPI)
+
+
+def predict_disorder_uniprot(uniprot_id, normalized=True):
+    """
+    Function to return disorder of a single input sequence. Uses a 
+    Uniprot ID to get the sequence.
+
+    Arguments:
+    ----------
+    uniprot_ID : String
+         The uniprot ID of the sequence to predict
+    """
+
+    # fetch sequence from Uniprot
+    sequence = fetch_sequence(uniprot_id)
+    # return predicted values of disorder for sequence
+    return meta_predict(sequence, normalized)
+
+
+def graph_disorder_uniprot(uniprot_id, line_intervals=[], name = " ", DPI=150, save=False, output="."):
+    """
+    Function to plot the disorder of an input sequece. Displays immediately.
+
+    Arguments:
+    ----------
+    uniprot_ID : String
+        The uniprot ID of the sequence to predict
+
+    line_intervals (optional) : List
+        A list of values that you would like to have for lines across the X-axis.
+        The default puts lines at intervals of 0.2.
+            Example: line_intervals = [0.1, 0.2, 0.3, 0.4, 0.5]
+
+    name (optional) - setting the value of name will change the title of the
+    graph. By default, the title is "Predicted Protein Disorder", so if you
+    for example set name = "- PAB1", the title on the graph will be "Predicted
+    Protein Disorder - PAB1". 
+
+
+    DPI (optional) - default value is 150. Increasing this value will increase
+    the resolution of the output graph. Decreasing this value will decrease
+    the resolution.
+    """
+    #make all residues upper case 
+    sequence = fetch_sequence(uniprot_id)
+    #graph sequence
+    graph(sequence = sequence, name = name, cutoffLines=line_intervals, DPI=DPI, save_fig=save, output_file=output)
+
+
+def predict_disorder_domains_uniprot(uniprot_id, 
+                             disorder_threshold=0.42, 
+                             minimum_IDR_size=12, 
+                             minimum_folded_domain=50,
+                             gap_closure=10, 
+                             normalized=True):
+    """
+
+    This function takes an amino acid sequence, a disorder score, and returns a 4-position tuple with
+    the following information:
+
+    [0] - 'Raw' disorder score; i.e. disorder propensity as predicted by metapredict
+
+    [1] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding
+          how IDRs/folded domains were identified, and will vary depending on minimum_region_size.
+
+    [2] - a list of elements, where each element is itself a list where position 0 and 1 define the IDR location 
+          and position 2 gives the actual IDR sequence
+
+    [3] - a list of elements, where each element is itself a list where position 0 and 1 define the folded domain 
+          location and position 2 gives the actual folded domain sequence.
+
+    Parameters
+    -------------
+    uniprot_ID : String
+        The uniprot ID of the sequence to predict
+
+    sequence : str
+        Amino acid sequence
+
+    disorder_threshold : float
+        Value that defines what 'disordered' is based on the metapredict disorder score. The higher the value the more
+        stringent the cutoff. Default = 0.42
+
+    minimum_IDR_size : int
+        Defines the smallest possible IDR. This is a hard limit - i.e. we CANNOT get IDRs smaller than this. Default = 12.
+
+    minimum_folded_domain : int
+        Defines where we expect the limit of small folded domains to be. This is NOT a hard limit and functions to modulate
+        the removal of large gaps (i.e. gaps less than this size are treated less strictly). Note that, in addition, 
+        gaps < 35 are evaluated with a threshold of 0.35*disorder_threshold and gaps < 20 are evaluated with a threshold 
+        of 0.25*disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which
+        are IDRs in isolation) often show up with reduced apparent disorder within IDRs, and but can be as short as 20-30 
+        residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain 
+        to be identified. Default=50.
+
+    gap_closure : int
+        Defines the largest gap that would be 'closed'. Gaps here refer to a scenario in which you have two groups
+        of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
+        larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes
+        very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
+        are increasingly rare. Default=10.
+
+    Returns
+    ----------
+    list
+        Always returns a list with 4 elements, as outlined below
+
+        [0] - List of floats - this is the 'raw' disorder score; i.e. disorder propensity as predicted by metapredict
+
+        [1] - List of floats - this is the smoothed disorder score used to aid in domain boundary identification. 
+              This can be useful for understanding how IDRs/folded domains were identified, and will vary depending on 
+              minimum_region_size.
+          
+        [2] - a list of elements, where each element is itself a list where position 0 and 1 define the IDR location 
+              and position 2 gives the actual IDR sequence
+
+        [3] - a list of elements, where each element is itself a list where position 0 and 1 define the folded domain 
+              location and position 2 gives the actual folded domain sequence.
+
+
+    """
+    sequence = fetch_sequence(uniprot_id)
+
+    disorder = predict_disorder(sequence, normalized=normalized)
+
+    return_tuple = domain_definition.get_domains(sequence, 
+                                                 disorder, 
+                                                 disorder_threshold=disorder_threshold,                                            
+                                                 minimum_IDR_size=minimum_IDR_size, 
+                                                 minimum_folded_domain=minimum_folded_domain,
+                                                 gap_closure=gap_closure)
+                                                 
+    
+    return [disorder, return_tuple[0], return_tuple[1], return_tuple[2]]
+
+
 

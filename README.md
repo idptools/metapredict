@@ -223,6 +223,13 @@ The gap closure defines the largest gap that would be closed. Gaps here refer to
 
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", gap_closure = 5)
 
+### Predicting Disorder Domains using a Uniprot ID
+In addition to inputting a sequence, you can predict disorder domains by inputting a Uniprot ID by usign the ``predict_disorder_domains_uniprot`` function. This function has the exact same functionality as ``predict_disorder_domains`` except you can now input a Uniprot ID. 
+
+**Example**
+
+    meta.predict_disorder_domains_uniprot('Q8N6T3')
+
 
 ### Graphing Disorder 
 The ``graph_disorder`` function will show a plot of the predicted disorder consensus values across the input amino acid sequence.
@@ -321,6 +328,13 @@ By default, this function will output prediction values that are normalized betw
 
 	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", normalized=False)
 
+### Predict Disorder Using Uniprot ID
+By using the ``predict_disorder_uniprot`` function, you can return predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+
+**Example**
+
+    meta.predict_disorder_uniprot("Q8N6T3")
+
 
 ### Generating Graphs From a .fasta File
 By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp|Q8N6T3|*.
@@ -364,6 +378,22 @@ If you choose to view the generated graphs instead of saving them, you can only 
 
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=False)
 
+
+### Generating Graphs Using Uniprot ID
+By using the ``graph_disorder_uniprot`` function, you can graph predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+
+**Example**
+
+    meta.graph_disorder_uniprot("Q8N6T3")
+
+This function carries all of the same functionality as ``graph_disorder`` including specifying line intervals, name of the graph, the DPI, and whether or not to save the output.
+
+**Example**
+
+    meta.graph_disorder_uniprot("Q8N6T3", line_intervals=[0.1, 0.2], name="my protein", DPI=300, save=True, output="/Users/thisUser/Desktop")
+
+
+
 ### metapredict isn't working!
 I have recieved occassional feedback that metapredict is not working for a user. A common problem is that the user is using a different version of Python than metapredict was made on. metapredict was made using Python version 3.7, and I recommend using this version while using metapredict to avoid problems (I haven't done extensive testing using other versions of Python, so if you're not using 3.7, do so at your own risk). A convenient workaround is to use a conda environment that has Python 3.7 set as the default version of Python. For more info on conda, please see https://docs.conda.io/projects/conda/en/latest/index.html
 
@@ -382,7 +412,7 @@ This section is a log of recent changes with metapredict. My hope is that as I c
 
 #### V1.0
 Change:
-Added functionality to generate graphs using a Uniprot ID as the input. Added functionality to predict disorder domains. 
+Added functionality to generate graphs using a Uniprot ID as the input from command line. Added functionality to predict disorder domains. Added functionality to predict/graph disorder and predict disorder domains using a Uniprot ID from Python. Updated tests to include testing new functionality.
 
 
 #### V0.61
