@@ -57,7 +57,8 @@ setup(
             'torch',
             'numpy',
             'matplotlib',
-            'protfasta'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+            'protfasta',
+            'scipy'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',

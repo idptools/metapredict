@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 from scipy.signal import savgol_filter
 """
 Functions for extracting out discrete disordered domains based on the linear disorder score

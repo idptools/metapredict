@@ -6,9 +6,11 @@ A protein disorder predictor based on a BRNN (IDP-Parrot) trained on the consens
 # Add imports here
 from .meta import *
 from .backend.brnn_architecture import *
+from .backend.domain_definition import *
 from .backend.encode_sequence import *
 from .backend.meta_graph import *
 from .backend.meta_predict_disorder import *
+from .backend.uniprot_predictions import *
 
 
 
