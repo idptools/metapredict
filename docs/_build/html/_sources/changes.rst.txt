@@ -6,6 +6,12 @@ About
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
 
+V.1.0
+------
+Change:
+Added functionality to generate graphs using a Uniprot ID as the input. Added functionality to predict disorder domains. 
+
+
 V.061
 ------
 

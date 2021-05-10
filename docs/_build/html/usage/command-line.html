@@ -232,6 +232,28 @@ This command will generate a .png file for <strong>every</strong> sequence in th
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -D <span class="m">200</span>
 </pre></div>
 </div>
+<p><strong>metapredict-uniprot</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">metapredict-uniprot</span></code> is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional <em>optinonal</em> arguments, 1. DPI can be changed with the <code class="docutils literal notranslate"><span class="pre">-D</span></code>  or <code class="docutils literal notranslate"><span class="pre">--dpi</span></code> flags, default is 150 DPI, 2. DPI <code class="docutils literal notranslate"><span class="pre">-s</span></code>  or <code class="docutils literal notranslate"><span class="pre">--save</span></code> will save the plot. The default behavior <em>if a file path is not specified using the -p flag</em> is to save the graph to the current directory. The plot will save as the uniprot ID followed by .png, 3. <code class="docutils literal notranslate"><span class="pre">-p</span></code>  or <code class="docutils literal notranslate"><span class="pre">--path</span></code> will let you specify the path to where to save the plot, and 4. <code class="docutils literal notranslate"><span class="pre">-t</span></code>  or <code class="docutils literal notranslate"><span class="pre">--title</span></code> will let you specify the title of the plot. By defualt the title will be <em>Predicted Consensus Disorder</em> followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-uniprot Q8RYC8
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-uniprot Q8RYC8 -D <span class="m">300</span>
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-uniprot Q8RYC8 -t ARF19
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-uniprot Q8RYC8 -s
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ metapredict-uniprot Q8RYC8 -s -p /Users/ThisUser/Desktop/MyFolder/DisorderGraphs
+</pre></div>
+</div>
 </div>
 </div>
 
