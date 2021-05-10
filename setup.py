@@ -58,7 +58,8 @@ setup(
             'numpy',
             'matplotlib',
             'protfasta',
-            'scipy'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+            'scipy',
+            'urllib3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',
