@@ -16,9 +16,66 @@ from .backend.uniprot_predictions import *
 
 
 
+
+
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()
 __version__ = versions['version']
 __git_revision__ = versions['full-revisionid']
 del get_versions, versions
+
+
+def print_performance(seq_len=500, num_seqs=100, verbose=True):
+    """
+    Function that lets you test metapredicts performance on your local hardware.
+
+    Parameters
+    --------------
+    seqlen : int 
+        Length of each random sequence to be tested. Default = 500.
+
+    num_seqs : int
+        Number of sequences to compute over. Default = 100.
+
+    verbose : bool
+        Flag which, if true, means the function prints a summary when finished. If 
+        false simply returns an integer
+
+    Returns
+    ---------------
+    int
+        Returns the nearest number of sequences-per-second metapredict is currently
+        predicting. For ref, on a spring 2020 MBP this value was ~10,000 sequences per
+        second.
+
+    """
+
+    # this is a bit bad but, only import random is this FX is called
+    import random
+    import time
+    VALID_AMINO_ACIDS = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y']
+
+    def genseq(n):
+        """
+        Function that generates a random 
+        """    
+        return "".join([random.choice(VALID_AMINO_ACIDS) for i in range(n)])
+
+    seqs = []
+    for i in range(num_seqs):
+        seqs.append(genseq(seq_len))
+
+    start = time.time()
+    for i in seqs:
+        predict_disorder(i)
+
+    end = time.time()
+    s_per_second = (seq_len*num_seqs)/(end - start)
+
+    if verbose:
+        print('Predicting %i sequences per second!'%(s_per_second))
+
+    return s_per_second
+    
+    
