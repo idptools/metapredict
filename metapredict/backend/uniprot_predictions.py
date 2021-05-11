@@ -1,17 +1,13 @@
 # code for pulling down uniprot sequence for predictions
-import os
-import sys
-import argparse
 import urllib3
-
-import csv
-import protfasta
-
-from metapredict import meta
 
 def fetch_sequence(uniprot_id):
     """
     Function that returns the amino acid sequence by polling UniProt.com
+    
+    Note that right now the test for success is a bit hap-hazard (looks for the
+    string "Sorry", which appears if the UniProt call fails. We probably want
+    something a bit more robust in the future...
     
     Parameters
     --------------
@@ -20,6 +16,9 @@ def fetch_sequence(uniprot_id):
 
     Returns
     -----------
+    str or None:
+        If the call is succesfull, this returns the amino acid string. If not, it returns
+        None. 
     
     """
 
