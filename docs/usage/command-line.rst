@@ -35,7 +35,8 @@ By default, the output prediction values are normalized between 0 and 1. However
 	
 	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
 
-**Quick predictions**
+Quick Predictions
+------------------
 
 ``metapredict-quick-predict`` is a command that will let you input a sequence and get disorder values immediately printed to the terminal. The only argument that can be input is the sequence.
 
@@ -103,7 +104,8 @@ By default, the output files contain characters that are non-alphabetic (for exa
 	
 	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ --remove_characters
 
-**Quick graphing**
+Quick Graphing
+---------------
 
 ``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes two arguments, 1. the sequence and 2. *which is optional* is the DPI ``-D``  or ``--dpi`` of the ouput graph which defaults to 150 DPI
 
@@ -121,7 +123,8 @@ By default, the output files contain characters that are non-alphabetic (for exa
 	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -D 200
 
 
-**metapredict-uniprot**
+Graphing using Uniprot ID
+--------------------------
 
 ``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optinonal* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. DPI ``-s``  or ``--save`` will save the plot. The default behavior *if a file path is not specified using the -p flag* is to save the graph to the current directory. The plot will save as the uniprot ID followed by .png, 3. ``-p``  or ``--path`` will let you specify the path to where to save the plot, and 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Predicted Consensus Disorder* followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.
 
