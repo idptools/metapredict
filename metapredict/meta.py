@@ -25,6 +25,7 @@ from metapredict.backend import domain_definition
 # stuff for uniprot from backend
 import metapredict.backend.uniprot_predictions
 from metapredict.backend.uniprot_predictions import fetch_sequence
+from metapredict.metapredict_exceptions import MetapredictError
 
 def predict_disorder_domains(sequence, 
                              disorder_threshold=0.42, 
@@ -490,6 +491,12 @@ def predict_disorder_uniprot(uniprot_id, normalized=True):
 
     # fetch sequence from Uniprot
     sequence = fetch_sequence(uniprot_id)
+
+    # raise error if the webcall fails
+    if sequence is None:
+        raise MetapredictError('Error: unable to fetch UniProt with accession %s'%(uniprot_id))
+
+        
     # return predicted values of disorder for sequence
     return meta_predict(sequence, normalized)
 
@@ -520,6 +527,11 @@ def graph_disorder_uniprot(uniprot_id, line_intervals=[], name = " ", DPI=150, s
     """
     #make all residues upper case 
     sequence = fetch_sequence(uniprot_id)
+
+    # raise error if the webcall fails
+    if sequence is None:
+        raise MetapredictError('Error: unable to fetch UniProt with accession %s'%(uniprot_id))
+
     #graph sequence
     graph(sequence = sequence, name = name, cutoffLines=line_intervals, DPI=DPI, save_fig=save, output_file=output)
 
@@ -597,6 +609,10 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
     """
     sequence = fetch_sequence(uniprot_id)
+
+    # raise error if the webcall fails
+    if sequence is None:
+        raise MetapredictError('Error: unable to fetch UniProt with accession %s'%(uniprot_id))
 
     disorder = predict_disorder(sequence, normalized=normalized)
 

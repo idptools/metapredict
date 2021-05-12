@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 from scipy.signal import savgol_filter
+from metapredict.metapredict_exceptions import DomainError
 """
 Functions for extracting out discrete disordered domains based on the linear disorder score
 calculated by metapredict.
@@ -9,8 +10,6 @@ calculated by metapredict.
 
 
 
-class DomainException(Exception):
-    pass
 
 
 ## ------------------------------------------------------------------------
@@ -114,7 +113,7 @@ def __build_domains_from_values(values,
     
     # add to help debugging
     if len(B) != len(values):
-        raise DomainException('Error with binerize function. This is a bug. Please raise an issue on GitHub')
+        raise DomainError('Error with binerize function. This is a bug. Please raise an issue on GitHub')
             
 
     ## Part 1 - remove gaps
