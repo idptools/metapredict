@@ -65,10 +65,10 @@ def graph(sequence, name = " ", line_color = "blue", cutoffLines=[], DPI = 150, 
 	#set y limit as 0-1 since the predictor data is normalized from 0 to 1.
 	axes.set_ylim(-0.003, 1.003)
 
-	#graph "disorder cutoff line at 0.5"
+	#graph "disorder cutoff line at 0.3"
 	disorderValues = []
 	for i in range(0, len(yValues)):
-		disorderValues.append(0.5)
+		disorderValues.append(0.3)
 	axes.plot(xValues, disorderValues, color = "black", linewidth = "1.25")
 	#add dashed lines at 0.2 intervals if cutoff lines not specified
 	if cutoffLines == []:

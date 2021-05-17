@@ -158,7 +158,7 @@ def graph_disorder(sequence, line_intervals=[], name = " ", DPI=150, save=False,
 
 
 
-def percent_disorder(sequence, cutoff=0.5):
+def percent_disorder(sequence, cutoff=0.3):
     """
     function to return the percent disorder for any given protein.
     By default, uses 0.5 as a cutoff (values greater than or equal
@@ -278,6 +278,9 @@ def predict_disorder_fasta(filepath, save=False, output_path = "", output_name =
 
     #if save=True, save the disorder_dict to the specified output_path
     else:
+        # by default set output path to current working directory
+        if output_path == "":
+            output_path = os.getcwd()
         # Test to see that the output path is valid
         test_output_path = os.path.abspath(output_path)
         if not os.path.exists(test_output_path):
@@ -437,6 +440,9 @@ def graph_disorder_fasta(filepath, DPI=150, line_intervals=[], save=True, output
         sequence = v.upper()
         #If save is True (default)
         if save == True:
+            # by default set output path to current working directory
+            if output_path == "":
+                output_path = os.getcwd()            
             # Test to see that the output path is valid
             test_output_path = os.path.abspath(output_path)
             if not os.path.exists(test_output_path):
