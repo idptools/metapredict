@@ -1,26 +1,25 @@
-Module Documentation
-====================
+Python Module Documentation
+=============================
 
-meta_predict_disorder.py
+Recommended usage
+-------------------
+In general, we recommend using metapredict in Python by first importing metapredict as meta:
+
+.. code-block:: python
+
+	import metapredict as meta
+
+	
+The ``meta`` module can the be used to call all the user-facing functions. Documentation for these functions is included below.
+
+
+metapredict functions
 ------------------------
 
-.. automodule:: metapredict.meta_predict_disorder
+.. automodule:: metapredict
    :members:
 
-meta_graph.py
-----------------
 
-.. automodule:: metapredict.meta_graph
+.. automodule:: metapredict.meta
    :members:
 
-brnn_architecture.py
---------------------
-
-.. automodule:: metapredict.brnn_architecture
-   :members:
-
-encode_sequence.py
-------------------
-
-.. automodule:: metapredict.encode_sequence
-   :members:

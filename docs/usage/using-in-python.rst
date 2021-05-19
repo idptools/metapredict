@@ -7,15 +7,14 @@ First import metapredict -
 
 .. code-block:: python
 
-	import metapredict
-	from metapredict import meta
+	import metapredict as meta
 
 Once metapredict is imported, you can work with individual sequences or .fasta files. 
 
 Predicting Disorder
 --------------------
 
-The ``predict_disorder`` function will return a list of predicted disorder consensus values for the residues of the input sequence. The input sequence should be a string. Running -
+The ``predict_disorder()`` function will return a list of predicted disorder consensus values for the residues of the input sequence. The input sequence should be a string made of valid amino acids. Running -
 
 .. code-block:: python
 	
@@ -40,7 +39,7 @@ By default, output prediction values are normalized between 0 and 1. However, so
 Graphing Disorder
 ------------------
 
-The ``graph_disorder`` function will show a plot of the predicted disorder consensus values across the input amino acid sequence. Running - 
+The ``graph_disorder()`` function will show a plot of the predicted disorder consensus values across the input amino acid sequence. Running - 
 
 .. code-block:: python
 	
@@ -54,11 +53,11 @@ would output -
 **Additional Usage:**
 
 **Changing title of generated graph -**
-There are two parameters that the user can change easily for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted Consensus Disorder*. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing *name* = " - *MadeUpProtein*" would result in a title of *Predicted Consensus Disorder - MadeUpProtein*. Running - 
+There are two parameters that the user can change easily for graph_disorder. The first is the title for the generated graph. The title by default is blank and the title of the graph is simply *Predicted Consensus Disorder*. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing *title* = " - *Predicted Consensus Disorder - MadeUpProtein*" would result in a title of *Predicted Consensus Disorder - MadeUpProtein*. Running - 
 
 .. code-block:: python
 
-	meta.graph_disorder("GHPGKQRNPGEHHSSRNVKRNWNNSPSGPNEGRESQEERKTPPRRGGQQSGESHNQDETNKPNPSDNHHEEEKADDNAHRGNDSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLRAKRVLRENFVQCEKAWHRRRLAHPYNRINMQWLDVFDGDCWLAPQLCFGFQFGHDRPVWKIFWYHERGDLRYKLILKDHANVLNKPAHSRNARCESSAPSHDPHGNANSYDKKVTTPDPTEIKSSQESGNSNPDHSPHMPGRDMQEQPGEEPGGHPEKRLIRSKGKTDYKDNRSPRNNPSTDPEWESAHFQWSHDPNEQWLHNLGWPMRWMWQLPNPGIEPFSLNTRKKAPSWINLLYNADPCKTQDDERDCEHHMYQIQPIAPVPKIAMHYCTCFPRVHRIPC", name="- MadeUpProtein")
+	meta.graph_disorder("GHPGKQRNPGEHHSSRNVKRNWNNSPSGPNEGRESQEERKTPPRRGGQQSGESHNQDETNKPNPSDNHHEEEKADDNAHRGNDSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLRAKRVLRENFVQCEKAWHRRRLAHPYNRINMQWLDVFDGDCWLAPQLCFGFQFGHDRPVWKIFWYHERGDLRYKLILKDHANVLNKPAHSRNARCESSAPSHDPHGNANSYDKKVTTPDPTEIKSSQESGNSNPDHSPHMPGRDMQEQPGEEPGGHPEKRLIRSKGKTDYKDNRSPRNNPSTDPEWESAHFQWSHDPNEQWLHNLGWPMRWMWQLPNPGIEPFSLNTRKKAPSWINLLYNADPCKTQDDERDCEHHMYQIQPIAPVPKIAMHYCTCFPRVHRIPC", title = "MadeUpProtein")
 
 would output -
 
@@ -75,6 +74,8 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 	meta.graph_disorder("DAPPTSQEHTQAEDKERD", DPI=300)
 
 
+
+
 **Specify the lines across a graph:**
 
 By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using specifying *line_intervals*
@@ -89,7 +90,7 @@ By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 t
 Calculating Percent Disorder:
 -----------------------------
 
-The ``percent_disorder`` function will return the percent of residues in a sequence that  have predicted consensus disorder values of 50% or more (as a decimal value). Running -
+The ``percent_disorder()`` function will return the percent of residues in a sequence that have predicted consensus disorder values of 0.3 or more. Running -
 
 .. code-block:: python
 
@@ -99,9 +100,9 @@ would output -
 
 .. code-block:: python
 
-	0.4411764705882353
+	44.1
 
-By default, this uses a cutoff predicted value of equal to or greater than 0.5 for a residue to be considered disordered.
+By default, this uses a cutoff predicted value of equal to or greater than 0.3 for a residue to be considered disordered, and rounds to one decimal place.
 
 **Additional Usage:**
 
@@ -118,7 +119,7 @@ would output
 
 .. code-block:: python
 
-	0.29411764705882354
+	29.4
 
 The higher the cutoff value, the higher the value any given predicted residue must be greater than or equal to in order to be considered disordered when calculating the final percent disorder for the input sequence.
 
@@ -126,7 +127,7 @@ The higher the cutoff value, the higher the value any given predicted residue mu
 Predicting Disorder From a .fasta File:
 ---------------------------------------
 
-By using the ``predict_disorder_fasta`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
+By using the ``predict_disorder_fasta()`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
 
 **Example:**
 
@@ -188,7 +189,7 @@ By default, this function will output prediction values that are normalized betw
 Predict Disorder Using Uniprot ID
 -----------------------------------
 
-By using the ``predict_disorder_uniprot`` function, you can return predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+By using the ``predict_disorder_uniprot()`` function, you can return predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
 
 **Example**
 
@@ -200,7 +201,7 @@ By using the ``predict_disorder_uniprot`` function, you can return predicted con
 Generating Graphs From a .fasta File:
 -------------------------------------
 
-By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted\_disorder\_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled Predicted Consensus Disorder sp|Q8N6T3|.
+By using the ``graph_disorder_fasta()`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted\_disorder\_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled Predicted Consensus Disorder sp|Q8N6T3|.
 
 **WARNING:**
 
@@ -257,7 +258,7 @@ If you choose to view the generated graphs instead of saving them, you can only 
 Generating Graphs Using Uniprot ID
 ------------------------------------
 
-By using the ``graph_disorder_uniprot`` function, you can graph predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+By using the ``graph_disorder_uniprot()`` function, you can graph predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
 
 **Example**
 
@@ -265,7 +266,7 @@ By using the ``graph_disorder_uniprot`` function, you can graph predicted consen
 
     meta.graph_disorder_uniprot("Q8N6T3")
 
-This function carries all of the same functionality as ``graph_disorder`` including specifying line intervals, name of the graph, the DPI, and whether or not to save the output.
+This function carries all of the same functionality as ``graph_disorder()`` including specifying line intervals, name of the graph, the DPI, and whether or not to save the output.
 
 **Example**
 
@@ -278,7 +279,7 @@ This function carries all of the same functionality as ``graph_disorder`` includ
 Predicting Disorder Domains:
 -----------------------------
 
-The ``predict_disorder_domains`` function takes in an amino acid function and returns a 4-position tuple with: 0. the raw disorder scores from 0 to 1 where 1 is the highest probability that a residue is disordered, 1. the smoothed disorder score used for boundary identification, 2. a list of elements where each element is a list where 0 and 1 define the IDR location and 2 gives the actual sequence, and 3. a list of elements where each element is a list where 0 and 1 define the folded domain location and 2 gives the actual sequence
+The ``predict_disorder_domains()`` function takes in an amino acid function and returns a 4-position tuple with: 0. the raw disorder scores from 0 to 1 where 1 is the highest probability that a residue is disordered, 1. the smoothed disorder score used for boundary identification, 2. a list of elements where each element is a list where 0 and 1 define the IDR location and 2 gives the actual sequence, and 3. a list of elements where each element is a list where 0 and 1 define the folded domain location and 2 gives the actual sequence
 
 .. code-block:: python
 
