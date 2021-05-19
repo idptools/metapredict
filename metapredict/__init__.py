@@ -1,23 +1,22 @@
-"""
-metapredict
-A protein disorder predictor based on a BRNN (IDP-Parrot) trained on the consensus disorder values from 8 disorder predictors from 12 proteomes.
-"""
+##
+## metapredict
+## A protein disorder predictor based on a BRNN (IDP-Parrot) trained on the consensus disorder values from 
+## 8 disorder predictors from 12 proteomes.
+##
 
-# Add imports here
+# import user-facing functions
 from .meta import *
-from .backend.brnn_architecture import *
-from .backend.domain_definition import *
-from .backend.encode_sequence import *
-from .backend.meta_graph import *
-from .backend.meta_predict_disorder import *
-from .backend.uniprot_predictions import *
+
+import os
+import sys
 
 
+# To crash on LIBOMP error set this to False
+IGNORE_LIBOMP_ERROR = True
 
 
-
-
-
+# ------------------------------------------------------------
+#
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()
@@ -26,6 +25,13 @@ __git_revision__ = versions['full-revisionid']
 del get_versions, versions
 
 
+# Handle omplib error 
+if IGNORE_LIBOMP_ERROR:
+    if sys.platform == 'darwin':
+        os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
+
+# Standardized function to check performance
 def print_performance(seq_len=500, num_seqs=100, verbose=True):
     """
     Function that lets you test metapredicts performance on your local hardware.

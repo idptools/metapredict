@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-#executing script for IDR predictor in command line.
+# executing script for IDR predictor in command line.
 
-#import stuff for making CLI
+# import stuff for making CLI
 import os
 import sys
 import argparse
@@ -12,49 +12,53 @@ import csv
 #import protfasta
 import protfasta
 
-#from metapredict import meta 
+#from metapredict import meta
 from metapredict import meta
 
 
-if __name__=="__main__":
-        #Parse command line arguments.
-        parser = argparse.ArgumentParser(description='Graph predicted disorder of amino acid sequences.')
-        parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
-        parser.add_argument('output_path', default = 'curdir', help='Path for the returned disorder graphs.')
-        parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI',
-                            help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
-        parser.add_argument('-lines', '--line_intervals', default=[], nargs='+', type=float, metavar='line_intervals',
-                            help = 'Optional. Will set the lines going across the x-axis on the graph.')
-        parser.add_argument('--remove_characters', action='store_true', 
-                            help='Use if you want to avoid using any non-alphabetic characters in the fasta headers as file names')
+if __name__ == "__main__":
 
-        args = parser.parse_args()
+    # Parse command line arguments.
+    parser = argparse.ArgumentParser(description='Generate disorder figures for all sequences in a FASTA file.')
+
+    parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
+
+    parser.add_argument('-D', '--dpi', default=150, type=int, help='Optional. Set DPI to change resolution of output graphs. Default is 150.')                        
+
+    parser.add_argument('--filetype', default='png', help='Define the possible output filetype. Valid options are png, pdf, jpg. Default is png')
+                        
+    parser.add_argument('-o', '--output-directory', help='Directory for where to save the returned graphs. If not provided the program generates a default output directory called disorder_out and files are writte there.')
+
+    parser.add_argument('--indexed-filenames', help='Flag which, if set to true, means files will be indexed with a leading unique integer start at 1.', action='store_true')
+
+    parser.add_argument('--disorder-threshold', help='Defines the value plotted as a theshold line on the graph', default=0.3, type=float)
+    parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert'", default='convert')
 
 
-        DPI=args.dpi
-        
-        if args.output_path == 'curdir':
-                current_dirrectory = os.getcwd()
-                args.output_path = current_dirrectory
 
-        if args.output_path == '.':
-                current_dirrectory = os.getcwd()
-                args.output_path = current_dirrectory	
+    args = parser.parse_args()
 
-        # Test to see if the data_file exists
-        test_data_file = os.path.abspath(args.data_file)
-        if not os.path.isfile(test_data_file):
-                raise FileNotFoundError('Datafile does not exist.')
+    DPI = args.dpi
 
-        # Test to see that the output path is valid
-        test_output_path = os.path.abspath(args.output_path)
-        if not os.path.exists(test_output_path):
-                raise FileNotFoundError('Output path is not valid.')
+    if args.output_directory is None:
+        try:
+            # make dir
+            os.makedirs('disorder_out', exist_ok=True)
+        except Exception:
+            print('Error: Unable to make default outdirectory (disorder_out)')
+            exit(1)
 
-        if args.remove_characters:
-                remove_char = True
-        else:
-                remove_char = False
+        outdir = 'disorder_out'
+    else:
+        outdir = args.output_directory
 
-        #run graph_disorder_fasta. For more info, see the graph_disorder_fasta function in meta.py.
-        meta.graph_disorder_fasta(filepath = args.data_file, line_intervals=args.line_intervals, DPI=DPI, output_path = args.output_path, remove_characters=remove_char)
+    # run graph_disorder_fasta. For more info, see the graph_disorder_fasta function in meta.py.
+    meta.graph_disorder_fasta(filepath=args.data_file, 
+                              disorder_threshold=args.disorder_threshold,
+                              DPI=args.dpi,
+                              output_dir=outdir,
+                              output_filetype=args.filetype,
+                              indexed_filenames=args.indexed_filenames)
+                              
+                              
+                              

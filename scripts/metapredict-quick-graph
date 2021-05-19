@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 
-#executing script allowing direct input of a sequence in command line and getting graphed disorder values back
-#import stuff for making CLI
+# executing script allowing direct input of a sequence in command line and getting graphed disorder values back
+# import stuff for making CLI
 
-import os
-import sys
 import argparse
+import metapredict as meta
 
-import csv
-import protfasta
+VALID_AA = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y']
 
-from metapredict import meta
-
-#Parse command line arguments.
+# Parse command line arguments.
 parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
 parser.add_argument('sequence', help='The amino acid sequence to predict disorder for.')
 parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI',
@@ -20,5 +16,5 @@ parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI',
 
 args = parser.parse_args()
 
-#Print the sequence to the command line
-meta.graph_disorder(sequence = args.sequence, DPI=args.dpi)
+# display the disorder of the sequence
+meta.graph_disorder(sequence=args.sequence.upper(), DPI=args.dpi)

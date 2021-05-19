@@ -1,55 +1,28 @@
 #!/usr/bin/env python
 
-#executing script allowing direct input of a sequence in command line and getting graphed disorder values back
-#import stuff for making CLI
+# executing script allowing direct input of a sequence in command line and getting graphed disorder values back
+# import stuff for making CLI
 
 import os
-import sys
 import argparse
-import urllib3
 
-import csv
-import protfasta
+from metapredict.metapredict_exceptions import MetapredictError
+import metapredict as meta
 
-from metapredict import meta
+if __name__ == "__main__":
 
-def fetch_sequence(uniprot_id):
-    """
-    Function that returns the amino acid sequence by polling UniProt.com
-    
-    Parameters
-    --------------
-    uniprot_id : str
-        Uniprot accession number
+    # Parse command line arguments.
+    parser = argparse.ArgumentParser(description='Predict intrinsic disorder from a UniProt accession number.')
 
-    Returns
-    -----------
-    
-    """
-
-    http = urllib3.PoolManager()
-    r = http.request('GET', 'https://www.uniprot.org/uniprot/%s.fasta'%(uniprot_id))
-    
-    s = "".join(str(r.data).split('\\n')[1:]).replace("'","")
-
-
-    if s.find('Sorry') > -1:
-        return None
-
-    return s
-
-
-
-if __name__=="__main__":
-
-
-    #Parse command line arguments.
-    parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
     parser.add_argument('uniprot', help='The uniprot accession.')
-    parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI', help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
-    parser.add_argument('-s', '--save', action='store_true', 
-        help='Use this flag to save the file. If this flag is called, specify file path using -p or -path. Otherwise saves to curdir.')
-    parser.add_argument('-p', '--path', default='curdir', help='Path for where to save the returned graph.')
+
+    parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI',
+                        help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
+
+    parser.add_argument('-o', '--output-file', const='USE_DEFAULT', help='Filename for where to save the returned graph. \
+    The can included file extension, which in turn defines the filetype (pdf, png, jpg etc.) Note if no filename is included then \
+    the -o acts as a flag and the  ', nargs='?')
+    
     parser.add_argument('-t', '--title', help='Title to put on graph')
 
     args = parser.parse_args()
@@ -58,49 +31,23 @@ if __name__=="__main__":
     if args.title:
         graph_title = args.title
     else:
-        graph_title = args.uniprot
+        graph_title = 'Disorder for %s'%(args.uniprot)
 
-    s = fetch_sequence(args.uniprot)
 
-    if s is None:
-        print('Error: Unable to fetch accession %s'%(args.uniprot))
-    
+    # if we don't want to save...
+    if args.output_file is None:
+        try:
+            meta.graph_disorder_uniprot(args.uniprot, title=graph_title, DPI=args.dpi)
+        except MetapredictError as e:
+            print(e)
+            exit(1)
+
+    # else we do want to save
     else:
-        if args.save:
-            if args.path == 'curdir':
-                current_dirrectory = os.getcwd()
-                args.path = current_dirrectory
-
-            if args.path == '.':
-                current_dirrectory = os.getcwd()
-                args.path = current_dirrectory
-
-            # Test to see that the output path is valid
-            test_output_path = os.path.abspath(args.path)
-            if not os.path.exists(test_output_path):
-                    raise FileNotFoundError('Output path is not valid.')
-
-            #set name of saved chart to the uniprot ID + "./predicted_disorder.png"
-            # make sure that the path is properly formatted
-            if args.path[-1]=="/":
-                if args.title:
-                    final_output = "{}{}.png".format(args.path, args.title)
-                else:
-                    final_output = "{}{}.png".format(args.path, args.uniprot)
-            else:
-                if args.title:
-                    final_output = "{}/{}.png".format(args.path, args.title)
-                else:
-                    final_output = "{}/{}.png".format(args.path, args.uniprot)
-
-            meta.graph_disorder(sequence = s, DPI=args.dpi, name=graph_title, save=True, output=final_output)
-
+        
+        if args.output_file == 'USE_DEFAULT':
+            outname = '%s.png'%(args.uniprot)
         else:
-            meta.graph_disorder(sequence = s, DPI=args.dpi, name=graph_title)
+            outname = args.output_file
 
-
-
-
-
-
-
+        meta.graph_disorder_uniprot(args.uniprot, title=graph_title, DPI=args.dpi, output_file=outname)

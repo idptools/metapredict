@@ -1,30 +1,36 @@
-"""
-meta.py
-A protein disorder predictor based on a BRNN (IDP-Parrot) trained
-on the consensus disorder values from 8 disorder predictors from 
-12 proteomes (see https://mobidb.bio.unipd.it) as of 08/2020.
+##
+## meta.py
+## 
+## meta.py contains all the user-facing function associated with metapredict. If a new function is added it should be included
+## here and added to the __all__ list
+## 
 
-Handles the primary functions
-"""
+##Handles the primary functions
+
+
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot']
+ 
 import os
 import sys
 
-#import protfasta to read .fasta files
-import protfasta
-import csv
 
-#import stuff for IDR predictor from backend
-from metapredict.backend import meta_predict_disorder
-from metapredict.backend.meta_predict_disorder import meta_predict
+
+# note - we imort packages below with a leading _ which means they are ignored in the import
+
+#import protfasta to read .fasta files
+import protfasta as _protfasta
+
+# import stuff for IDR predictor from backend. Note the 'as _*' hides the imported
+# module from the user
+from metapredict.backend.meta_predict_disorder import meta_predict as _meta_predict
+from metapredict.backend import meta_tools as _meta_tools
 
 #import stuff for graphing from backend
-from metapredict.backend import meta_graph
-from metapredict.backend.meta_graph import graph
-from metapredict.backend import domain_definition
+from metapredict.backend.meta_graph import graph as _graph
+from metapredict.backend import domain_definition as _domain_definition
 
 # stuff for uniprot from backend
-import metapredict.backend.uniprot_predictions
-from metapredict.backend.uniprot_predictions import fetch_sequence
+from metapredict.backend.uniprot_predictions import fetch_sequence as _fetch_sequence
 from metapredict.metapredict_exceptions import MetapredictError
 
 def predict_disorder_domains(sequence, 
@@ -51,6 +57,7 @@ def predict_disorder_domains(sequence,
 
     Parameters
     -------------
+
     sequence : str
         Amino acid sequence
 
@@ -78,7 +85,7 @@ def predict_disorder_domains(sequence,
         are increasingly rare. Default=10.
 
     Returns
-    ----------
+    ---------
     list
         Always returns a list with 4 elements, as outlined below
 
@@ -99,7 +106,7 @@ def predict_disorder_domains(sequence,
     
     disorder = predict_disorder(sequence, normalized)
 
-    return_tuple = domain_definition.get_domains(sequence, 
+    return_tuple = _domain_definition.get_domains(sequence, 
                                                  disorder, 
                                                  disorder_threshold=disorder_threshold,                                            
                                                  minimum_IDR_size=minimum_IDR_size, 
@@ -115,86 +122,148 @@ def predict_disorder(sequence, normalized=True):
     Function to return disorder of a single input sequence. Returns the
     predicted values as a list.
 
-    Arguments:
-    ----------
-    sequence - Input amino acid sequence (as string) to be predicted.
+    Parameters
+    ------------
 
-    normalized (optional) - by default predictor returns values normalized between 0 and 1.
-    This is because the BRNN will output some negative values and some values greater
-    than 1. Setting normalized=False will result in returning the raw predicted values.
+    sequence : str 
+        Input amino acid sequence (as string) to be predicted.
+
+    normalized : bool
+        Flag which defines in the predictor should control and normalize such that all values fall 
+        between 0 and 1. The underlying learning model can, in fact output some negative values 
+        and some values greater than 1. Normalization controls for this. Default = True
+
+    Returns
+    --------
+    
+    list
+        Returns a list of floats that corresponds to the per-residue disorder score.
+
     """
-    #make all residues upper case 
-    sequence=sequence.upper()
-    #return predicted values of disorder for sequence
-    return meta_predict(sequence, normalized=normalized)
+    # make all residues upper case 
+    sequence = sequence.upper()
+
+    # return predicted values of disorder for sequence
+    return _meta_predict(sequence, normalized=normalized)
 
 
-def graph_disorder(sequence, line_intervals=[], name = " ", DPI=150, save=False, output="."):
+def graph_disorder(sequence, 
+                   title = 'Predicted protein disorder', 
+                   disorder_threshold = 0.3,
+                   shaded_regions = None,
+                   shaded_region_color = 'red',
+                   DPI=150, 
+                   output_file=None):
     """
     Function to plot the disorder of an input sequece. Displays immediately.
 
-    Arguments:
-    ----------
-    sequence - Input amino acid sequence (as string) to be predicted.
+    Parameters
+    -------------
 
-    name (optional) - setting the value of name will change the title of the
-    graph. By default, the title is "Predicted Protein Disorder", so if you
-    for example set name = "- PAB1", the title on the graph will be "Predicted
-    Protein Disorder - PAB1". 
+    sequence : str 
+        Input amino acid sequence (as string) to be predicted.
 
-    line_intervals (optional) : List
-        A list of values that you would like to have for lines across the X-axis.
-        The default puts lines at intervals of 0.2.
-            Example: line_intervals = [0.1, 0.2, 0.3, 0.4, 0.5]
+    title : str
+        Sets the title of the generated figure. Default = "Predicted protein disorder"
 
-    DPI (optional) - default value is 150. Increasing this value will increase
-    the resolution of the output graph. Decreasing this value will decrease
-    the resolution.
+    disorder_threshold : float
+        Sets a threshold which draws a horizontal black line as a visual guide along
+        the length of the figure. Must be a value between 0 and 1. Default = 0.3
+    
+    shaded_regions : list of lists
+        A list of lists, where sub-elements are of length 2 and contain start and end
+        values for regions to be shaded. Assumes that sanity checking on positions has
+        already been done. Default is None, but if there were specific regions you wanted
+        to highlight this might, for example, look like shaded_regions=[[1,10],[40,50]], 
+        which would shade between 1 and 10 and then between 40 and 50. This can be useful
+        to either highlight specific IDRs or specific folded domains
+
+    shaded_region_color : str
+        String that defines the color of the shaded region. The shaded region is always
+        set with an alpha of 0.3 but the color can be any valid matplotlib color name
+        or a hex color string (i.e. "#ff0000" is red).
+    
+    DPI : int
+        Dots-per-inch. Defines the resolution of the generated figure. Passed to the
+        dpi argument in ``matplotlib.pyplot.savefig()``.
+
+    output_file : str
+        If provided, the output_file variable defines the location and type of the file
+        to be saved. This should be a file location and filename with a valid matplotlib
+        extension (such as .png, or .pdf) and, if provided, this value is passed directly
+        to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
+        Default = None.
+
+    Returns
+    --------
+
+    None
+        No return object, but, the graph is saved to disk or displayed locally.
+
+
     """
-    #make all residues upper case 
-    sequence=sequence.upper()
-    #graph sequence
-    graph(sequence = sequence, name = name, cutoffLines=line_intervals, DPI=DPI, save_fig=save, output_file=output)
+
+    # check that a valid range was passed for disorder_threshold
+    _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
+
+    # ensure sequence is upper case
+    sequence = sequence.upper()
+
+    # check that a valid set of shaded regions was passed
+    _meta_tools.valid_shaded_region(shaded_regions, len(sequence))
+
+    # call the graph function
+    _graph(sequence, title=title, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
 
 
 
 def percent_disorder(sequence, cutoff=0.3):
     """
     function to return the percent disorder for any given protein.
-    By default, uses 0.5 as a cutoff (values greater than or equal
-    to 0.5 will be considred disordered).
-    
-    Arguments:
-    ----------
-    sequence - Input amino acid sequence (as string) to be predicted.
-    
-    cutoff (optional) the cutoff for the predicted value of an individual
-    residue to be considered disordered. By default this value is 0.5. Increasing
-    this value will make the cutoff more "strict" in that a higher predicted
-    vallue will be required for a residue to be considered disordered.
+    By default, uses 0.3 as a cutoff (values greater than or equal
+    to 0.3 will be considered disordered).
 
-    Returns the percent disorder for the input sequence as a decimal. 
-    1.0 = 100% disordered,
-    0.9 = 90% disordered, 
-    and so on.
+    This function rounds to a single decimal place.
+    
+    Parameters
+    -------------
+
+    sequence : str 
+        Input amino acid sequence (as string) to be predicted.
+
+    disorder_threshold : float
+        Sets a threshold which defines if a residue is considered disordered
+        or not. Default = 0.3.
+
+    Returns
+    -----------
+
+    float
+        Returns a floating point value between 0 and 100 that defines what
+        percentage of the sequence is considered disordered.
+
     """
-    #make all residues upper case 
-    sequence=sequence.upper()
-    #set dis equal to the predicted disorder for the input sequence
-    dis = meta_predict(sequence)
-    #set arbitrarily chosen variable n to equal 0
+    # make all residues upper case 
+    sequence = sequence.upper()
+
+    # set dis equal to the predicted disorder for the input sequence
+    dis = _meta_predict(sequence)
+
+    # set arbitrarily chosen variable n to equal 0
     n = 0
-    #for predicted disorder values in dis:
+
+    # for predicted disorder values in dis:
     for i in dis:
         #if predicted value is greater than cutoff, add one to n
         if i >= cutoff:
             n += 1
+
     """
     percent disorder is equal to n (number of residues with predicted
     value >= cutoff) divided by the total number of residues in the
     input sequence.
     """
-    percent_disordered = round((n / len(dis)), 5)
+    percent_disordered = 100*round((n / len(dis)), 3)
     #return percent_disordered
     return(percent_disordered)
 
@@ -202,286 +271,201 @@ def percent_disorder(sequence, cutoff=0.3):
 
 #./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\
 #./\./\./\./\./\./\./\./\./\./\./\./\.FASTA STUFF./\./\./\./\./\./\./\./\./\./\./\./\
-#./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\
+#./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\././\./\
 
 #Various functions for working with fasta files to make everyones life easier.
 
 
-def predict_disorder_fasta(filepath, save=False, output_path = "", output_name = "predicted_disorder_values", normalized=True):
+def predict_disorder_fasta(filepath, 
+                           output_file = None,
+                           normalized=True,
+                           invalid_sequence_action='convert'):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of disorder values where the key is the 
     fasta header and the values are the predicted disorder values.
     
-    Arguments:
-    ----------
-    filepath - the path to where the .fasta file is located. The filepath
-    should end in the file name. For example (on MacOS):
-    filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
-    
-    save (optional) - by default, a dictionary of predicted values is 
-    returned immediately. However, you can specify save=True in order to 
-    save the output as a .csv file. 
-    ***important***
-    If you specify save=True, then output_path is a required argument!
+    Parameters
+    -------------
 
-    output_path - the path to where the output .csv file should be saved. 
-    For example, on MacOS:
-    output_path="Users/thisUser/Desktop/folder_of_cool_results/"
-    ***important***
-    You cannot specify the output file name here! By default, the file name will
-    be predicted_values.csv. However, you can change the output file name by 
-    specifying ouput_name (see below).
-    
-    output_name (optional) - by default is set to equal "predicted values". However,
-    the user can specify output_name="my_cool_output_name" in order to specify the
-    name of the output file.
-    ***important***
-    Do not add a file extension to output_name. The .csv file extension is added 
-    automatically. If you do by accident, it will (hopefully) be removed.
+    filepath : str 
+        The path to where the .fasta file is located. The filepath should end in the file name. 
+        For example (on MacOS):filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
 
-    normalized - decide whether the values are normalized from 0 to 1. By default, the
-    values are normalized. However, occassionally the raw values from the predictor can be
-    negative or greater than 1. If you want thes values, set normalied=False.
+    output_file : str
+        By default, a dictionary of predicted values is returned immediately. However, you can specify 
+        an output filename and path and a .csv file will be saved. This should include any file extensions.
+        Default = None.
+
+    normalized : bool
+        Flag which defines in the predictor should control and normalize such that all values fall 
+        between 0 and 1. The underlying learning model can, in fact output some negative values 
+        and some values greater than 1. Normalization controls for this. Default = True
+
+    invalid_sequence_action : str
+        Tells the function how to deal with sequences that lack standard amino acids. Default is 
+        convert, which as the name implies converts via standard rules. See 
+        https://protfasta.readthedocs.io/en/latest/read_fasta.html for more information.
+
+
+    Returns
+    --------
+
+    dict or None
+        If output_file is set to None (as default) then this fiction returns a dictionary of sequence ID to
+        disorder vector. If output_file is set to a filename then a .csv file will instead be written and 
+        no return data will be provided.
+
     """
 
-    #set variable protfastaSeqs equal to output from protfasta (with correction of invalid sequence values)
-    """
-    Importantly, by default this function corrects invalid residue
-    values using protfasta.read_fasta() because the disorder predictor
-    cannot have non-amino acid values as an input.
-    """    
+    # Importantly, by default this function corrects invalid residue
+    # values using protfasta.read_fasta() because the disorder predictor
+    # cannot have non-amino acid values as an input.
+
     # Test to see if the data_file exists
     test_data_file = os.path.abspath(filepath)
+
     if not os.path.isfile(test_data_file):
         raise FileNotFoundError('Datafile does not exist.')
 
-    protfasta_seqs = protfasta.read_fasta(filepath, invalid_sequence_action = "convert", return_list = True)
-    #initialize empty dictionary to be populated with the the fasta headers (key) 
-    #and the predicted disorder values (value)
+    protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
+
+    # initialize empty dictionary to be populated with the the fasta headers (key) 
+    # and the predicted disorder values (value)
     disorder_dict = {}
-    #for the sequences in the protffasta_seqs list:
+
+    # for the sequences in the protffasta_seqs list:
     for seqs in protfasta_seqs:
-        #set cur_header equal to the fasta header
+
+        # set cur_header equal to the fasta header
         cur_header = seqs[0]
-        #set cur_seq equal to the sequence associated with the fasta header
+
+        # set cur_seq equal to the sequence associated with the fasta header
         cur_seq = seqs[1]
-        #make all values for curSeq uppercase so they work with predictor
+
+        # make all values for curSeq uppercase so they work with predictor
         cur_seq = cur_seq.upper()
-        #set cur_disorder equal to the predicted values for cur_seq
-        cur_disorder = meta_predict(cur_seq, normalized=normalized)
+
+        # set cur_disorder equal to the predicted values for cur_seq
+        cur_disorder = _meta_predict(cur_seq, normalized=normalized)
+
         disorder_dict[cur_header] = cur_disorder
 
-    #if save=False (default), immediately return the dictionary disorder_dict
-    if save == False:
+    # if we did not request an output file 
+    if output_file is None:
         return disorder_dict
 
-    #if save=True, save the disorder_dict to the specified output_path
+    # else write to disk 
     else:
-        # by default set output path to current working directory
-        if output_path == "":
-            output_path = os.getcwd()
-        # Test to see that the output path is valid
-        test_output_path = os.path.abspath(output_path)
-        if not os.path.exists(test_output_path):
-            raise FileNotFoundError('Output path is not valid.')
+        _meta_tools.write_csv(disorder_dict, output_file)
 
-        #Check if there is a .csv in output_name (which there shouldn't be)
-        #set try_output_name = output_name
-        try_output_name = output_name
-        #if there is .csv in try_output_name
-        if ".csv" in try_output_name:
-            #split try_output_name and set output_file_name equal to everything before .csv
-            output_file_name = try_output_name.split(".csv")[0]
-        else:
-            #if .csv is not in try_output_name, set final output_final_name equal to args.output_name
-            output_file_name = output_name
 
-        """
-        Make sure output_path ends in / (mac) or \\ (windows).
-        This is necessary because earlier when testing the output path using OS,
-        a valid output path can still not end in a / or \\. When the path does not
-        end in a / or \\, then the file does not get saved correctly but pandas
-        doesn't raise an error. I'm not sure this is totally necessary, but
-        I made this mistake a few times while testing this stuff so I figured it might
-        be a nice feature.
-        """
-        #Set final_output_path_character = last character in output_path
-        final_output_path_character = output_path[-1]
-        #if / in output_path (user is using MacOS or linux)
-        if "/" in output_path:
-            #if the final character in the path does not equal a /
-            if final_output_path_character != "/":
-                #add in a / to complete file path
-                output_path += "/"
-        #if \ in output_path (user is using Windows)
-        elif "\\" in output_path:
-            #if the last character does not equal \
-            if final_output_path_character != "\\":
-                #add in a \ to output path
-                output_path += "\\"
 
-        #finalize output path
-        final_output = "{}{}.csv".format(output_path, output_file_name)
-        #try to export .csv to path
-        try:
-            with open(final_output, 'w', newline='') as csvfile:
-                csvWriter=csv.writer(csvfile, dialect='excel')
-                for header, predictions in disorder_dict.items():
-                    temp_predictions=[]
-                    temp_predictions.append(header)
-                    for i in predictions:
-                        predicted_space = "{} ".format(i)
-                        temp_predictions.append(predicted_space)
-                    csvWriter.writerow(temp_predictions)
-        #if this fails...
-        except IOError:
-            #print IO error
-            print("IO error")
+def graph_disorder_fasta(filepath, 
+                         disorder_threshold = 0.3,
+                         DPI=150, 
+                         output_dir = None,
+                         output_filetype='png', 
+                         invalid_sequence_action='convert',
+                         indexed_filenames=False):
 
-def graph_disorder_fasta(filepath, DPI=150, line_intervals=[], save=True, output_path="", remove_characters=False):
     """
     Function to make graphs of predicted disorder from the sequences
     in a specified .fasta file. By default will save the generated
     graphs to the location output_path specified in filepath.
+
+    **WARNING**: It is unadvisable to not include an output directory if you are reading in a .fasta 
+    file with many sequences! This is because each graph must be closed individually before the next 
+    will appear. Therefore, you will spend a bunch of time closing each graph.
+
+    **NB**: You cannot specify the output file name here! By default, the file name will
+    be the first 14 characters of the FASTA header followed by the filetype as specified 
+    by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name
+    where X starts at 1 and increments) then set indexed_filenames to True. This can be useful if you
+    have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an 
+    output file.
+
+    Parameters
+    -----------
+
+    filepath : str 
+        The path to where the .fasta file is located. The filepath should end in the file name. 
+        For example (on MacOS):filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
+
+    disorder_threshold : float
+        Sets a threshold which draws a horizontal black line as a visual guide along
+        the length of the figure. Must be a value between 0 and 1.
     
-    Arguments:
-    ----------
-    filepath : String
-        the path to where the .fasta file is located. The filepath
-        should end in the file name. For example (on MacOS):
-        filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
-    
-    DPI (optional) : Int
-        default value is 150. Increasing this value will increase
-        the resolution of the output graph. Decreasing this value will decrease
-        the resolution. 
+    DPI : int
+        Dots-per-inch. Defines the resolution of the generated figure. Passed to the
+        dpi argument in ``matplotlib.pyplot.savefig()``.
 
-    line_intervals (optional) : List
-        A list of values that you would like to have for lines across the X-axis.
-        The default puts lines at intervals of 0.2.
-            Example: line_intervals = [0.1, 0.2, 0.3, 0.4, 0.5]
+    output_dir : str
+        If provided, the output_dir variable defines the directory where file should besaved
+        to be saved. This should be a writeable filepath. Default is None. Output files are 
+        saved with filename as first 14 chars of fasta header (minus bad characters) plus the
+        appropriate file extension, as defined by filetype.
 
-    save (optional) - by default, the generated graphs are saved. This can be set
-    to False, which will result in the graphs being sequentially shown.
-    ***important***
-    It is unadvisable to set save=False if you are inputting a large .fasta file! This
-    is because each graph must be closed individually before the next will appear. Therefore,
-    you will spend a bunch of time closing each graph.
+    output_filetype : str
+        String that defines the output filetype to be used. Must be one of pdf, png, jpg.
 
-    output_path - the path to where the output graphs should be saved. 
-    For example, on MacOS:
-    output_path="Users/thisUser/Desktop/folder_of_cool_results/"
-    ***important***
-    You cannot specify the output file name here! By default, the file name will
-    be predicted_disorder followed by 6 characters from the .fasta header (which ideally
-    should be a unique identifier that can be input into uniprot) followed by .png. 
-    For example, predicted_disorder_sp|O43150|.png
+    invalid_sequence_action : str
+        Tells the function how to deal with sequences that lack standard amino acids. Default is 
+        convert, which as the name implies converts via standard rules. See 
+        https://protfasta.readthedocs.io/en/latest/read_fasta.html for more information.
 
-    remove_characters (optional) - allows all non-alphabetic characters to be removed
-    from the output file names. If user is on an OS that doesn't allow specific characters
-    to be used in file names, this should be a way to get around that.
+    indexed_filenames : bool
+        Bool which, if set to true, means filenames start with an unique integer.
+
+
+    Returns
+    ---------
+
+    None
+        No return object, but, the graph is saved to disk or displayed locally.
+
     """
 
     # Test to see if the data_file exists
-    test_data_file = os.path.abspath(filepath)
-    if not os.path.isfile(test_data_file):
-        raise FileNotFoundError('Datafile does not exist.')
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError('Datafile [%s] does not exist'%(filepath))
 
-    #use protfasta to read in fasta file
-    """
-    Importantly, by default this function corrects invalid residue
-    values using protfasta.read_fasta() because the disorder predictor
-    cannot have non-amino acid values as an input.
-    """
-    sequences = protfastaSeqs = protfasta.read_fasta(filepath, invalid_sequence_action = "convert")
+    # Test to see if output directory exists
+    if output_dir is not None:
+        if not os.path.isdir(output_dir):
+            raise FileNotFoundError('Proposed output directory could not be found')
 
-    #for key, value in sequences.items (which are the items in the dict returned by protfasta)
-    for i, v in sequences.items():
-        #set title of graph equal to the first 14 characters of the fasta header after >
-        #if the title is long enough to suppor that. Otherwise, use longest possible title
-        if len(i) >= 14:
-            title = i[0:14]
+    # validate disorder_threshold
+    _meta_tools.valid_range(disorder_threshold, 0,1)
+
+    # use protfasta to read in fasta file
+    sequences =  _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action)
+
+    # now for each sequence...
+    idx_counter = 0
+    for idx in sequences:
+        
+        # increment the index counter...
+        idx_counter = idx_counter + 1
+
+        # grab the sequence and convert to upper as well
+        local_sequence = sequences[idx].upper()
+
+        # define the full filename with filetype. NOTE - we use os.sep as an OS-independent way to define
+        # filename and filepath. This may end up with the filename containing a double slash, but this is fine
+        # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
+        # file writing
+        if indexed_filenames:
+            filename = output_dir + os.sep + "%i_"%(idx_counter) + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
         else:
-            title = i[0:]
-        #if remove_characters is False:
-        if remove_characters == False:
-            #set name equal to the first 14 characters of the fasta header after >
-            if len (i) >= 14:
-                name = (i[0:14])
-            else:
-                name = i[0:]
-        else:
-            #initializing empty string
-            empty_name = ""
-            #removing all common characters (non-alphabetic) from the fasta header
-            for j in i:
-                if j==">":
-                    continue
-                elif j=="|":
-                    continue
-                elif j=="=":
-                    continue
-                elif j=="-":
-                    continue
-                elif j==" ":
-                    continue
-                else:
-                    empty_name += j
-            #set final name equal to the first 14 characters from the fasta header with
-            #the various characters removed.
-            if len(empty_name)>=14:
-                name = empty_name[0:14]
-            else:
-                name = empty_name[0:]
+            filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
 
-        #set the sequence equal to the amino acid sequence associated with
-        #the fasta header and make all amino acids uppercase.
-        sequence = v.upper()
-        #If save is True (default)
-        if save == True:
-            # by default set output path to current working directory
-            if output_path == "":
-                output_path = os.getcwd()            
-            # Test to see that the output path is valid
-            test_output_path = os.path.abspath(output_path)
-            if not os.path.exists(test_output_path):
-                raise FileNotFoundError('Output path is not valid.')
+        # define title (including bad chars)
+        title = idx[0:14]
 
+        # plot!        
+        graph_disorder(local_sequence, title=title, DPI=DPI, output_file=filename)
 
-            """
-            Make sure output_path ends in / (mac) or \\ (windows).
-            This is necessary because earlier when testing the output path using OS,
-            a valid output path can still not end in a / or \\. When the path does not
-            end in a / or \\, then the file does not get saved correctly but pandas
-            doesn't raise an error. I'm not sure this is totally necessary, but
-            I made this mistake a few times while testing this stuff so I figured it might
-            be a nice feature.
-            """
-            #Set final_output_path_character = last character in output_path
-            final_output_path_character = output_path[-1]
-            #if / in output_path (user is using MacOS or linux)
-            if "/" in output_path:
-                #if the final character in the path does not equal a /
-                if final_output_path_character != "/":
-                    #add in a / to complete file path
-                    output_path += "/"
-            #if \ in output_path (user is using Windows)
-            elif "\\" in output_path:
-                #if the last character does not equal \
-                if final_output_path_character != "\\":
-                    #add in a \ to output path
-                    output_path += "\\"
-
-            #set variable output equal to the output_path folowed by the file name which is
-            #predicted_disorder_{name}.png, where name is the name specified earlier (first 10 characters
-            #of the fasta header either as is or with characters removed if remove_characters is set to true).
-            output = "{}predicted_disorder_{}.png".format(output_path, name)
-            #use the graph function (specified in meta_graph from the backend) to save the graph.
-            graph(sequence = sequence, name = title, cutoffLines=line_intervals, DPI = DPI, save_fig = True, output_file = output)
-        else:
-            #if save was set to False, then just graph the sequences from the .fasta file and show them immediately.
-            graph(sequence = sequence, name = title, cutoffLines=line_intervals, DPI = DPI)
 
 
 def predict_disorder_uniprot(uniprot_id, normalized=True):
@@ -489,58 +473,95 @@ def predict_disorder_uniprot(uniprot_id, normalized=True):
     Function to return disorder of a single input sequence. Uses a 
     Uniprot ID to get the sequence.
 
-    Arguments:
-    ----------
-    uniprot_ID : String
+    Parameters
+    ------------
+
+    uniprot_ID : str
          The uniprot ID of the sequence to predict
+
+    no_ID : str
+         The uniprot ID of the sequence to predict
+
+    Returns
+    ----------
+
+    None
+        No return object, but, the graph is saved to disk or displayed locally.
+    
     """
 
     # fetch sequence from Uniprot
-    sequence = fetch_sequence(uniprot_id)
-
-    # raise error if the webcall fails
-    if sequence is None:
-        raise MetapredictError('Error: unable to fetch UniProt with accession %s'%(uniprot_id))
-
+    sequence = _fetch_sequence(uniprot_id)
         
     # return predicted values of disorder for sequence
-    return meta_predict(sequence, normalized)
+    return _meta_predict(sequence, normalized)
 
 
-def graph_disorder_uniprot(uniprot_id, line_intervals=[], name = " ", DPI=150, save=False, output="."):
+
+def graph_disorder_uniprot(uniprot_id, 
+                           title = 'Predicted protein disorder', 
+                           disorder_threshold = 0.3,
+                           shaded_regions = None,
+                           shaded_region_color = 'red',
+                           DPI=150, 
+                           output_file=None):
+
     """
     Function to plot the disorder of an input sequece. Displays immediately.
 
-    Arguments:
+    Parameters
+    -------------
+
+    sequence : str 
+        Input amino acid sequence (as string) to be predicted.
+
+    title : str
+        Sets the title of the generated figure. Default = "Predicted protein disorder"
+
+    disorder_threshold : float
+        Sets a threshold which draws a horizontal black line as a visual guide along
+        the length of the figure. Must be a value between 0 and 1.
+    
+    shaded_regions : list of lists
+        A list of lists, where sub-elements are of length 2 and contain start and end
+        values for regions to be shaded. Assumes that sanity checking on positions has
+        already been done. Default is None, but if there were specific regions you wanted
+        to highlight this might, for example, look like shaded_regions=[[1,10],[40,50]], 
+        which would shade between 1 and 10 and then between 40 and 50. This can be useful
+        to either highlight specific IDRs or specific folded domains
+
+    shaded_region_color : str
+        String that defines the color of the shaded region. The shaded region is always
+        set with an alpha of 0.3 but the color can be any valid matplotlib color name
+        or a hex color string (i.e. "#ff0000" is red).
+    
+    DPI : int
+        Dots-per-inch. Defines the resolution of the generated figure. Passed to the
+        dpi argument in ``matplotlib.pyplot.savefig()``.
+
+    output_file : str
+        If provided, the output_file variable defines the location and type of the file
+        to be saved. This should be a file location and filename with a valid matplotlib
+        extension (such as .png, or .pdf) and, if provided, this value is passed directly
+        to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
+        Default = None.
+
+    Returns
     ----------
-    uniprot_ID : String
-        The uniprot ID of the sequence to predict
 
-    line_intervals (optional) : List
-        A list of values that you would like to have for lines across the X-axis.
-        The default puts lines at intervals of 0.2.
-            Example: line_intervals = [0.1, 0.2, 0.3, 0.4, 0.5]
-
-    name (optional) - setting the value of name will change the title of the
-    graph. By default, the title is "Predicted Protein Disorder", so if you
-    for example set name = "- PAB1", the title on the graph will be "Predicted
-    Protein Disorder - PAB1". 
-
-
-    DPI (optional) - default value is 150. Increasing this value will increase
-    the resolution of the output graph. Decreasing this value will decrease
-    the resolution.
+    None
+        No return object, but, the graph is saved to disk or displayed locally.
+    
     """
-    #make all residues upper case 
-    sequence = fetch_sequence(uniprot_id)
+    # check that a valid range was passed for 
+    _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
 
-    # raise error if the webcall fails
-    if sequence is None:
-        raise MetapredictError('Error: unable to fetch UniProt with accession %s'%(uniprot_id))
+    # grab uniprot sequence
+    sequence = _fetch_sequence(uniprot_id)
 
-    #graph sequence
-    graph(sequence = sequence, name = name, cutoffLines=line_intervals, DPI=DPI, save_fig=save, output_file=output)
-
+    # graph sequence
+    _graph(sequence, title=title, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
+    
 
 def predict_disorder_domains_uniprot(uniprot_id, 
                              disorder_threshold=0.42, 
@@ -564,8 +585,10 @@ def predict_disorder_domains_uniprot(uniprot_id,
     [3] - a list of elements, where each element is itself a list where position 0 and 1 define the folded domain 
           location and position 2 gives the actual folded domain sequence.
 
+
     Parameters
     -------------
+
     uniprot_ID : String
         The uniprot ID of the sequence to predict
 
@@ -597,6 +620,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
     Returns
     ----------
+
     list
         Always returns a list with 4 elements, as outlined below
 
@@ -614,15 +638,11 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
 
     """
-    sequence = fetch_sequence(uniprot_id)
-
-    # raise error if the webcall fails
-    if sequence is None:
-        raise MetapredictError('Error: unable to fetch UniProt with accession %s'%(uniprot_id))
+    sequence = _fetch_sequence(uniprot_id)
 
     disorder = predict_disorder(sequence, normalized=normalized)
 
-    return_tuple = domain_definition.get_domains(sequence, 
+    return_tuple = _domain_definition.get_domains(sequence, 
                                                  disorder, 
                                                  disorder_threshold=disorder_threshold,                                            
                                                  minimum_IDR_size=minimum_IDR_size, 
