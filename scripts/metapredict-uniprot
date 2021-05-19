@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-o', '--output-file', const='USE_DEFAULT', help='Filename for where to save the returned graph. \
     The can included file extension, which in turn defines the filetype (pdf, png, jpg etc.) Note if no filename is included then \
-    the -o acts as a flag and the  ', nargs='?')
+    the -o acts as a flag and the file will be saved as the Uniprot ID', nargs='?')
     
     parser.add_argument('-t', '--title', help='Title to put on graph')
 

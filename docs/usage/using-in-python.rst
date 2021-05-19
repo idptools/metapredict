@@ -145,36 +145,20 @@ An actual filepath would look something like:
 **Additional Usage:**
 
 **Save the output values -**
-By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *save=True* and *output_path* ="*location you want to save the file to*". This will save a file called *predicted_disorder_values.csv* to the location you specify for the output_path. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
+By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *output_file = "location you want to save the file to*". When specifying the file path, you also want to specify the file name. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
 
 **Example:**
 
 .. code-block:: python
 
-	meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", save=True, output_path="file path where the output .csv should be saved")
+    meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", output_path="file path where the output .csv should be saved")
 
 An actual filepath would look something like:
 
 .. code-block:: python
 
-	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True, output_path"/Users/thisUser/Desktop/")
+    meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_path="/Users/thisUser/Desktop/cool_predictions.csv")
 
-**Specifying the name of the output file -**
-By default, the generated .csv file will save as *predicted_disorder_values.csv*. However, you can change the default by specifing output_name="file_name".
-
-**Example:**
-
-.. code-block:: python
-
-	meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", save=True, output_path="file path where the output .csv should be saved", output_name="name of file")
-
-An actual filepath would look something like:
-
-.. code-block:: python
-
-	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True, output_path="/Users/thisUser/Desktop/", output_name="my_predictions")
-
-Importantly, you do not need to add the .csv file extension to your file name specified in output_name. However, if you do specify .csv as a file extension, everything should still work.
 
 **Get raw prediction values -**
 By default, this function will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. If you want the raw values simply specify *normalized=False*. There is not a very good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.
@@ -201,23 +185,23 @@ By using the ``predict_disorder_uniprot()`` function, you can return predicted c
 Generating Graphs From a .fasta File:
 -------------------------------------
 
-By using the ``graph_disorder_fasta()`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted\_disorder\_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled Predicted Consensus Disorder sp|Q8N6T3|.
+By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. You cannot specify the output file name here! By default, the file name will be the first 14 characters of the FASTA header followed by the filetype as specified by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name where X starts at 1 and increments) then set indexed_filenames to True. This can be useful if you have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an output file. By default this will return a single graph for every sequence in the FASTA file.
 
 **WARNING:**
 
-This command will generate a .png file for **every** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop...).
+This command will generate a graph for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** graphs that you will have to close sequentially. Therefore, I recommend saving specifying the *output_dir* such that the output is saved to a dedicated folder.
 
 **Example:**
 
 .. code-block:: python
 
-	meta.graph_disorder_fasta("file path to .fasta file/fileName.fasta", output_path="file path of where to save output graphs")
+    meta.graph_disorder_fasta("file path to .fasta file/fileName.fasta", output_dir="file path of where to save output graphs")
 
 An actual filepath would look something like:
 
 .. code-block:: python
 
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_path="/Users/thisUser/Desktop/folderForGraphs")
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 
 
@@ -230,29 +214,7 @@ By default, the output files have a DPI of 150. However, the user can change the
 
 .. code-block:: python
 
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_path="/Users/thisUser/Desktop/folderForGraphs")
-
-**Remove non-alphabetic characters from file names -**
-By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, but others do not allow files to have names that contain certain characters. To get around this, you can add an additional argument *remove\_characters=True*. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*. 
-
-**Example:**
-
-.. code-block:: python
-
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_path="/Users/thisUser/Desktop/folderForGraphs", remove_characters=True)
-
-**Viewing generated graphs without saving -**
-The default behavior for the graph_disorder_fasta function is to save the generated graphs for viewing elsewhere. However, the user can choose to view the generated graphs without saving them by specifying *save=False*. 
-
-**WARNING:**
-
-If you choose to view the generated graphs instead of saving them, you can only view one at a time and each graph must be closed before the next will open. This is not a problem if you only have around 10 sequences in your .fasta file. However, if you have 1,000 sequences in a .fasta file, you will have to close out **1,000** graphs. This isn't a problem if you don't mind clicking... a lot.
-
-**Example:**
-
-.. code-block:: python
-
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=False)
+	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 
 Generating Graphs Using Uniprot ID
@@ -274,6 +236,15 @@ This function carries all of the same functionality as ``graph_disorder()`` incl
 
     meta.graph_disorder_uniprot("Q8N6T3", line_intervals=[0.1, 0.2], name="my protein", DPI=300, save=True, output="/Users/thisUser/Desktop")
 
+
+**Changing the output File Type -** 
+By default ths output file is a .png. However, you can specify the output file type by using *output_filetype="file_type"* where file_type is some matplotlib compatible file type (such as .pdf).
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", output_filetype = "pdf")
 
 
 Predicting Disorder Domains:

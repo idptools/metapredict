@@ -8,7 +8,7 @@ What is metapredict?
 
 Why is metapredict useful?
 ===========================
-A major drawback of consensus disorder databases is that they can only give you values of *previously predicted protein sequencecs*. Therefore, if your sequence of interest is not in their database, tough luck. Fortunately, metapredict gives you a way around this problem!
+A major drawback of consensus disorder databases is that they can only give you values of *previously predicted protein sequencecs*. Therefore, if your sequence of interest is not in their database, tough luck. Fortunately, metapredict gives you a way around this problem! Additionally, metapredict allows for predicting disorder for any amino acid sequence, and predictions can be output as graphs or as raw values. Additionally, metapredict allows for predicting disorder values for protein sequences from .fasta files either directly in Python or from the command-line. This gives maximum flexibility so the user can easily predict/graph disorder from a single sequence of for an entire proteome.
 
 How was metapredict made?
 ===========================

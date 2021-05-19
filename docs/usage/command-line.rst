@@ -49,60 +49,66 @@ Quick Predictions
 Graphing Disorder
 -------------------
 
-The ``metapredict-graph-disorder`` is a command that takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png file for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted\_disorder\_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as predicted_disorder_sp|Q8N6T3|.png. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled Predicted Consensus Disorder sp|Q8N6T3|.
-
-Once metapredict is installed, the user can run ``graph-disorder`` from the command line:
+The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a graph for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. These graphs will have to be closed sequentially. Therefore, it is not recommended to use this command without specifying an output directory specifying where to save the files. 
 
 .. code-block:: bash
-	
-	$ metapredict-graph-disorder <Path to .fasta file> <Path where to save the output> <flags>
 
-**Example:** 
+    $ metapredict-graph-disorder <Path to .fasta file> 
 
-.. code-block:: bash
-	
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/
-
-If the output path is not specified, output will save to the current directroy. 
-
-**WARNING:**
-This command will generate a .png file for **every** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop...).
-
-
-**Additional Usage:**
-
-**Changing resolution of saved graphs:**
-``--dpi`` / ``-D`` 
-
-By default, the output files have a DPI of 150. However, the user can change the DPI of the output graphs (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` followed by the wanted DPI value.
-
-**Example:** 
+**Example**
 
 .. code-block:: bash
-	
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
 
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
 
-**Specify the lines across a graph:**
-``-lines`` / ``--line_intervals``
+**Additional Usage**
 
-By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using the ``-lines`` / ``--line_intervals`` argument
+**Saving the output -**
+To save the output, simply use the ``-o`` or ``--output-directory`` flag to specify where to save the file.
 
-.. code-block:: bash
-	
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -lines 0.1 0.2 0.3 0.4 0.5
-
-
-**Remove non-alphabetic characters from file name:**
-``--remove_characters``
-
-By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, but others do not allow files to have names that contain certain characters. To get around this, you can add the ``--remove_characters`` flag. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*.
-
-**Example:** 
+**Example**
 
 .. code-block:: bash
-	
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ --remove_characters
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/FolderForCoolPredictions
+
+
+**Changing resolution of saved graphs -**
+By default, the output graphs have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` or ``--dpi`` followed by the wanted DPI value. 
+
+**Example**
+
+.. code-block:: bash
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
+
+
+**Changing the file type -**
+By default the graphs will save as .png files. However, you can specify the file type by calling ``--dpi`` and then specifying the file type. Any matplotlib compatible file extension should work (for example, pdf).
+
+**Example**
+
+.. code-block:: bash
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --filetype pdf
+
+**Indexing file names -**
+If you would like to index the file names with a leading unique integer starting at 1, use the ``--indexed-filenames`` flag.
+
+**Example**
+
+.. code-block:: bash
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --indexed-filenames
+
+**Changing the disorder threshhold line on the graph -**
+If you would like to change the disorder threshold line plotted on the graph, use the ``--disorder-threshold`` flag followed by some value between 0 and 1. Default is 0.3.
+
+**Example**
+
+.. code-block:: bash
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --disorder-threshold 0.5
 
 Quick Graphing
 ---------------
@@ -126,7 +132,7 @@ Quick Graphing
 Graphing using Uniprot ID
 --------------------------
 
-``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optinonal* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. DPI ``-s``  or ``--save`` will save the plot. The default behavior *if a file path is not specified using the -p flag* is to save the graph to the current directory. The plot will save as the uniprot ID followed by .png, 3. ``-p``  or ``--path`` will let you specify the path to where to save the plot, and 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Predicted Consensus Disorder* followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.
+``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optinonal* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory). Filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png. 3. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Predicted Consensus Disorder* followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.
 
 **Example:**
 
@@ -144,19 +150,19 @@ Graphing using Uniprot ID
 
 .. code-block:: bash
 	
+	$ metapredict-uniprot Q8RYC8 -o /Users/ThisUser/Desktop/MyFolder/DisorderGraphs
+
+**Example:**
+
+.. code-block:: bash
+	
+	$ metapredict-uniprot Q8RYC8 -o /Users/ThisUser/Desktop/MyFolder/DisorderGraphs/my_graph.png
+
+**Example:**
+
+.. code-block:: bash
+	
 	$ metapredict-uniprot Q8RYC8 -t ARF19
-
-**Example:**
-
-.. code-block:: bash
-	
-	$ metapredict-uniprot Q8RYC8 -s
-
-**Example:**
-
-.. code-block:: bash
-	
-	$ metapredict-uniprot Q8RYC8 -s -p /Users/ThisUser/Desktop/MyFolder/DisorderGraphs
 
 
 

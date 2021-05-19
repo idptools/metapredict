@@ -13,7 +13,7 @@ A major drawback of consensus disorder databases is that they can only give you 
 For full documentation, please see:
 https://metapredict.readthedocs.io/en/latest/getting_started.html
 
-**metapredict** allows for predicting disorder for any amino acid sequence, and predictions can be output as graphs or as raw values. Additionally, metapredict allows for predicting disorder values for protein sequences from .fasta files either directly in Python or from the command-line.
+**metapredict** allows for predicting disorder for any amino acid sequence, and predictions can be output as graphs or as raw values. Additionally, metapredict allows for predicting disorder values for protein sequences from .fasta files either directly in Python or from the command-line. This gives maximum flexibility so the user can easily predict/graph disorder from a single sequence of for an entire proteome.
 
 ## Installation:
 
@@ -41,24 +41,23 @@ There are two ways you can use metapredict:
 ## Using metapredict from the command-line:
 
 ### Predicting Disorder
-The ``metapredict-predict-disorder`` command from the command line takes a .fasta file as input and returns a .csv file containing rows where the first cell in the row is the fasta header and all subsequent cells in that row are predicted consensus disorder values for each residue in the amino acid sequence associated with the fasta header. 
+The ``metapredict-predict-disorder`` command from the command line takes a .fasta file as input and returns disorder scores for the sequences in the FASTA file.
 
-	$ metapredict-predict-disorder <Path to .fasta file> <Path where to save the output> <Output file name>
-
-This will save a .csv file to the location specified by *Path where to save the output*. The name specified in *Output file name* will be the name of the output file followed by .csv. The .csv extension is automatically added to the output file name.
+	$ metapredict-predict-disorder <Path to .fasta file>
 
 **Example**
 
-	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions
+	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
 
 **Additional Usage**
 
-**Get raw prediction values -**
-By default, the output prediction values are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are replaced with 0 and the values greater than 1 are replaced with 1 by default. However, if you want raw values, simply add the flag ``--no_normalization``. There is not a very good reason to do this, and it is generally not recommended. However, I wanted to give users the maximum amount of flexibility when using metapredict, so I made it an option.
+**Save the output -** 
+If you would like to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this will save the output file as disorder.csv. However, you can specify the file name in the output path.
 
 **Example**
 
-	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
+    $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
+
 
 **Quick predict**
 
@@ -70,40 +69,53 @@ By default, the output prediction values are normalized between 0 and 1. However
 
 
 ### Graphing Disorder
-The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png file for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp|Q8N6T3|*.
+The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a graph for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. These graphs will have to be closed sequentially. Therefore, it is not recommended to use this command without specifying an output directory specifying where to save the files. 
 
-	$ metapredict-graph-disorder <Path to .fasta file> <Path where to save the output>
+	$ metapredict-graph-disorder <Path to .fasta file> 
 
 **Example**
 
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/
-
-**WARNING -**
-This command will generate a .png file for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop...).
+	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
 
 **Additional Usage**
 
+**Saving the output -**
+To save the output, simply use the ``-o`` or ``--output-directory`` flag to specify where to save the file.
+
+**Example**
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/FolderForCoolPredictions
+
+
 **Changing resolution of saved graphs -**
-By default, the output graphs have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` or ``-dpi`` followed by the wanted DPI value. 
+By default, the output graphs have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` or ``--dpi`` followed by the wanted DPI value. 
 
 **Example**
 
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
-
-**Specify the lines across a graph:**
-``-lines`` / ``--line_intervals``
-
-By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using the ``-lines`` / ``--line_intervals`` argument
-
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ -lines 0.1 0.2 0.3 0.4 0.5
+	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ -D 300
 
 
-**Remove non-alphabetic characters from file names -**
-By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, but others do not allow files to have names that contain certain characters. To get around this, you can add the ``--remove_characters`` flag. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*. 
+**Changing the file type -**
+By default the graphs will save as .png files. However, you can specify the file type by calling ``--dpi`` and then specifying the file type. Any matplotlib compatible file extension should work (for example, pdf).
 
 **Example**
 
-	$ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderGraphsFolder/ --remove_characters
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --filetype pdf
+
+**Indexing file names -**
+If you would like to index the file names with a leading unique integer starting at 1, use the ``--indexed-filenames`` flag.
+
+**Example**
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --indexed-filenames
+
+**Changing the disorder threshhold line on the graph -**
+If you would like to change the disorder threshold line plotted on the graph, use the ``--disorder-threshold`` flag followed by some value between 0 and 1. Default is 0.3.
+
+**Example**
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --disorder-threshold 0.5
+
 
 **Quick graph**
 
@@ -121,7 +133,7 @@ By default, the output files contain characters that are non-alphabetic (for exa
 
 **metapredict-uniprot**
 
-``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optinonal* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. DPI ``-s``  or ``--save`` will save the plot. The default behavior *if a file path is not specified using the -p flag* is to save the graph to the current directory. The plot will save as the uniprot ID followed by .png, 3. ``-p``  or ``--path`` will let you specify the path to where to save the plot, and 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Predicted Consensus Disorder* followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.
+``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optinonal* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory). Filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png. 3. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Predicted Consensus Disorder* followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.
 
 **Example:**
 
@@ -133,15 +145,15 @@ By default, the output files contain characters that are non-alphabetic (for exa
 
 **Example:**
 
-	$ metapredict-uniprot Q8RYC8 -t ARF19
+	$ metapredict-uniprot Q8RYC8 -o /Users/ThisUser/Desktop/MyFolder/DisorderGraphs
 
 **Example:**
 
-	$ metapredict-uniprot Q8RYC8 -s
+	$ metapredict-uniprot Q8RYC8 -o /Users/ThisUser/Desktop/MyFolder/DisorderGraphs/my_graph.png
 
 **Example:**
 
-	$ metapredict-uniprot Q8RYC8 -s -p /Users/ThisUser/Desktop/MyFolder/DisorderGraphs
+    $ metapredict-uniprot Q8RYC8 -t ARF19
 
 
 
@@ -150,8 +162,8 @@ In addition to using metapredict from the command line, you can also use metapre
 
 First import metapredict -
  
-	import metapredict
-	from metapredict import meta
+	import metapredict as meta
+
 
 Once metapredict is imported you can work with individual sequences or .fasta files. 
 
@@ -239,11 +251,11 @@ The ``graph_disorder`` function will show a plot of the predicted disorder conse
 **Additional Usage**
 
 **Changing the title of the generated graph -**
-There are two parameters that the user can change for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted Consensus Disorder*. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing name = "- PAB1" would result in a title of *Predicted Consensus Disorder - PAB1*.
+There are two parameters that the user can change for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted Consensus Disorder*. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing *title* = "- PAB1" would result in a title of *Predicted Consensus Disorder - PAB1*.
 
 **Example**
 
-	meta.graph_disorder("DAPPTSQEHTQAEDKERD", name="Name of this nonexistant protein")
+	meta.graph_disorder("DAPPTSQEHTQAEDKERD", title="Name of this nonexistant protein")
 
 **Changing the resolution of the generated graph -**
 By default, the output graph has a DPI of 150. However, the user can change the DPI of the generated graph (higher values have greater resolution). To do so, simply specify *DPI="Number"* where the number is an integer.
@@ -252,13 +264,30 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 
 	meta.graph_disorder("DAPPTSQEHTQAEDKERD", DPI=300)
 
-
-**Specify the lines across a graph -**
-By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using specifying *line_intervals*
+**Changing the disorder threshhold line -**
+The disorder threshhold line for graphs defaults to 0.3. However, if you want to change where the line designating the disorder cutoff is, simply specify *disorder_threshold = Float* where Float is some decimal value between 0 and 1. 
 
 **Example**
 
-	meta.graph_disorder("DAPPTSQEHTQAEDKERD", line_intervals = [0.1, 0.2, 0.3]
+    meta.graph_disorder("DAPPTSQEHTQAEDKERD", disorder_threshold=0.5)
+
+**Adding shaded regions to the graph -** If you would like to shade specific regions of your generated graph (perhaps shade the disordered regions), you can specify *shaded_regions=[[list of regions]]* where the list of regions is a list of lists that defines the regions to shade.
+
+**Example**
+
+    meta.graph_disorder("DAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERD", shaded_regions=[[1, 20], [30, 40]])
+
+In addition, you can specify the color of the shaded regions by specifying *shaded_region_color*. The default for this is red. You can specify any matplotlib color or a hex color string.
+
+**Example**
+
+    meta.graph_disorder("DAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERD", shaded_regions=[[1, 20], [30, 40]], shaded_region_color="blue")
+
+**Saving the graph -** By default, the graph will automatically appear. However, you can also save the graph if you'd like. To do this, simply specify *output_file = /Users/thisUser/Desktop/cool_graphs/myCoolGraph.png*. You can save the file with any valid matplotlib extension (.png, .pdf, etc.). 
+
+**Example**
+
+    meta.graph_disorder("DAPPTSQEHTQAEDKER", output_file=/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png)
 
 
 ### Calculating Percent Disorder
@@ -298,28 +327,16 @@ An actual filepath would look something like:
 **Additional Usage**
 
 **Save the output values -**
-By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *save=True* and *output_path = "location you want to save the file to*". This will save a file called *predicted_disorder_values.csv* to the location you specify for the output_path. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
+By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *output_file = "location you want to save the file to*". When specifying the file path, you also want to specify the file name. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
 
 **Example**
 
-	meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", save=True, output_path="file path where the output .csv should be saved")
+	meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", output_path="file path where the output .csv should be saved")
 
 An actual filepath would look something like:
 
-	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True, output_path="/Users/thisUser/Desktop/")
+	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_path="/Users/thisUser/Desktop/cool_predictions.csv")
 
-**Specifying the name of the output file -**
-By default, the generated .csv file will save as *predicted_disorder_values.csv*. However, you can change the default by specifing *output_name="file_name*".
-
-**Example**
-
-	meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", save=True, output_path="file path where the output .csv should be saved", output_name="name of file")
-
-An actual filepath would look something like:
-
-	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=True output_path"/Users/thisUser/Desktop/", output_name="my_predictions")
-
-Importantly, you do not need to add the .csv file extension to your file name specified in output_name. However, if you do specify .csv as a file extension, everything should still work.
 
 **Get raw prediction values -**
 By default, this function will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. If you want the raw values simply specify *normalized=False*. There is not a very good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.
@@ -337,18 +354,18 @@ By using the ``predict_disorder_uniprot`` function, you can return predicted con
 
 
 ### Generating Graphs From a .fasta File
-By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. Each file will be named as predicted_disorder_ followed by the first 10 characters of the .fasta header (which is typically the unique identifier for the protein). For example, a fasta header of >sp|Q8N6T3|ARFG1_HUMAN will return a file saved as *predicted_disorder_sp|Q8N6T3|.png*. Additionally, the title of each graph is automatically generated and will have the title Predicted Consensus Disorder followed by the first 10 characters of the .fasta header. In the previous example, the graph would be titled *Predicted Consensus Disorder sp|Q8N6T3|*.
+By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. You cannot specify the output file name here! By default, the file name will be the first 14 characters of the FASTA header followed by the filetype as specified by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name where X starts at 1 and increments) then set indexed_filenames to True. This can be useful if you have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an output file. By default this will return a single graph for every sequence in the FASTA file. 
 
 **WARNING -**
-This command will generate a .png file for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** files. Therefore, I recommend saving the output to a dedicated folder (or at least not your Desktop...).
+This command will generate a graph for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** graphs that you will have to close sequentially. Therefore, I recommend saving specifying the *output_dir* such that the output is saved to a dedicated folder.
 
 **Example**
 
-	meta.graph_disorder_fasta("file path to .fasta file/fileName.fasta", output_path="file path of where to save output graphs")
+	meta.graph_disorder_fasta("file path to .fasta file/fileName.fasta", output_dir="file path of where to save output graphs")
 
 An actual filepath would look something like:
 
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_path="/Users/thisUser/Desktop/folderForGraphs")
+	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 
 
@@ -359,24 +376,14 @@ By default, the output files have a DPI of 150. However, the user can change the
 
 **Example**
 
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_path="/Users/thisUser/Desktop/folderForGraphs")
+	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
-**Remove non-alphabetic characters from file name -**
-By default, the output files contain characters that are non-alphabetic (for example, *predicted_disorder_sp|Q8N6T3|.png*). This is not a problem on some operating systems, while others do not allow files to have names that contain certain characters. To get around this, you can add an additional argument *remove_characters=True*. This will remove all non-alphabetic characters from the .fasta header when saving the file. The previous example with the header >sp|Q8N6T3|ARFG1_HUMAN would now save as *predicted_disorder_spQ8N726AR.png*. 
-
-**Example**
-
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_path="/Users/thisUser/Desktop/folderForGraphs", remove_characters=True)
-
-**Viewing generated graphs without saving -**
-The default behavior for the graph_disorder_fasta function is to save the generated graphs for viewing elsewhere. However, the user can choose to view the generated graphs without saving them by specifying *save=False*. 
-
-**WARNING**
-If you choose to view the generated graphs instead of saving them, you can only view one at a time and each must be closed before the next will open. This is not a problem if you only have around 10 sequences in your .fasta file. However, if you have 1,000 sequences in a .fasta file, you will have to close out ***1,000*** graphs. This isn't a problem if you don't mind clicking... a lot.
+**Changing the output File Type -** 
+By default ths output file is a .png. However, you can specify the output file type by using *output_filetype="file_type"* where file_type is some matplotlib compatible file type (such as .pdf).
 
 **Example**
 
-	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", save=False)
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", output_filetype = "pdf")
 
 
 ### Generating Graphs Using Uniprot ID
@@ -409,6 +416,14 @@ https://github.com/idptools/metapredict/issues
 
 ### Recent changes
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+
+#### V1.2
+Change:
+Major update. Changed some basic functionality. Made it such that you don't need to specify to save (for disorder prediction values or graphs). Rather, if a file path is specified, the files will be saved. Updated graphing functionality to allow for specifying the disorder cutoff line and to allow users to highlight various regions of the graph. Changed import such that you can now just use import metapredict as meta in Python (as opposed to import metapredict and then from metapredict import meta). Lots of backend changes to make metapredict more stable. Added additional testing. Updated documentation. Standardized file reading/writing. Made it so user can specify file type of saved graphs. Added backend meta_tools.py to handle the busywork. Changed version numbering for networks. Updated code to avoid OMPLIB issue (known bug in previous versions). Updated all command-line tools to match backend code.
+
+#### V1.1
+Change:
+Fixed some bugs.
 
 #### V1.0
 Change:
