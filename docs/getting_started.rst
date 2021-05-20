@@ -4,20 +4,32 @@ Getting Started with metapredict
 
 What is metapredict?
 ====================
-**metapredict** is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on **consensus** values from MobiDB. These values are the percent of other disorders that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then *all 8 predictors predicted that residue to be disordered*. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximations of what other predictors would predict (things got pretty 'meta' there, hence the name metapredict).
+**metapredict** is a software tool to predict intrinicallydisordered regions in protein sequences. It is provided as a downloadable Python tool that includes a Python application programming interface (API) and a set of command-line tools for working with FASTA files. 
+
+Our goal in building **metapredict** was to develop a robust, accurate, and high-performance predictor of intrinsic disorder that is also easy to install and use. As such, **metapredict** is implemented in Python be installed directly via `pip` (see below).
+
+This already seems complicated...
+-----------------------------------
+As well as providing a set of high-performance software tools, **metapredict** is provided as a stand-alone webserver which can predict disorder profiles, scores, and contagious IDRs for single sequences.
+
+To access the webserver go to `metapredict.net <http://metapredict.net/>`_. 
+
+How does metapredict work?
+===========================
+**metapredict** is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, **metapredict** tries to predict the *consensus disorder* score for the residue. Consensus disorder reports on the fraction of independent disorder predictors that would predict a given residue is disordered.
+
+**metapredict** is a deep-learning-based predictor trained on consensus disorder data from 8 different predictors, as pre-computed and provided by `MobiDB <https://mobidb.bio.unipd.it/>`_. Functionally, this means each residue is assigned a score between 0 and 1 which reflects the confidence we have that the residue is disordered (or not). If the score was 0.5, this means half of the predictors predict that residue to be disordered. In this way, **metapredict** can help you quickly determine the likelihood that residues are disordered by giving you an approximations of what other predictors would predict (things got pretty 'meta' there, hence the name **metapredict**).
 
 Why is metapredict useful?
 ===========================
-A major drawback of consensus disorder databases is that they can only give you values of *previously predicted protein sequencecs*. Therefore, if your sequence of interest is not in their database, tough luck. Fortunately, metapredict gives you a way around this problem! Additionally, metapredict allows for predicting disorder for any amino acid sequence, and predictions can be output as graphs or as raw values. Additionally, metapredict allows for predicting disorder values for protein sequences from .fasta files either directly in Python or from the command-line. This gives maximum flexibility so the user can easily predict/graph disorder from a single sequence of for an entire proteome.
+Consensus disorder scores are really useful as they distribute the biases and uncertainty associated with any specific predictor. However, a drawback of consensus disorder databases (like MobiDB) is that they can only give you values of *previously predicted protein sequences*. **metapredict** provides a way around this, allowing arbitrary sequences to be analyzed! 
 
-How was metapredict made?
-===========================
-**metapredict** uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from MobiDB. The creation of metapredict was made possible by IDP-parrot.
+The major advantages that **metapredict** offers over existing predictors is performance, ease of use, and ease of installation. Given **metapredict** uses a pre-trained bidirectional recurrent neural network, on hardware we've tested **metapredict** gives ~10,000 residues per second prediction power. This means that predicting disorder across entire proteomes is accessible in minutes - for example it takes ~20 minutes to predict disorder for every human protein in the reviewed human proteome (~23000 sequences). We provide **metapredict** as a simple-to-use Python library to integrate into existing Python workflows, and as a set of command-line tools for the stand-alone prediction of data from direct input or from FASTA files.
 
 
 Installation
 ==============
-metapredict is available through GitHub or the Python Package Index (PyPI). To install through PyPI, run
+**metapredict** is available through GitHub or the Python Package Index (PyPI). To install through PyPI, run
 
 .. code-block:: bash
 
@@ -31,7 +43,7 @@ To clone the GitHub repository and gain the ability to modify a local copy of th
 	$ cd metapredict
 	$ pip install .
 
-This will install metapredict locally. If you modify the source code in the local repository, be sure to re-install with pip.
+This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with `pip`.
 
 Known installation/execution issues
 ====================================
@@ -54,12 +66,12 @@ PyTorch current ships with its own version of the OpenMP library (``libiomp.dyli
    but that may cause crashes or silently produce incorrect results. For more information, 
    please see http://www.intel.com/software/products/support/.
 
-To avoid this error we make the executive decision to ignore this clash. This has largely not appeared to have any deleterious issues on performance or accuracy accross the tests run. If you are uncomfortable with this then the code in ``metapredict/__init__.py`` can be edited with ``IGNORE_LIBOMP_ERROR`` set to ``False`` and metapredict resinstalled from the source directory.
+To avoid this error we make the executive decision to ignore this clash. This has largely not appeared to have any deleterious issues on performance or accuracy accross the tests run. If you are uncomfortable with this then the code in ``metapredict/__init__.py`` can be edited with ``IGNORE_LIBOMP_ERROR`` set to ``False`` and **metapredict** re-installed from the source directory.
 
 Testing
 ========
 
-To see if your installation of metapredict is working properly, you can run the unit test included in the package by navigating to the metapredict/tests folder within the installation directory and running:
+To see if your installation of **metapredict** is working properly, you can run the unit test included in the package by navigating to the metapredict/tests folder within the installation directory and running:
 
 .. code-block:: bash
 
