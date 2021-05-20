@@ -451,20 +451,29 @@ def graph_disorder_fasta(filepath,
         # grab the sequence and convert to upper as well
         local_sequence = sequences[idx].upper()
 
-        # define the full filename with filetype. NOTE - we use os.sep as an OS-independent way to define
-        # filename and filepath. This may end up with the filename containing a double slash, but this is fine
-        # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
-        # file writing
-        if indexed_filenames:
-            filename = output_dir + os.sep + "%i_"%(idx_counter) + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
+        # make sure file doesn't try to save if no output dir specified
+        if output_dir is not None:
+
+            # define the full filename with filetype. NOTE - we use os.sep as an OS-independent way to define
+            # filename and filepath. This may end up with the filename containing a double slash, but this is fine
+            # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
+            # file writing
+            if indexed_filenames:
+                filename = output_dir + os.sep + "%i_"%(idx_counter) + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
+            else:
+                filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
+
+            # define title (including bad chars)
+            title = idx[0:14]
+
+            # plot!        
+            graph_disorder(local_sequence, title=title, DPI=DPI, output_file=filename)
+
+        # if no output_dir specified just graph the seq        
         else:
-            filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
-
-        # define title (including bad chars)
-        title = idx[0:14]
-
-        # plot!        
-        graph_disorder(local_sequence, title=title, DPI=DPI, output_file=filename)
+            # define title (including bad chars)
+            title = idx[0:14]            
+            graph_disorder(local_sequence, title=title, DPI=DPI)
 
 
 
