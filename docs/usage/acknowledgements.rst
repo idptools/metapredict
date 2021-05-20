@@ -1,7 +1,7 @@
 Acknowledgements
 =================
 
-IDP-Parrot, created by Dan Griffith, was used to generate the network used for metapredict. See https://pypi.org/project/idptools-parrot/ for some very cool machine learning stuff.
+IDP-Parrot, created by Dan Griffith, was used to generate the network used for metapredict. See https://pypi.org/project/idptools-parrot/ for some very cool machine learning stuff from Dan.
 
 In addition to using Dan Griffith's tool for creating metapredict, the code for brnn_architecture.py and encode_sequence.py was written by Dan (originally for idptools-Parrot). 
 

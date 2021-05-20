@@ -4,36 +4,32 @@ metapredict from the command-line
 Predicting Disorder
 -------------------
 
-``metapredict-predict-disorder`` is a command that takes a .fasta file as input and returns a .csv file where the first cell in each row is the uniprot header and all subsequent cells in that row are predicted consensus disorder values for each residue in the amino acid sequence associated with the fasta header. 
+The ``metapredict-predict-disorder`` command from the command line takes a .fasta file as input and returns disorder scores for the sequences in the FASTA file.
 
 Once metapredict is installed, the user can run ``metapredict-predict-disorder`` from the command line:
 
 .. code-block:: bash
 	
-	$ metapredict-predict-disorder <Path to .fasta file> <Path where to save the output> <Output file name> <flags>
-
-This will save a .csv file to the location specified by <Path where to save the output>. The name specified in <Output file name> will be the name of the output file followed by .csv. The .csv extension is automatically added to the output file name.
+	$ metapredict-predict-disorder <Path to .fasta file> 
 
 **Example:** 
 
 .. code-block:: bash
 	
-	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions
+	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
 
-If the output path is not specified, output will save to the current directroy.
 
 **Additional Usage:**
 
-**Get raw prediction values**
-``--no_normalization``
+**Save the output -** 
+If you would like to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this will save the output file as disorder.csv. However, you can specify the file name in the output path.
 
-By default, the output prediction values are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 and slightly greater than 1. The negative values are replaced with 0 and the values greater than 1 are replaced with 1 by default. However, if you want raw values, simply add the flag ``--no_normalization``.
-
-**Example:**
+**Example:** 
 
 .. code-block:: bash
-	
-	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta /Users/thisUser/Desktop/DisorderPredictions/ myCoolPredictions --no_normalization
+    
+    $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
+
 
 Quick Predictions
 ------------------
@@ -49,7 +45,7 @@ Quick Predictions
 Graphing Disorder
 -------------------
 
-The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a graph for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. These graphs will have to be closed sequentially. Therefore, it is not recommended to use this command without specifying an output directory specifying where to save the files. 
+The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a graph for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. These graphs will have to be closed sequentially. Therefore, it is not recommended to use this command without specifying an output directory specifying where to save the files.  
 
 .. code-block:: bash
 
@@ -84,7 +80,7 @@ By default, the output graphs have a DPI of 150. However, the user can change th
 
 
 **Changing the file type -**
-By default the graphs will save as .png files. However, you can specify the file type by calling ``--dpi`` and then specifying the file type. Any matplotlib compatible file extension should work (for example, pdf).
+By default the graphs will save as .png files. However, you can specify the file type by calling ``--filetype`` and then specifying the file type. Any matplotlib compatible file extension should work (for example, pdf).
 
 **Example**
 
@@ -132,7 +128,7 @@ Quick Graphing
 Graphing using Uniprot ID
 --------------------------
 
-``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optinonal* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory). Filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png. 3. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Predicted Consensus Disorder* followed by the Uniprot ID. If you specify the title, the plot will save as your specified title followed by .png rather than save as the Uniprot ID.
+``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optional* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 3. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Disorder for* followed by the Uniprot ID.
 
 **Example:**
 

@@ -1,3 +1,4 @@
+
 metapredict in Python
 =====================
 
@@ -24,7 +25,7 @@ would output -
 
 .. code-block:: python
 	
-	[1, 1, 1, 1, 1, 1, 1, 0.958249, 0.915786, 0.845275, 0.75202, 0.687313, 0.588148, 0.603413, 0.506673, 0.476576, 0.407988, 0.432979, 0.286987, 0.160754, 0.102596, 0.094578, 0.073396, 0.140863, 0.27831, 0.327464, 0.336405, 0.351597, 0.356424, 0.354656, 0.379971, 0.351955, 0.456596, 0.365483]
+	[1, 1, 1, 1, 0.957, 0.934, 0.964, 0.891, 0.863, 0.855, 0.793, 0.719, 0.665, 0.638, 0.576, 0.536, 0.496, 0.482, 0.306, 0.152, 0.096, 0.088, 0.049, 0.097, 0.235, 0.317, 0.341, 0.377, 0.388, 0.412, 0.46, 0.47, 0.545, 0.428]
 
 **Additional Usage:**
 
@@ -53,7 +54,7 @@ would output -
 **Additional Usage:**
 
 **Changing title of generated graph -**
-There are two parameters that the user can change easily for graph_disorder. The first is the title for the generated graph. The title by default is blank and the title of the graph is simply *Predicted Consensus Disorder*. However, the name can be specified in order to add the name of the protein after the default title. For example, specifing *title* = " - *Predicted Consensus Disorder - MadeUpProtein*" would result in a title of *Predicted Consensus Disorder - MadeUpProtein*. Running - 
+There are two parameters that the user can change for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted protein disorder*. However, the title can be specified by specifing *title* = "my cool title" would result in a title of *my cool title*. Running - 
 
 .. code-block:: python
 
@@ -74,17 +75,38 @@ By default, the output graph has a DPI of 150. However, the user can change the 
 	meta.graph_disorder("DAPPTSQEHTQAEDKERD", DPI=300)
 
 
-
-
-**Specify the lines across a graph:**
-
-By default, the graphs have horizontal dashed lines at intervals of 0.2 from 0 to 1. Now, can specify the location of the dashed lines by using specifying *line_intervals*
+**Changing the disorder threshold line -**
+The disorder threshold line for graphs defaults to 0.3. However, if you want to change where the line designating the disorder cutoff is, simply specify *disorder_threshold = Float* where Float is some decimal value between 0 and 1.
 
 **Example**
 
 .. code-block:: python
 
-	meta.graph_disorder("DAPPTSQEHTQAEDKERD", line_intervals = [0.1, 0.2, 0.3])
+	meta.graph_disorder("DAPPTSQEHTQAEDKERD", disorder_threshold=0.5)
+
+**Adding shaded regions to the graph -** If you would like to shade specific regions of your generated graph (perhaps shade the disordered regions), you can specify *shaded_regions=[[list of regions]]* where the list of regions is a list of lists that defines the regions to shade.
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder("DAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERD", shaded_regions=[[1, 20], [30, 40]])
+
+In addition, you can specify the color of the shaded regions by specifying *shaded_region_color*. The default for this is red. You can specify any matplotlib color or a hex color string.
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder("DAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERDDAPPTSQEHTQAEDKERD", shaded_regions=[[1, 20], [30, 40]], shaded_region_color="blue")
+
+**Saving the graph -** By default, the graph will automatically appear. However, you can also save the graph if you'd like. To do this, simply specify *output_file = path_where_to_save/filename.file_extension.* For example, output_file=/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png. You can save the file with any valid matplotlib extension (.png, .pdf, etc.). 
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder("DAPPTSQEHTQAEDKER", output_file=/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png)
 
 
 Calculating Percent Disorder:
@@ -151,13 +173,13 @@ By default the predict_disorder_fasta function will immediately return a diction
 
 .. code-block:: python
 
-    meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", output_path="file path where the output .csv should be saved")
+    meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", output_file="file path where the output .csv should be saved")
 
 An actual filepath would look something like:
 
 .. code-block:: python
 
-    meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_path="/Users/thisUser/Desktop/cool_predictions.csv")
+    meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_file="/Users/thisUser/Desktop/cool_predictions.csv")
 
 
 **Get raw prediction values -**
@@ -185,11 +207,11 @@ By using the ``predict_disorder_uniprot()`` function, you can return predicted c
 Generating Graphs From a .fasta File:
 -------------------------------------
 
-By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and returns a .png for every sequence within the .fasta file. The .png files for each sequence will be saved to wherever the user specifies as the output location. You cannot specify the output file name here! By default, the file name will be the first 14 characters of the FASTA header followed by the filetype as specified by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name where X starts at 1 and increments) then set indexed_filenames to True. This can be useful if you have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an output file. By default this will return a single graph for every sequence in the FASTA file.
+By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and by default will return the graphs immediately. However, you can specify *output_dir=path_to_save_files* which result in a a .png file saved to that directory for every sequence within the .fasta file. You cannot specify the output file name here! By default, the file name will be the first 14 characters of the FASTA header followed by the filetype as specified by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name where X starts at 1 and increments) then set *indexed_filenames = True*. This can be useful if you have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an output file. By default this will return a single graph for every sequence in the FASTA file. 
 
-**WARNING:**
+**WARNING -**
+This command will generate a graph for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file and you do not specify the *output_dir*, it will generate **1,000** graphs that you will have to close sequentially. Therefore, I recommend specifying the *output_dir* such that the output is saved to a dedicated folder.
 
-This command will generate a graph for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file, it will generate **1,000** graphs that you will have to close sequentially. Therefore, I recommend saving specifying the *output_dir* such that the output is saved to a dedicated folder.
 
 **Example:**
 
@@ -204,7 +226,6 @@ An actual filepath would look something like:
     meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 
-
 **Additional Usage:**
 
 **Changing resolution of saved graphs -**
@@ -215,6 +236,24 @@ By default, the output files have a DPI of 150. However, the user can change the
 .. code-block:: python
 
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_dir="/Users/thisUser/Desktop/folderForGraphs")
+
+**Changing the output File Type -** 
+By default ths output file is a .png. However, you can specify the output file type by using *output_filetype="file_type"* where file_type is some matplotlib compatible file type (such as .pdf).
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", output_filetype = "pdf")
+
+**Indexing generated files -**
+If you would like to index the file names with a leading unique integer starting at 1, set *indexed_filenames=True*.
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", indexed_filenames=True)
 
 
 Generating Graphs Using Uniprot ID
@@ -228,23 +267,14 @@ By using the ``graph_disorder_uniprot()`` function, you can graph predicted cons
 
     meta.graph_disorder_uniprot("Q8N6T3")
 
-This function carries all of the same functionality as ``graph_disorder()`` including specifying line intervals, name of the graph, the DPI, and whether or not to save the output.
+This function carries all of the same functionality as ``graph_disorder`` including specifying disorder_threshold, title of the graph, the DPI, and whether or not to save the output.
 
 **Example**
 
 .. code-block:: python
 
-    meta.graph_disorder_uniprot("Q8N6T3", line_intervals=[0.1, 0.2], name="my protein", DPI=300, save=True, output="/Users/thisUser/Desktop")
+    meta.graph_disorder_uniprot("Q8N6T3", disorder_threshold=0.5, title="my protein", DPI=300, output_file="/Users/thisUser/Desktop/my_cool_graph.png")
 
-
-**Changing the output File Type -** 
-By default ths output file is a .png. However, you can specify the output file type by using *output_filetype="file_type"* where file_type is some matplotlib compatible file type (such as .pdf).
-
-**Example**
-
-.. code-block:: python
-
-    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", output_filetype = "pdf")
 
 
 Predicting Disorder Domains:
@@ -281,7 +311,7 @@ would output -
 **Additional Usage**
 
 **Altering the disorder theshhold -**
-To alter the disorder theshhold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher then treshold value, the more stringent the conservative metapredict will be for designating a region to be considered disordered. Default = 0.42
+To alter the disorder theshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the treshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
 
 **Example**
 
@@ -299,7 +329,7 @@ The minimum IDR size will define the smallest possible region that could be cons
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
 
 **Altering the minimum folded domain size -**
-The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs, and but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
+The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
 
 **Example**
 
@@ -308,7 +338,7 @@ The minimum folded domain size defines where we expect the limit of small folded
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_folded_domain = 60)
 
 **Altering gap_closure -**
-The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
+The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues seprated by a 'gap' of not disordered residues. In general large gap sizes will favour larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
 
 **Example**
 
@@ -320,7 +350,7 @@ The gap closure defines the largest gap that would be closed. Gaps here refer to
 Predicting Disorder Domains using a Uniprot ID:
 -------------------------------------------------
 
-In addition to inputting a sequence, you can predict disorder domains by inputting a Uniprot ID by usign the ``predict_disorder_domains_uniprot`` function. This function has the exact same functionality as ``predict_disorder_domains`` except you can now input a Uniprot ID. 
+In addition to inputting a sequence, you can predict disorder domains by inputting a Uniprot ID by using the ``predict_disorder_domains_uniprot`` function. This function has the exact same functionality as ``predict_disorder_domains`` except you can now input a Uniprot ID. 
 
 **Example**
 
