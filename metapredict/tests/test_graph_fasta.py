@@ -20,6 +20,16 @@ def test_graph_fasta_png():
     assert os.path.isfile('output/sp_P0DMV8_HS71.png') is True
 
 
+def test_graph_fasta_png_idx():
+
+    # can make PNGs
+    meta.graph_disorder_fasta(fasta_filepath, output_dir='output/', indexed_filenames=True)
+
+    assert os.path.isfile('output/1_Q8N6T3.png') is True
+    assert os.path.isfile('output/2_p53.png') is True
+    assert os.path.isfile('output/3_sp_P0DMV8_HS71.png') is True
+
+
 
 def test_graph_fasta_jpg():
 
