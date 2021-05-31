@@ -7,8 +7,8 @@
 
 ##Handles the primary functions
 
-
-__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot']
+# NOTE - any new functions must be added to this list!
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores']
  
 import os
 import sys
@@ -32,6 +32,136 @@ from metapredict.backend import domain_definition as _domain_definition
 # stuff for uniprot from backend
 from metapredict.backend.uniprot_predictions import fetch_sequence as _fetch_sequence
 from metapredict.metapredict_exceptions import MetapredictError
+
+
+
+def predict_disorder_domains_from_external_scores(disorder, 
+                                                  sequence=None,
+                                                  disorder_threshold=0.5, 
+                                                  minimum_IDR_size=12, 
+                                                  minimum_folded_domain=50,
+                                                  gap_closure=10):
+    
+    """
+
+    This function takes in disorder scores generated from another predictor and applies the same domain-decomposition
+    algorithm as predict_disorder_domains() does to extract out congigous IDRs. For example, if one were to predict
+    disorder using the (excellent) ODiNPred, download the resulting scores, and read the scores into a list, that 
+    list could be passed as the $disorder argument to this function.
+
+    Note that the settings used here may be inapplicable to another disorder predictor, so you may need to play
+    around with the parameters including disorder_threshold, minimum_IDR_size, minimum_folded_domain and gap_closure.
+
+    the following information:
+
+        [0] -  Smoothed disorder score used to aid in domain boundary identification. This can be useful for 
+               understanding how IDRs/folded domains were identified, and will vary depending on the settings 
+               provided.
+         
+        [1] - a list of elements, where each element defines the start and end position of each IDR 
+
+        [2] - a list of elements, where each element defines the start and end position of each folded region  
+
+
+    Parameters
+    -------------
+
+    disorder : list
+        A list of per-residue disorder scores.
+
+    sequence : str
+        An optional argument which, if provided, is assumed to reflect the the amino acid sequence from which the 
+        disorder scores were computed. Note if these do not match one another in length then the function raises
+        an exception. Default = None
+
+    disorder_threshold : float
+        Value that defines what 'disordered' is based on the input predictor score. The higher the value the more
+        stringent the cutoff. Default = 0.5. 
+
+    minimum_IDR_size : int
+        Defines the smallest possible IDR. This is a hard limit - i.e. we CANNOT get IDRs smaller than this. Default = 12.
+
+    minimum_folded_domain : int
+        Defines where we expect the limit of small folded domains to be. This is NOT a hard limit and functions to modulate
+        the removal of large gaps (i.e. gaps less than this size are treated less strictly). Note that, in addition, 
+        gaps < 35 are evaluated with a threshold of 0.35*disorder_threshold and gaps < 20 are evaluated with a threshold 
+        of 0.25*disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which
+        are IDRs in isolation) often show up with reduced apparent disorder within IDRs, and but can be as short as 20-30 
+        residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain 
+        to be identified. Default=50.
+
+    gap_closure : int
+        Defines the largest gap that would be 'closed'. Gaps here refer to a scenario in which you have two groups
+        of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
+        larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes
+        very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
+        are increasingly rare. Default=10.
+
+    Returns
+    ---------
+    list
+        Always returns a list with three elements, as outlined below.
+
+        [0] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding
+              how IDRs/folded domains were identified, and will vary depending on the settings provided
+
+        [1] - a list of elements, where each element defines the start and end position of each IDR. If a sequence was provided
+              the third element in each sub-element is the IDR sequence. If no sequence was provided, then each sub-element is
+              simply len=2.
+ 
+        [2] - a list of elements, where each element defines the start and end position of each folded region. If a sequence was 
+              provided the third element in each sub-element is the folded domain sequence. If no sequence was provided, then each 
+              sub-element is simply len=2.
+
+    """
+
+    # if a sequence was provided check it makes sense in terms of type and length...
+    if sequence is not None:
+        try:
+            if len(sequence) != len(disorder):
+                raise MetapredictError('Disorder and sequence info are not length matched [disorder length = {len(disorder)}, sequence length = {len(sequence)}')
+        except Exception:
+            raise MetapredictError('Could not compare length of disorder and sequence parameters. Make sure sequence is a str and disorder a list')
+
+        return_sequence = True
+
+    # if sequence is None create a fake sequence and set return_sequence to False
+    else:
+        sequence = 'A'*len(disorder)
+        return_sequence = False
+        
+            
+    # run the get_domains function, passing in parameters
+    return_tuple = _domain_definition.get_domains(sequence, 
+                                                 disorder, 
+                                                 disorder_threshold=disorder_threshold,                                            
+                                                 minimum_IDR_size=minimum_IDR_size, 
+                                                 minimum_folded_domain=minimum_folded_domain,
+                                                 gap_closure=gap_closure)
+                                                 
+    
+
+    # if we are going to use the sequence then return 
+    if return_sequence:
+        return [return_tuple[0], return_tuple[1], return_tuple[2]]
+
+    # if we are not using the sequence
+    else:
+        # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
+        IDRs = []
+        for local_idr in return_tuple[1]:
+            IDRs.append([local_idr[0],local_idr[1]])
+
+        FDs = []
+        for local_fd in return_tuple[2]:
+            FDs.append([local_fd[0],local_fd[1]])
+            
+        return [return_tuple[0],IDRs, FDs]
+
+
+    
+
+
 
 def predict_disorder_domains(sequence, 
                              disorder_threshold=0.42, 
