@@ -77,10 +77,10 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True):
         predict_disorder(i)
 
     end = time.time()
-    s_per_second = (seq_len*num_seqs)/(end - start)
+    r_per_second = (seq_len*num_seqs)/(end - start)
 
     if verbose:
-        print('Predicting %i sequences per second!'%(s_per_second))
+        print('Predicting %i residues per second!'%(r_per_second))
 
     return s_per_second
     
