@@ -16,7 +16,8 @@ def __build_domains_from_values(values,
                                 disorder_threshold,
                                 minimum_IDR_size=12,
                                 minimum_folded_domain=50,
-                                gap_closure=10):
+                                gap_closure=10,
+                                override_folded_domain_minsize=False):
     """
     This function  extracts out disordered and folded domains from the linear
     disorder score. There are a few parameters here that tune the behavior, but
@@ -56,6 +57,14 @@ def __build_domains_from_values(values,
         folded in. This actually ends up being most important when disorder scores
         are unsmoothed. Default is 10.
 
+    override_folded_domain_minsize : bool
+        By default this function includes a fail-safe check that assumes folded domains
+        really shouldn't be less than 35 or 20 residues. However, for some approaches we
+        may wish to over-ride these thresholds to match the passed minimum_folded_domain
+        value. If this flag is set to True this override occurs. This is generally not 
+        recommended unless you expect there to be well-defined sharp boundaries which could
+        define small (20-30) residue folded domains. Default = False.
+
     Returns
     -------------
     list of lists
@@ -75,8 +84,12 @@ def __build_domains_from_values(values,
     # upper bounds for what we might consider to be single folded structures which are then
     # used as a final step in the procedure (see step 5). Defined here just by convention
     # of defining params early on
-    folded_domain_maxsize_1 = 35
-    folded_domain_maxsize_2 = 20
+    if override_folded_domain_minsize is False:
+        folded_domain_min_size_1 = 35
+        folded_domain_min_size_2 = 20
+    else:
+        folded_domain_min_size_1 = minimum_folded_domain
+        folded_domain_min_size_2 = minimum_folded_domain
 
     # Defines a local function that converts a continous IDR score into a bindary classification
     # - this function is instantiated with the passed disorder_threshold
@@ -227,12 +240,12 @@ def __build_domains_from_values(values,
                 local_domains.append(d)
                 continue
 
-        if d[1]-d[0] < folded_domain_maxsize_1:
+        if d[1]-d[0] < folded_domain_min_size_1:
             if np.mean(values[d[0]:d[1]]) > disorder_threshold*0.35:
                 local_domains.append(d)
                 continue
 
-        if d[1]-d[0] < folded_domain_maxsize_2:
+        if d[1]-d[0] < folded_domain_min_size_2:
             if np.mean(values[d[0]:d[1]]) > disorder_threshold*0.25:
                 local_domains.append(d)
                 continue
@@ -268,7 +281,8 @@ def get_domains(sequence,
                 disorder_threshold=0.42,
                 minimum_IDR_size=12,
                 minimum_folded_domain=50,
-                gap_closure=10):
+                gap_closure=10,
+                override_folded_domain_minsize=False):
     """
 
     Parameters
@@ -300,7 +314,15 @@ def get_domains(sequence,
         of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
         larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes
         very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
-        are increasingly rare. Default = 10
+        are increasingly rare. Default = 10.
+
+    override_folded_domain_minsize : bool
+        By default this function includes a fail-safe check that assumes folded domains
+        really shouldn't be less than 35 or 20 residues. However, for some approaches we
+        may wish to over-ride these thresholds to match the passed minimum_folded_domain
+        value. If this flag is set to True this override occurs. This is generally not 
+        recommended unless you expect there to be well-defined sharp boundaries which could
+        define small (20-30) residue folded domains. Default = False.
 
     Returns
     ------------
@@ -348,7 +370,9 @@ def get_domains(sequence,
                                                          disorder_threshold,
                                                          minimum_IDR_size=minimum_IDR_size,
                                                          minimum_folded_domain=minimum_folded_domain,
-                                                         gap_closure=gap_closure)
+                                                         gap_closure=gap_closure,
+                                                         override_folded_domain_minsize=override_folded_domain_minsize)
+                                                         
 
     # finally cycle through and get the actual IDR and FD sequences. Note the if len(d) ==2 means we
     # skip over cases where no FDs or no IDRs were found

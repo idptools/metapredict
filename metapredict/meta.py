@@ -40,7 +40,8 @@ def predict_disorder_domains_from_external_scores(disorder,
                                                   disorder_threshold=0.5, 
                                                   minimum_IDR_size=12, 
                                                   minimum_folded_domain=50,
-                                                  gap_closure=10):
+                                                  gap_closure=10,
+                                                  override_folded_domain_minsize=False):
     
     """
 
@@ -97,6 +98,16 @@ def predict_disorder_domains_from_external_scores(disorder,
         very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
 
+    override_folded_domain_minsize : bool
+        By default this function includes a fail-safe check that assumes folded domains
+        really shouldn't be less than 35 or 20 residues. However, for some approaches we
+        may wish to over-ride these thresholds to match the passed minimum_folded_domain
+        value. If this flag is set to True this override occurs. This is generally not 
+        recommended unless you expect there to be well-defined sharp boundaries which could
+        define small (20-30) residue folded domains. This is not provided as an option in the normal
+        predict_disorder_domains for metapredict. Default = False. 
+
+
     Returns
     ---------
     list
@@ -133,11 +144,12 @@ def predict_disorder_domains_from_external_scores(disorder,
             
     # run the get_domains function, passing in parameters
     return_tuple = _domain_definition.get_domains(sequence, 
-                                                 disorder, 
-                                                 disorder_threshold=disorder_threshold,                                            
-                                                 minimum_IDR_size=minimum_IDR_size, 
-                                                 minimum_folded_domain=minimum_folded_domain,
-                                                 gap_closure=gap_closure)
+                                                  disorder, 
+                                                  disorder_threshold=disorder_threshold,                                            
+                                                  minimum_IDR_size=minimum_IDR_size, 
+                                                  minimum_folded_domain=minimum_folded_domain,
+                                                  gap_closure=gap_closure,
+                                                  override_folded_domain_minsize=override_folded_domain_minsize)
                                                  
     
 
