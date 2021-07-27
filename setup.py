@@ -48,7 +48,9 @@ setup(
              'scripts/metapredict-predict-disorder',
              'scripts/metapredict-quick-graph',
              'scripts/metapredict-quick-predict',
-             'scripts/metapredict-uniprot'],
+             'scripts/metapredict-uniprot',
+             'scripts/metapredict-predict-idrs'],
+             
          
 
     # Additional entries you may want simply uncomment the lines you want and fill in the data
