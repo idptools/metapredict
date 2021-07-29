@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# executing script for IDR predictor in command line.
+# executing script for AF2 confidence predictor in command line.
 
 # import stuff for making CLI
 import os
@@ -19,13 +19,11 @@ from metapredict import meta
 if __name__ == "__main__":
 
     # Parse command line arguments.
-    parser = argparse.ArgumentParser(description='Generate disorder figures for all sequences in a FASTA file.')
+    parser = argparse.ArgumentParser(description='Generate Alphafold2 confidence score figures for all sequences in a FASTA file.')
 
     parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
 
     parser.add_argument('-D', '--dpi', default=150, type=int, help='Optional. Set DPI to change resolution of output graphs. Default is 150.')                        
-
-    parser.add_argument('-c', '--confidence', action='store_true', help='Optional. Use this flag to include AlphaFold2 confidence scores in the graph.')                        
 
     parser.add_argument('--filetype', default='png', help='Define the possible output filetype. Valid options are png, pdf, jpg. Default is png')
                         
@@ -33,35 +31,28 @@ if __name__ == "__main__":
 
     parser.add_argument('--indexed-filenames', help='Flag which, if set to true, means files will be indexed with a leading unique integer start at 1.', action='store_true')
 
-    parser.add_argument('--disorder-threshold', help='Defines the value plotted as a theshold line on the graph', default=0.3, type=float)
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert'", default='convert')
+
 
 
     args = parser.parse_args()
 
-    
-    if args.confidence == True:
-        confidence_scores = True
-    else:
-        confidence_scores = False
-    
+    DPI = args.dpi
 
     if args.output_directory is None:
         try:
             # make dir
-            os.makedirs('disorder_out', exist_ok=True)
+            os.makedirs('confidence_out', exist_ok=True)
         except Exception:
-            print('Error: Unable to make default outdirectory (disorder_out)')
+            print('Error: Unable to make default outdirectory (confidence_out)')
             exit(1)
 
-        outdir = 'disorder_out'
+        outdir = 'confidence_out'
     else:
         outdir = args.output_directory
 
     # run graph_disorder_fasta. For more info, see the graph_disorder_fasta function in meta.py.
-    meta.graph_disorder_fasta(filepath=args.data_file, 
-                              disorder_threshold=args.disorder_threshold,
-                              confidence_scores=confidence_scores,
+    meta.graph_confidence_fasta(filepath=args.data_file, 
                               DPI=args.dpi,
                               output_dir=outdir,
                               output_filetype=args.filetype,

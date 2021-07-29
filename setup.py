@@ -49,7 +49,9 @@ setup(
              'scripts/metapredict-quick-graph',
              'scripts/metapredict-quick-predict',
              'scripts/metapredict-uniprot',
-             'scripts/metapredict-predict-idrs'],
+             'scripts/metapredict-predict-idrs',
+             'scripts/metapredict-graph-confidence',
+             'scripts/metapredict-predict-confidence'],
              
          
 
@@ -61,7 +63,8 @@ setup(
             'matplotlib',
             'protfasta',
             'scipy',
-            'urllib3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+            'urllib3',
+            'alphaPredict'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',

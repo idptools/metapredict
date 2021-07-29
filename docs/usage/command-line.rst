@@ -1,8 +1,8 @@
 metapredict from the command-line
 ==================================
 
-Predicting Disorder
--------------------
+Predicting Disorder from Fasta Files
+---------------------------------------
 
 The ``metapredict-predict-disorder`` command from the command line takes a .fasta file as input and returns disorder scores for the sequences in the FASTA file.
 
@@ -21,8 +21,8 @@ Once metapredict is installed, the user can run ``metapredict-predict-disorder``
 
 **Additional Usage:**
 
-**Save the output -** 
-If you would like to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this will save the output file as disorder.csv. However, you can specify the file name in the output path.
+**Specifying where to save the output -** 
+If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name. By default this command will save the output file as disorder_scores.csv to your current working directory. However, you can specify the file name in the output path.
 
 **Example:** 
 
@@ -31,8 +31,8 @@ If you would like to save the ouptut, simply use the ``-o`` or ``--output-file``
     $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
 
 
-Quick Predictions
-------------------
+Predicting Disorder from a Sequence
+------------------------------------
 
 ``metapredict-quick-predict`` is a command that will let you input a sequence and get disorder values immediately printed to the terminal. The only argument that can be input is the sequence.
 
@@ -42,10 +42,39 @@ Quick Predictions
 	
 	$ metapredict-quick-predict ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN
 
-Graphing Disorder
--------------------
 
-The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a graph for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. These graphs will have to be closed sequentially. Therefore, it is not recommended to use this command without specifying an output directory specifying where to save the files.  
+Predicting AlphaFold2 Confidence Scores from a Fasta File
+------------------------------------------------------------
+
+The ``metapredict-predict-confidence`` command from the command line takes a .fasta file as input and returns predicted AlphaFold2 confidence scores for the sequences in the FASTA file.
+
+.. code-block:: bash
+	
+	$ metapredict-predict-confidence <Path to .fasta file>
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-confidence /Users/thisUser/Desktop/interestingProteins.fasta 
+
+**Additional Usage**
+
+**Specify where to save the output -** 
+If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this command will save the output file as confidence_scores.csv to your current working directory. However, you can specify the file name in the output path.
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_confidence_predictions.csv
+
+
+
+Graphing Disorder from a Fasta file
+------------------------------------
+
+The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a graph for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file.  
 
 .. code-block:: bash
 
@@ -57,10 +86,23 @@ The ``metapredict-graph-disorder`` command from the command line takes a .fasta 
 
     $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
 
+If no output directory is specified, this function will make an output directory in the current working directory called *disorder_out*. This directory will hold all generated graphs.
+
 **Additional Usage**
 
-**Saving the output -**
-To save the output, simply use the ``-o`` or ``--output-directory`` flag to specify where to save the file.
+
+**Adding AlphaFold2 Confidence Scores -**
+To add predicted AlphaFold2 confidence scores, simply use the ``-c`` or ``--confidence`` flag.
+
+**Example**
+
+.. code-block:: bash
+
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -c
+
+
+**Specifying where to save the output -**
+To specify where to dave the output, simply use the ``-o`` or ``--output-directory`` flag.
 
 **Example**
 
@@ -109,7 +151,7 @@ If you would like to change the disorder threshold line plotted on the graph, us
 Quick Graphing
 ---------------
 
-``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes two arguments, 1. the sequence and 2. *which is optional* is the DPI ``-D``  or ``--dpi`` of the ouput graph which defaults to 150 DPI
+``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes three arguments, 1. the sequence 2. *optional* DPI ``-D``  or ``--dpi`` of the ouput graph which defaults to 150 DPI, and 3. *optional* to include predicted AlphaFold2 condience scores, use the ``-c`` or ``--confidence`` flag.
 
 **Example:**
 
@@ -117,6 +159,11 @@ Quick Graphing
 	
 	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN
 
+**Example:**
+
+.. code-block:: bash
+	
+	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -c
 
 **Example:**
 
@@ -128,13 +175,19 @@ Quick Graphing
 Graphing using Uniprot ID
 --------------------------
 
-``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has three possible additional *optional* arguments, 1. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 2. Using ``-o``  or ``--output-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 3. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Disorder for* followed by the Uniprot ID.
+``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optional* arguments, 1. To include predicted AlphaFold2 2 confidence scores, use the ``-c``  or ``--confidence`` flag. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 3. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Disorder for* followed by the Uniprot ID.
 
 **Example:**
 
 .. code-block:: bash
 	
 	$ metapredict-uniprot Q8RYC8
+
+**Example:**
+
+.. code-block:: bash
+	
+	$ metapredict-uniprot Q8RYC8 -c
 
 **Example:**
 
@@ -159,6 +212,66 @@ Graphing using Uniprot ID
 .. code-block:: bash
 	
 	$ metapredict-uniprot Q8RYC8 -t ARF19
+
+
+
+Graphing Predicted AlphaFold2 Confidence Scores from a fasta file
+-------------------------------------------------------------------
+
+The ``metapredict-graph-confidence`` command from the command line takes a .fasta file as input and returns a graph of the predicted AlphaFold2 confidence score for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. 
+
+.. code-block:: bash
+	
+	$ metapredict-graph-confidence <Path to .fasta file> 
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta 
+
+If no output directory is specified, this function will make an output directory in the current working directory called *confidence_out*. This directory will hold all generated graphs.
+
+**Additional Usage**
+
+**Specifying where to save the output -**
+To specify where to dave the output, simply use the ``-o`` or ``--output-directory`` flag.
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/FolderForCoolPredictions
+
+
+**Changing resolution of saved graphs -**
+By default, the output graphs have a DPI of 150. However, the user can change the DPI of the output (higher values have greater resolution but take up more space). To change the DPI simply add the flag ``-D`` or ``--dpi`` followed by the wanted DPI value. 
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/confidenceGraphsFolder/ -D 300
+
+
+**Changing the file type -**
+By default the graphs will save as .png files. However, you can specify the file type by calling ``--filetype`` and then specifying the file type. Any matplotlib compatible file extension should work (for example, pdf).
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/confidenceGraphsFolder/ --filetype pdf
+
+**Indexing file names -**
+If you would like to index the file names with a leading unique integer starting at 1, use the ``--indexed-filenames`` flag.
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/confidenceGraphsFolder/ --indexed-filenames
+
 
 
 

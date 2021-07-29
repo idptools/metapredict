@@ -37,6 +37,23 @@ By default, output prediction values are normalized between 0 and 1. However, so
 	meta.predict_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", normalized=False)
 
 
+Predicting AlphaFold2 Confidence Scores
+----------------------------------------
+
+The ``predict_confidence`` function will return a list of predicted AlphaFold2 confidence scores  for each residue of the input sequence. The input sequence should be a string. Running -
+
+.. code-block:: python
+	
+	meta.predict_confidence("DAPPTSQEHTQAEDKERD")
+
+would output -
+
+.. code-block:: python
+	
+	[35.7925, 40.4579, 46.3753, 46.2976, 42.3189, 42.0248, 43.5976, 40.7481, 40.1676, 41.9618, 43.3977, 43.938, 41.8352, 44.0462, 44.5382, 46.3081, 49.2345, 46.0671]
+
+
+
 Graphing Disorder
 ------------------
 
@@ -51,7 +68,24 @@ would output -
 .. image:: ../images/meta_predict_disorder.png
   :width: 400
 
-**Additional Usage:**
+**Additional Usage**
+
+**Adding Predicted AlphaFold2 Confidence Scores -**
+To add predicted AlphaFold2 confidence scores, simply specify *confidence_scores=True*.
+
+**Example**
+
+.. code-block:: python
+	
+	seq = 'GHPGKQRNPGEHHSSRNVKRNWNNSPSGPNEGRESQEERKTPPRRGGQQSGESHNQDETNKPNPSDNHHEEEKADDNAHRGNDSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLRAKRVLRENFVQCEKAWHRRRLAHPYNRINMQWLDVFDGDCWLAPQLCFGFQFGHDRPVWKIFWYHERGDLRYKLILKDHANVLNKPAHSRNARCESSAPSHDPHGNANSYDKKVTTPDPTEIKSSQESGNSNPDHSPHMPGRDMQEQPGEEPGGHPEKRLIRSKGKTDYKDNRSPRNNPSTDPEWESAHFQWSHDPNEQWLHNLGWPMRWMWQLPNPGIEPFSLNTRKKAPSWINLLYNADPCKTQDDERDCEHHMYQIQPIAPVPKIAMHYCTCFPRVHRIPC'
+	
+	meta.graph_disorder(seq, confidence_scores=True)
+
+would output - 
+
+.. image:: ../images/confidence_scores_disorder.png
+  :width: 400
+
 
 **Changing title of generated graph -**
 There are two parameters that the user can change for graph_disorder(). The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted protein disorder*. However, the title can be specified by specifing *title* = "my cool title" would result in a title of *my cool title*. Running - 
@@ -107,6 +141,20 @@ In addition, you can specify the color of the shaded regions by specifying *shad
 .. code-block:: python
 
     meta.graph_disorder("DAPPTSQEHTQAEDKER", output_file=/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png)
+
+
+Graphing AlphaFold2 Confidence Scores
+--------------------------------------
+
+The ``graph_confidence`` function will show a plot of the predicted AlphaFold2 confidence scores across the input amino acid sequence.
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_confidence("DAPTSQEHTQAEDKERDSKTHPQKKQSPS")
+
+This function has all of the same functionality as ``graph_disorder``.
 
 
 Calculating Percent Disorder:
@@ -192,6 +240,19 @@ By default, this function will output prediction values that are normalized betw
 	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", normalized=False)
 
 
+
+Predicting AlphaFold2 confidence scores From a .fasta File
+-------------------------------------------------------------
+
+Just like with ``predict_disorder_fasta``, you can use ``predict_confidence_fasta`` to get predicted AlphaFold2 confidence scores from a fasta file. All the same functionality in ``predict_disorder_fasta`` is in ``predict_confidence_fasta``.
+
+**Example**
+
+.. code-block:: python
+
+	meta.predict_confidence_fasta("/Users/thisUser/Desktop/coolSequences.fasta")
+
+
 Predict Disorder Using Uniprot ID
 -----------------------------------
 
@@ -204,8 +265,21 @@ By using the ``predict_disorder_uniprot()`` function, you can return predicted c
     meta.predict_disorder_uniprot("Q8N6T3")
 
 
-Generating Graphs From a .fasta File:
--------------------------------------
+Predicting AlphaFold2 Confidence Scores Using Uniprot ID
+-----------------------------------------------------------
+
+By using the ``predict_confidence_uniprot`` function, you can generate predicted AlphaFold2 confidence scores by inputting a Uniprot ID.
+
+**Example**
+
+.. code-block:: python
+
+    meta.predict_confidence_uniprot('P16892')
+
+
+
+Generating Disorder Graphs From a .fasta File:
+-----------------------------------------------
 
 By using the ``graph_disorder_fasta()`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and by default will return the graphs immediately. However, you can specify *output_dir=path_to_save_files* which result in a .png file saved to that directory for every sequence within the .fasta file. You cannot specify the output file name here! By default, the file name will be the first 14 characters of the FASTA header followed by the filetype as specified by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name where X starts at 1 and increments) then set *indexed_filenames = True*. This can be useful if you have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an output file. By default this will return a single graph for every sequence in the FASTA file. 
 
@@ -226,7 +300,17 @@ An actual filepath would look something like:
     meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 
-**Additional Usage:**
+**Additional Usage**
+
+**Adding Predicted AlphaFold2 Confidence Scores -**
+To add predicted AlphaFold2 confidence scores, simply specify *confidence_scores=True*.
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", confidence_scores=True)
+
 
 **Changing resolution of saved graphs -**
 By default, the output files have a DPI of 150. However, the user can change the DPI of the output files (higher values have greater resolution but take up more space). To change the DPI, specify *DPI=Number* where Number is an integer.
@@ -256,6 +340,17 @@ If you would like to index the file names with a leading unique integer starting
     meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", indexed_filenames=True)
 
 
+
+Generating AlphaFold2 Confidence Score Graphs from fasta files
+----------------------------------------------------------------
+
+By using the ``graph_confidence_fasta`` function, you can graph predicted AlphaFold2 confidence scores for the amino acid sequences in a .fasta file. This works the same as ``graph_disorder_fasta`` but instead returns graphs with just the predicted AlphaFold2 confidence scores.
+
+.. code-block:: python
+
+    meta.graph_confidence_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
+
+
 Generating Graphs Using Uniprot ID
 ------------------------------------
 
@@ -275,6 +370,28 @@ This function carries all of the same functionality as ``graph_disorder()`` incl
 
     meta.graph_disorder_uniprot("Q8N6T3", disorder_threshold=0.5, title="my protein", DPI=300, output_file="/Users/thisUser/Desktop/my_cool_graph.png")
 
+**Additional usage**
+
+**Adding Predicted AlphaFold2 Confidence Scores -**
+To add predicted AlphaFold2 confidence scores, simply specify *confidence_scores=True*.
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_disorder_uniprot("Q8N6T3", confidence_scores=True)
+
+
+Generating AlphaFold2 Confidnce Score Graphs Using Uniprot ID
+--------------------------------------------------------------
+
+Just like with disorder predictions, you can also get AlphaFold2 confidence score graphs using the Uniprot ID. This will **only display the confidence scores** and not the predicted disorder scores. 
+
+**Example**
+
+.. code-block:: python
+
+    meta.graph_confidence_uniprot("Q8N6T3")
 
 
 Predicting Disorder Domains:

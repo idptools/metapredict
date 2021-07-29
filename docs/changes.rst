@@ -6,6 +6,12 @@ About
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
 
+V1.3
+-----
+Change:
+Added functionality to generate predicted AlphaFold2 confidence scores. Can get scores or generate graphs from Python or command-line. Can also generate graphs with both predicted disorder and predicted confidence scores. Also added functionality to predict disorder domains using scores from a different disorder predictor. 
+
+
 V.1.2
 ------
 Change:
