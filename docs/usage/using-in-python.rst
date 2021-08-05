@@ -40,11 +40,11 @@ By default, output prediction values are normalized between 0 and 1. However, so
 Predicting AlphaFold2 Confidence Scores
 ----------------------------------------
 
-The ``predict_confidence`` function will return a list of predicted AlphaFold2 confidence scores  for each residue of the input sequence. The input sequence should be a string. Running -
+The ``predict_pLDDT`` function will return a list of predicted AlphaFold2 pLDDT confidence scores  for each residue of the input sequence. The input sequence should be a string. Running -
 
 .. code-block:: python
 	
-	meta.predict_confidence("DAPPTSQEHTQAEDKERD")
+	meta.predict_pLDDT("DAPPTSQEHTQAEDKERD")
 
 would output -
 
@@ -71,7 +71,7 @@ would output -
 **Additional Usage**
 
 **Adding Predicted AlphaFold2 Confidence Scores -**
-To add predicted AlphaFold2 confidence scores, simply specify *confidence_scores=True*.
+To add predicted AlphaFold2 pLDDT confidence scores, simply specify *pLDDT_scores=True*.
 
 **Example**
 
@@ -79,7 +79,7 @@ To add predicted AlphaFold2 confidence scores, simply specify *confidence_scores
 	
 	seq = 'GHPGKQRNPGEHHSSRNVKRNWNNSPSGPNEGRESQEERKTPPRRGGQQSGESHNQDETNKPNPSDNHHEEEKADDNAHRGNDSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLRAKRVLRENFVQCEKAWHRRRLAHPYNRINMQWLDVFDGDCWLAPQLCFGFQFGHDRPVWKIFWYHERGDLRYKLILKDHANVLNKPAHSRNARCESSAPSHDPHGNANSYDKKVTTPDPTEIKSSQESGNSNPDHSPHMPGRDMQEQPGEEPGGHPEKRLIRSKGKTDYKDNRSPRNNPSTDPEWESAHFQWSHDPNEQWLHNLGWPMRWMWQLPNPGIEPFSLNTRKKAPSWINLLYNADPCKTQDDERDCEHHMYQIQPIAPVPKIAMHYCTCFPRVHRIPC'
 	
-	meta.graph_disorder(seq, confidence_scores=True)
+	meta.graph_disorder(seq, pLDDT_scores=True)
 
 would output - 
 
@@ -146,13 +146,13 @@ In addition, you can specify the color of the shaded regions by specifying *shad
 Graphing AlphaFold2 Confidence Scores
 --------------------------------------
 
-The ``graph_confidence`` function will show a plot of the predicted AlphaFold2 confidence scores across the input amino acid sequence.
+The ``graph_pLDDT`` function will show a plot of the predicted AlphaFold2 pLDDT confidence scores across the input amino acid sequence.
 
 **Example**
 
 .. code-block:: python
 
-    meta.graph_confidence("DAPTSQEHTQAEDKERDSKTHPQKKQSPS")
+    meta.graph_pLDDT("DAPTSQEHTQAEDKERDSKTHPQKKQSPS")
 
 This function has all of the same functionality as ``graph_disorder``.
 
@@ -244,13 +244,13 @@ By default, this function will output prediction values that are normalized betw
 Predicting AlphaFold2 confidence scores From a .fasta File
 -------------------------------------------------------------
 
-Just like with ``predict_disorder_fasta``, you can use ``predict_confidence_fasta`` to get predicted AlphaFold2 confidence scores from a fasta file. All the same functionality in ``predict_disorder_fasta`` is in ``predict_confidence_fasta``.
+Just like with ``predict_disorder_fasta``, you can use ``predict_pLDDT_fasta`` to get predicted AlphaFold2 pLDDT confidence scores from a fasta file. All the same functionality in ``predict_disorder_fasta`` is in ``predict_pLDDT_fasta``.
 
 **Example**
 
 .. code-block:: python
 
-	meta.predict_confidence_fasta("/Users/thisUser/Desktop/coolSequences.fasta")
+	meta.predict_pLDDT_fasta("/Users/thisUser/Desktop/coolSequences.fasta")
 
 
 Predict Disorder Using Uniprot ID
@@ -268,13 +268,13 @@ By using the ``predict_disorder_uniprot()`` function, you can return predicted c
 Predicting AlphaFold2 Confidence Scores Using Uniprot ID
 -----------------------------------------------------------
 
-By using the ``predict_confidence_uniprot`` function, you can generate predicted AlphaFold2 confidence scores by inputting a Uniprot ID.
+By using the ``predict_pLDDT_uniprot`` function, you can generate predicted AlphaFold2 pLDDT confidence scores by inputting a Uniprot ID.
 
 **Example**
 
 .. code-block:: python
 
-    meta.predict_confidence_uniprot('P16892')
+    meta.predict_pLDDT_uniprot('P16892')
 
 
 
@@ -303,13 +303,13 @@ An actual filepath would look something like:
 **Additional Usage**
 
 **Adding Predicted AlphaFold2 Confidence Scores -**
-To add predicted AlphaFold2 confidence scores, simply specify *confidence_scores=True*.
+To add predicted AlphaFold2 pLDDT confidence scores, simply specify *pLDDT_scores=True*.
 
 **Example**
 
 .. code-block:: python
 
-    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", confidence_scores=True)
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", pLDDT_scores=True)
 
 
 **Changing resolution of saved graphs -**
@@ -344,11 +344,11 @@ If you would like to index the file names with a leading unique integer starting
 Generating AlphaFold2 Confidence Score Graphs from fasta files
 ----------------------------------------------------------------
 
-By using the ``graph_confidence_fasta`` function, you can graph predicted AlphaFold2 confidence scores for the amino acid sequences in a .fasta file. This works the same as ``graph_disorder_fasta`` but instead returns graphs with just the predicted AlphaFold2 confidence scores.
+By using the ``graph_pLDDT_fasta`` function, you can graph predicted AlphaFold2 pLDDT confidence scores for the amino acid sequences in a .fasta file. This works the same as ``graph_disorder_fasta`` but instead returns graphs with just the predicted AlphaFold2 pLDDT scores.
 
 .. code-block:: python
 
-    meta.graph_confidence_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
+    meta.graph_pLDDT_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 
 Generating Graphs Using Uniprot ID
@@ -373,25 +373,25 @@ This function carries all of the same functionality as ``graph_disorder()`` incl
 **Additional usage**
 
 **Adding Predicted AlphaFold2 Confidence Scores -**
-To add predicted AlphaFold2 confidence scores, simply specify *confidence_scores=True*.
+To add predicted AlphaFold2 pLDDT confidence scores, simply specify *pLDDT_scores=True*.
 
 **Example**
 
 .. code-block:: python
 
-    meta.graph_disorder_uniprot("Q8N6T3", confidence_scores=True)
+    meta.graph_disorder_uniprot("Q8N6T3", pLDDT_scores=True)
 
 
 Generating AlphaFold2 Confidnce Score Graphs Using Uniprot ID
 --------------------------------------------------------------
 
-Just like with disorder predictions, you can also get AlphaFold2 confidence score graphs using the Uniprot ID. This will **only display the confidence scores** and not the predicted disorder scores. 
+Just like with disorder predictions, you can also get AlphaFold2 pLDDT confidence score graphs using the Uniprot ID. This will **only display the pLDDT confidence scores** and not the predicted disorder scores. 
 
 **Example**
 
 .. code-block:: python
 
-    meta.graph_confidence_uniprot("Q8N6T3")
+    meta.graph_pLDDT_uniprot("Q8N6T3")
 
 
 Predicting Disorder Domains:

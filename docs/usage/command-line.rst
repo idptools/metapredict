@@ -46,28 +46,28 @@ Predicting Disorder from a Sequence
 Predicting AlphaFold2 Confidence Scores from a Fasta File
 ------------------------------------------------------------
 
-The ``metapredict-predict-confidence`` command from the command line takes a .fasta file as input and returns predicted AlphaFold2 confidence scores for the sequences in the FASTA file.
+The ``metapredict-predict-pLDDT`` command from the command line takes a .fasta file as input and returns predicted AlphaFold2 pLDDT confidence scores for the sequences in the FASTA file.
 
 .. code-block:: bash
 	
-	$ metapredict-predict-confidence <Path to .fasta file>
+	$ metapredict-predict-pLDDT <Path to .fasta file>
 
 **Example**
 
 .. code-block:: bash
 	
-	$ metapredict-predict-confidence /Users/thisUser/Desktop/interestingProteins.fasta 
+	$ metapredict-predict-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta 
 
 **Additional Usage**
 
 **Specify where to save the output -** 
-If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this command will save the output file as confidence_scores.csv to your current working directory. However, you can specify the file name in the output path.
+If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this command will save the output file as pLDDT_scores.csv to your current working directory. However, you can specify the file name in the output path.
 
 **Example**
 
 .. code-block:: bash
 	
-	$ metapredict-predict-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_confidence_predictions.csv
+	$ metapredict-predict-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_pLDDT_predictions.csv
 
 
 
@@ -92,13 +92,13 @@ If no output directory is specified, this function will make an output directory
 
 
 **Adding AlphaFold2 Confidence Scores -**
-To add predicted AlphaFold2 confidence scores, simply use the ``-c`` or ``--confidence`` flag.
+To add predicted AlphaFold2 pLDDT confidence scores, simply use the ``-p`` or ``--pLDDT`` flag.
 
 **Example**
 
 .. code-block:: bash
 
-    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -c
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta p
 
 
 **Specifying where to save the output -**
@@ -151,7 +151,7 @@ If you would like to change the disorder threshold line plotted on the graph, us
 Quick Graphing
 ---------------
 
-``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes three arguments, 1. the sequence 2. *optional* DPI ``-D``  or ``--dpi`` of the ouput graph which defaults to 150 DPI, and 3. *optional* to include predicted AlphaFold2 condience scores, use the ``-c`` or ``--confidence`` flag.
+``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes three arguments, 1. the sequence 2. *optional* DPI ``-D``  or ``--dpi`` of the ouput graph which defaults to 150 DPI, and 3. *optional* to include predicted AlphaFold2 condience scores, use the ``p`` or ``--pLDDT`` flag.
 
 **Example:**
 
@@ -163,7 +163,7 @@ Quick Graphing
 
 .. code-block:: bash
 	
-	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -c
+	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -p
 
 **Example:**
 
@@ -175,7 +175,7 @@ Quick Graphing
 Graphing using Uniprot ID
 --------------------------
 
-``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optional* arguments, 1. To include predicted AlphaFold2 2 confidence scores, use the ``-c``  or ``--confidence`` flag. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 3. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Disorder for* followed by the Uniprot ID.
+``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optional* arguments, 1. To include predicted AlphaFold2 pLDDT confidence scores, use the ``-p``  or ``--pLDDT`` flag. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 3. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Disorder for* followed by the Uniprot ID.
 
 **Example:**
 
@@ -187,7 +187,7 @@ Graphing using Uniprot ID
 
 .. code-block:: bash
 	
-	$ metapredict-uniprot Q8RYC8 -c
+	$ metapredict-uniprot Q8RYC8 -p
 
 **Example:**
 
@@ -215,22 +215,22 @@ Graphing using Uniprot ID
 
 
 
-Graphing Predicted AlphaFold2 Confidence Scores from a fasta file
+Graphing Predicted AlphaFold2 pLDDT Scores from a fasta file
 -------------------------------------------------------------------
 
-The ``metapredict-graph-confidence`` command from the command line takes a .fasta file as input and returns a graph of the predicted AlphaFold2 confidence score for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. 
+The ``metapredict-graph-pLDDT`` command from the command line takes a .fasta file as input and returns a graph of the predicted AlphaFold2 pLDDT confidence score for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. 
 
 .. code-block:: bash
 	
-	$ metapredict-graph-confidence <Path to .fasta file> 
+	$ metapredict-graph-pLDDT <Path to .fasta file> 
 
 **Example**
 
 .. code-block:: bash
 	
-	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta 
+	$ metapredict-graph-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta 
 
-If no output directory is specified, this function will make an output directory in the current working directory called *confidence_out*. This directory will hold all generated graphs.
+If no output directory is specified, this function will make an output directory in the current working directory called *pLDDT_out*. This directory will hold all generated graphs.
 
 **Additional Usage**
 
@@ -241,7 +241,7 @@ To specify where to dave the output, simply use the ``-o`` or ``--output-directo
 
 .. code-block:: bash
 	
-	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/FolderForCoolPredictions
+	$ metapredict-graph-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/FolderForCoolPredictions
 
 
 **Changing resolution of saved graphs -**
@@ -251,7 +251,7 @@ By default, the output graphs have a DPI of 150. However, the user can change th
 
 .. code-block:: bash
 	
-	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/confidenceGraphsFolder/ -D 300
+	$ metapredict-graph-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/pLDDTGraphsFolder/ -D 300
 
 
 **Changing the file type -**
@@ -261,7 +261,7 @@ By default the graphs will save as .png files. However, you can specify the file
 
 .. code-block:: bash
 	
-	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/confidenceGraphsFolder/ --filetype pdf
+	$ metapredict-graph-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/pLDDTGraphsFolder/ --filetype pdf
 
 **Indexing file names -**
 If you would like to index the file names with a leading unique integer starting at 1, use the ``--indexed-filenames`` flag.
@@ -270,7 +270,7 @@ If you would like to index the file names with a leading unique integer starting
 
 .. code-block:: bash
 	
-	$ metapredict-graph-confidence /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/confidenceGraphsFolder/ --indexed-filenames
+	$ metapredict-graph-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/pLDDTGraphsFolder/ --indexed-filenames
 
 
 

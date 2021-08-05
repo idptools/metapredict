@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_confidence_uniprot', 'predict_confidence_uniprot', 'graph_confidence_fasta', 'predict_confidence_fasta', 'graph_confidence', 'predict_confidence']
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
  
 import os
 import sys
@@ -294,7 +294,7 @@ def predict_disorder(sequence, normalized=True):
 def graph_disorder(sequence, 
                    title = 'Predicted protein disorder', 
                    disorder_threshold = 0.3,
-                   confidence_scores=False,
+                   pLDDT_scores=False,
                    shaded_regions = None,
                    shaded_region_color = 'red',
                    DPI=150, 
@@ -315,7 +315,7 @@ def graph_disorder(sequence,
         Sets a threshold which draws a horizontal black line as a visual guide along
         the length of the figure. Must be a value between 0 and 1. Default = 0.3
     
-    confidence_scores : Bool
+    pLDDT_scores : Bool
         Sets whether to include the predicted confidence scores from
         AlphaFold2
 
@@ -363,13 +363,13 @@ def graph_disorder(sequence,
 
     # call the graph function
     _graph(sequence, title = title, disorder_threshold = disorder_threshold, 
-        confidence_scores = confidence_scores, shaded_regions = shaded_regions,
+        pLDDT_scores = pLDDT_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
         DPI=DPI, output_file = output_file) 
 
-def predict_confidence(sequence):
+def predict_pLDDT(sequence):
     """
-    Function to return predicted confidence scores from
+    Function to return predicted pLDDT scores from
     AlphaFold2 for an input sequeunce.
 
     Parameters
@@ -382,7 +382,7 @@ def predict_confidence(sequence):
     --------
     
     list
-        Returns a list of floats that corresponds to the per-residue confidence score.
+        Returns a list of floats that corresponds to the per-residue pLDDT score.
 
     """
     # make all residues upper case 
@@ -392,16 +392,16 @@ def predict_confidence(sequence):
     return _AF2pLDDTscores.predict(sequence)
 
 
-def graph_confidence(sequence, 
-                   title = 'Predicted AF2 Confidence Score',
-                   confidence_scores=True,
+def graph_pLDDT(sequence, 
+                   title = 'Predicted AF2 pLDDT Confidence Score',
+                   pLDDT_scores=True,
                    disorder_scores=False, 
                    shaded_regions = None,
                    shaded_region_color = 'red',
                    DPI=150, 
                    output_file=None):
     """
-    Function to plot the AF2 confidence scores of an input sequece. Displays immediately.
+    Function to plot the AF2 pLDDT scores of an input sequece. Displays immediately.
 
     Parameters
     -------------
@@ -412,7 +412,7 @@ def graph_confidence(sequence,
     title : str
         Sets the title of the generated figure. Default = "Predicted protein disorder"
     
-    confidence_scores : Bool
+    pLDDT_scores : Bool
         Sets whether to include the predicted confidence scores from
         AlphaFold2
 
@@ -461,7 +461,7 @@ def graph_confidence(sequence,
     _meta_tools.valid_shaded_region(shaded_regions, len(sequence))
 
     # call the graph function
-    _graph(sequence, title = title, confidence_scores = confidence_scores,
+    _graph(sequence, title = title, pLDDT_scores = pLDDT_scores,
         disorder_scores=disorder_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
         DPI=DPI, output_file = output_file) 
@@ -610,13 +610,13 @@ def predict_disorder_fasta(filepath,
     else:
         _meta_tools.write_csv(disorder_dict, output_file)
 
-def predict_confidence_fasta(filepath, 
+def predict_pLDDT_fasta(filepath, 
                            output_file = None,
                            invalid_sequence_action='convert'):
     """
     Function to read in a .fasta file from a specified filepath.
-    Returns a dictionary of confidence values where the key is the 
-    fasta header and the values are the predicted confidence values.
+    Returns a dictionary of pLDDT values where the key is the 
+    fasta header and the values are the predicted pLDDT values.
     
     Parameters
     -------------
@@ -641,13 +641,13 @@ def predict_confidence_fasta(filepath,
 
     dict or None
         If output_file is set to None (as default) then this fiction returns a dictionary of sequence ID to
-        confidence vector. If output_file is set to a filename then a .csv file will instead be written and 
+        pLDDT vector. If output_file is set to a filename then a .csv file will instead be written and 
         no return data will be provided.
 
     """
 
     # Importantly, by default this function corrects invalid residue
-    # values using protfasta.read_fasta() because the confidence predictor
+    # values using protfasta.read_fasta() because the pLDDT predictor
     # cannot have non-amino acid values as an input.
 
     # Test to see if the data_file exists
@@ -691,7 +691,7 @@ def predict_confidence_fasta(filepath,
 
 
 def graph_disorder_fasta(filepath, 
-                         confidence_scores=False,
+                         pLDDT_scores=False,
                          disorder_threshold = 0.3,
                          DPI=150, 
                          output_dir = None,
@@ -722,8 +722,8 @@ def graph_disorder_fasta(filepath,
         The path to where the .fasta file is located. The filepath should end in the file name. 
         For example (on MacOS):filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
 
-    confidence_scores : Bool
-        Sets whether to include the predicted confidence scores from
+    pLDDT_scores : Bool
+        Sets whether to include the predicted pLDDT scores from
         AlphaFold2
 
     disorder_threshold : float
@@ -801,15 +801,15 @@ def graph_disorder_fasta(filepath,
             title = idx[0:14]
 
             # plot!        
-            graph_disorder(local_sequence, title=title, confidence_scores=confidence_scores, DPI=DPI, output_file=filename)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, output_file=filename)
 
         # if no output_dir specified just graph the seq        
         else:
             # define title (including bad chars)
             title = idx[0:14]            
-            graph_disorder(local_sequence, title=title, confidence_scores=confidence_scores, DPI=DPI)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI)
 
-def graph_confidence_fasta(filepath, 
+def graph_pLDDT_fasta(filepath, 
                          DPI=150, 
                          output_dir = None,
                          output_filetype='png', 
@@ -817,7 +817,7 @@ def graph_confidence_fasta(filepath,
                          indexed_filenames=False):
 
     """
-    Function to make graphs of predicted confidence from the sequences
+    Function to make graphs of predicted pLDDT from the sequences
     in a specified .fasta file. By default will save the generated
     graphs to the location output_path specified in filepath.
 
@@ -908,13 +908,13 @@ def graph_confidence_fasta(filepath,
             title = idx[0:14]
 
             # plot!        
-            graph_confidence(local_sequence, title=title, DPI=DPI, output_file=filename)
+            graph_pLDDT(local_sequence, title=title, DPI=DPI, output_file=filename)
 
         # if no output_dir specified just graph the seq        
         else:
             # define title (including bad chars)
             title = idx[0:14]      
-            graph_confidence(local_sequence, title=title, DPI=DPI)
+            graph_pLDDT(local_sequence, title=title, DPI=DPI)
 
 
 
@@ -948,9 +948,9 @@ def predict_disorder_uniprot(uniprot_id, normalized=True):
 
 
 
-def predict_confidence_uniprot(uniprot_id):
+def predict_pLDDT_uniprot(uniprot_id):
     """
-    Function to return confidence score of a single input sequence. Uses a 
+    Function to return pLDDT score of a single input sequence. Uses a 
     Uniprot ID to get the sequence.
 
     Parameters
@@ -977,7 +977,7 @@ def predict_confidence_uniprot(uniprot_id):
 
 def graph_disorder_uniprot(uniprot_id, 
                            title = 'Predicted protein disorder',
-                           confidence_scores=False, 
+                           pLDDT_scores=False, 
                            disorder_threshold = 0.3,
                            shaded_regions = None,
                            shaded_region_color = 'red',
@@ -996,8 +996,8 @@ def graph_disorder_uniprot(uniprot_id,
     title : str
         Sets the title of the generated figure. Default = "Predicted protein disorder"
 
-    confidence_scores : Bool
-        Sets whether to include the predicted confidence scores from
+    pLDDT_scores : Bool
+        Sets whether to include the predicted pLDDT scores from
         AlphaFold2
 
     disorder_threshold : float
@@ -1042,13 +1042,13 @@ def graph_disorder_uniprot(uniprot_id,
     sequence = _fetch_sequence(uniprot_id)
 
     # graph sequence
-    _graph(sequence, title=title, confidence_scores=confidence_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
+    _graph(sequence, title=title, pLDDT_scores=pLDDT_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
     
 
 
 
-def graph_confidence_uniprot(uniprot_id, 
-                           title = 'Predicted AF2 Confidence Scores', 
+def graph_pLDDT_uniprot(uniprot_id, 
+                           title = 'Predicted AF2 pLDDT Scores', 
                            shaded_regions = None,
                            shaded_region_color = 'red',
                            DPI=150, 
@@ -1102,7 +1102,7 @@ def graph_confidence_uniprot(uniprot_id,
     sequence = _fetch_sequence(uniprot_id)
 
     # graph sequence
-    _graph(sequence, title=title, disorder_scores=False, confidence_scores=True, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
+    _graph(sequence, title=title, disorder_scores=False, pLDDT_scores=True, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
     
 
 

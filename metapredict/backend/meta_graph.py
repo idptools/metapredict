@@ -16,7 +16,7 @@ from metapredict.metapredict_exceptions import MetapredictError
 def graph(sequence,
           title='Predicted protein disorder',
           disorder_threshold=0.3,
-          confidence_scores=False,
+          pLDDT_scores=False,
           disorder_scores=True,
           shaded_regions=None,
           shaded_region_color='red',
@@ -42,7 +42,7 @@ def graph(sequence,
     title : str
         Sets the title of the generated figure. Default = "Predicted protein disorder"
 
-    confidence_scores : Bool
+    pLDDT_scores : Bool
         Sets whether to include the predicted confidence scores from
         AlphaFold2
 
@@ -95,13 +95,13 @@ def graph(sequence,
 
     """
     # make sure confidence scores and disorder scores not both false
-    if confidence_scores == False and disorder_scores == False:
-        raise MetapredictError('Cannot set both confidence_scores and disorder_scores to False. If disorder_scores=False, set confidence_score=True.')
+    if pLDDT_scores == False and disorder_scores == False:
+        raise MetapredictError('Cannot set both pLDDT_scores and disorder_scores to False. If disorder_scores=False, set confidence_score=True.')
 
 
     # if confidence scores also added, match the threshold_line_color to the
     # disorder_line_color
-    if confidence_scores == True and disorder_scores==True:
+    if pLDDT_scores == True and disorder_scores==True:
         threshold_line_color = disorder_line_color
         confidence_threshold_color = confidence_line_color
 
@@ -118,7 +118,7 @@ def graph(sequence,
         
 
     # if a name is set, the figure will hold that name as the identifier
-    if confidence_scores == True and disorder_scores==True:
+    if pLDDT_scores == True and disorder_scores==True:
         fig = plt.figure(num=title, figsize=[10, 3], dpi=DPI, edgecolor='black')
         axes = fig.add_axes([0.15, 0.15, 0.55, 0.75])
     else:
@@ -132,10 +132,10 @@ def graph(sequence,
     if title == 'Predicted protein disorder':
         # if user doesn't set title and confidence scores
         # are added in, change default to include AF2pLDDT
-        if confidence_scores == True and disorder_scores==True:
+        if pLDDT_scores == True and disorder_scores==True:
             title = 'Predicted protein disorder / AF2pLDDT'
         # if user doesn't set title and only wants confidence scores
-        elif confidence_scores == True and disorder_scores==False:
+        elif pLDDT_scores == True and disorder_scores==False:
             title = 'Predicted protein AF2pLDDT scores'
         else:
             title = title
@@ -144,7 +144,7 @@ def graph(sequence,
     axes.set_title(title)
     
     # modify y_label if needed
-    if confidence_scores == True and disorder_scores == False:
+    if pLDDT_scores == True and disorder_scores == False:
         axes.set_ylabel("AF2pLDDT scores")
     else:
         axes.set_ylabel("Consensus Disorder")
@@ -188,24 +188,24 @@ def graph(sequence,
             axes.axvspan(start, end, alpha=0.2, color=shaded_region_color)
 
     # if graphing both confidence and disorder
-    if confidence_scores == True and disorder_scores==True:
+    if pLDDT_scores == True and disorder_scores==True:
         # import alpha predict
         from alphaPredict import alpha
         # get confidence scores
-        confidence_scores = alpha.predict(sequence)
+        pLDDT_scores = alpha.predict(sequence)
         twin1 = axes.twinx()
-        af1, = twin1.plot(xValues, confidence_scores, color = confidence_line_color, label="Predicted AF2pLDDT")
+        af1, = twin1.plot(xValues, pLDDT_scores, color = confidence_line_color, label="Predicted AF2pLDDT")
         twin1.set_ylim(0, 100)
         twin1.set_ylabel('Predicted AF2pLDDT Scores')
         af2, = axes.plot([0, n_res+2], [0.5, 0.5], color=confidence_line_color, linewidth="1.25", linestyle="dashed", label = 'AF2pLDDT Threshold')
         axes.legend(handles=[ds1, ds2, af1, af2], bbox_to_anchor=(1.1, 1), loc='upper left')
-    elif confidence_scores == True and disorder_scores == False:
+    elif pLDDT_scores == True and disorder_scores == False:
         # import alpha predict
         from alphaPredict import alpha
         # get confidence scores
-        confidence_scores = alpha.predict(sequence)
+        pLDDT_scores = alpha.predict(sequence)
         # plot the confidence scores
-        axes.plot(xValues, confidence_scores, color=confidence_line_color, linewidth='1.6', label = 'Disorder Scores')    
+        axes.plot(xValues, pLDDT_scores, color=confidence_line_color, linewidth='1.6', label = 'Disorder Scores')    
 
 
     if output_file is None:

@@ -50,8 +50,8 @@ setup(
              'scripts/metapredict-quick-predict',
              'scripts/metapredict-uniprot',
              'scripts/metapredict-predict-idrs',
-             'scripts/metapredict-graph-confidence',
-             'scripts/metapredict-predict-confidence'],
+             'scripts/metapredict-graph-pLDDT',
+             'scripts/metapredict-predict-pLDDT'],
              
          
 

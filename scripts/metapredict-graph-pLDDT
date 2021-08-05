@@ -19,7 +19,7 @@ from metapredict import meta
 if __name__ == "__main__":
 
     # Parse command line arguments.
-    parser = argparse.ArgumentParser(description='Generate Alphafold2 confidence score figures for all sequences in a FASTA file.')
+    parser = argparse.ArgumentParser(description='Generate Alphafold2 pLDDT score figures for all sequences in a FASTA file.')
 
     parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
 
@@ -42,17 +42,17 @@ if __name__ == "__main__":
     if args.output_directory is None:
         try:
             # make dir
-            os.makedirs('confidence_out', exist_ok=True)
+            os.makedirs('pLDDT_out', exist_ok=True)
         except Exception:
-            print('Error: Unable to make default outdirectory (confidence_out)')
+            print('Error: Unable to make default outdirectory (pLDDT_out)')
             exit(1)
 
-        outdir = 'confidence_out'
+        outdir = 'pLDDT_out'
     else:
         outdir = args.output_directory
 
     # run graph_disorder_fasta. For more info, see the graph_disorder_fasta function in meta.py.
-    meta.graph_confidence_fasta(filepath=args.data_file, 
+    meta.graph_pLDDT_fasta(filepath=args.data_file, 
                               DPI=args.dpi,
                               output_dir=outdir,
                               output_filetype=args.filetype,

@@ -23,17 +23,17 @@ if __name__ == "__main__":
     The can included file extension, which in turn defines the filetype (pdf, png, jpg etc.) Note if no filename is included then \
     the -o acts as a flag and the file will be saved as the Uniprot ID', nargs='?')
     
-    parser.add_argument('-c', '--confidence', action='store_true', help='Optional. Use this flag to include AlphaFold2 confidence scores in the graph.')                        
+    parser.add_argument('-p', '--pLDDT', action='store_true', help='Optional. Use this flag to include AlphaFold2 confidence scores in the graph.')                        
 
     parser.add_argument('-t', '--title', help='Title to put on graph')
 
     args = parser.parse_args()
 
     # see if to include confidence scores
-    if args.confidence == True:
-        confidence_scores = True
+    if args.pLDDT == True:
+        pLDDT_scores = True
     else:
-        confidence_scores = False
+        pLDDT_scores = False
     
 
     # set title
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # if we don't want to save...
     if args.output_file is None:
         try:
-            meta.graph_disorder_uniprot(args.uniprot, title=graph_title, confidence_scores=confidence_scores, DPI=args.dpi)
+            meta.graph_disorder_uniprot(args.uniprot, title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi)
         except MetapredictError as e:
             print(e)
             exit(1)
@@ -59,4 +59,4 @@ if __name__ == "__main__":
         else:
             outname = args.output_file
 
-        meta.graph_disorder_uniprot(args.uniprot, title=graph_title, confidence_scores=confidence_scores, DPI=args.dpi, output_file=outname)
+        meta.graph_disorder_uniprot(args.uniprot, title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, output_file=outname)

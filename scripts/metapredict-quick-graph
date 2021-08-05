@@ -13,15 +13,15 @@ parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amin
 parser.add_argument('sequence', help='The amino acid sequence to predict disorder for.')
 parser.add_argument('-D', '--dpi', default=150, type=int, metavar='DPI',
                     help='Optional. Set DPI to change resolution of output graphs. Default is 150.')
-parser.add_argument('-c', '--confidence', action='store_true', help='Optional. Use this flag to include AlphaFold2 confidence scores in the graph.')                        
+parser.add_argument('-p', '--pLDDT', action='store_true', help='Optional. Use this flag to include AlphaFold2 pLDDT scores in the graph.')                        
 
 
 args = parser.parse_args()
 
-if args.confidence == True:
-    confidence_scores = True
+if args.pLDDT == True:
+    pLDDT_scores = True
 else:
-    confidence_scores = False
+    pLDDT_scores = False
 
 # display the disorder of the sequence
-meta.graph_disorder(sequence=args.sequence.upper(), DPI=args.dpi, confidence_scores=confidence_scores)
+meta.graph_disorder(sequence=args.sequence.upper(), DPI=args.dpi, pLDDT_scores=pLDDT_scores)

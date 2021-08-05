@@ -13,7 +13,7 @@ import metapredict as meta
 if __name__ == "__main__":
 
     # Parse command line arguments.
-    parser = argparse.ArgumentParser(description='Generate disorder figures for all sequences in a FASTA file.')
+    parser = argparse.ArgumentParser(description='Generate disorder scores for all sequences in a FASTA file.')
 
     parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
 
