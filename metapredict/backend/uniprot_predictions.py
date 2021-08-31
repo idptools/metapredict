@@ -29,6 +29,11 @@ def fetch_sequence(uniprot_id):
 
     s = "".join(str(r.data).split('\\n')[1:]).replace("'", "")
 
+    # make sure that the last character is not a " due to a ' in protein name
+    # Thank you to Github user keithchev for pointing out this bug!
+    if s[len(s)-1] == '"':
+        s = s[:len(s)-1]
+
     if s.find('Sorry') > -1:
         raise MetapredictError('Error: unable to fetch UniProt sequence with accession %s'%(uniprot_id))
 
