@@ -6,6 +6,8 @@
 
 # import user-facing functions
 from .meta import *
+from metapredict.backend.meta_predict_disorder import get_metapredict_network_version
+
 
 import os
 import sys
@@ -84,4 +86,18 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True):
 
     return r_per_second
     
+def print_metapredict_network_version():
+    """
+    Function that returns a string with the current trained network version
+    used in disorder prediction. This is useful to know if updated versions
+    of the network are provided, which will always accompany a version bump
+    so prior versions of the code will always be available.
+
+    Returns
+    ---------
+    str 
+        Returns a string in the format v<version information>
     
+    """
+
+    return get_metapredict_network_version()

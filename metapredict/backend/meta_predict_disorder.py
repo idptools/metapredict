@@ -26,6 +26,7 @@ PATH = os.path.dirname(os.path.realpath(__file__))
 # Setting predictor equal to location of weighted values.
 predictor = "{}/networks/meta_predict_disorder_100e_v1.pt".format(PATH)
 
+
 ##################################################################################################
 # hyperparameters used by when metapredict was trained. Manually setting them here for clarity.
 ##################################################################################################
@@ -51,6 +52,21 @@ saved_weights = predictor
 brnn_network = brnn_architecture.BRNN_MtM(input_size, hidden_size, num_layers, num_classes, device).to(device)
 brnn_network.load_state_dict(torch.load(saved_weights, map_location=torch.device(device)))
 ###############################################################################
+
+def get_metapredict_network_version():
+    """
+    Function that returns a string with the current predictor version. Note that this requires trained weight
+    files to have a format that ends in "<anything>_v<version info>.pt". 
+    
+    For example, 'meta_predict_disorder_100e_v1.pt', 'meta_predict_disorder_best_v1.4.pt' etc.
+
+    Returns
+    ----------
+    str 
+        Returns a string with the current metapredict trained network being used
+
+    """
+    return ".".join(predictor.split('_')[-1].split('.')[:-1])
 
 
 def meta_predict(sequence, normalized=True, network=brnn_network, device=device, encoding_scheme=encoding_scheme):
