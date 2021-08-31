@@ -9,7 +9,7 @@ __pycache__/
 *~
 
 # ignore test output
-#metapredict/tests/output/*
+metapredict/tests/output/*
 
 # ignore built docs
 docs/_build*
