@@ -28,6 +28,12 @@ https://metapredict.readthedocs.io/en/latest/getting_started.html
 For disorder predictions using our server, please see:
 https://metapredict.net
 
+## How to cite metapredict
+
+If you use metapredict for your work, please cite the metapredict paper - 
+ 
+*Emenecker RJ, Griffith D, Holehouse AS, metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure, Biophysical Journal (2021), doi: https:// doi.org/10.1016/j.bpj.2021.08.039.*
+
 
 ## Installation:
 
@@ -644,6 +650,13 @@ Example data that can be used with metapredict can be found in the metapredict/d
 ### Recent changes
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+
+#### V1.5
+
+Changes:
+Fixed bug causing some functions to fail when getting sequences from Uniprot.
+Added information on citing metapredict because the final publication went live.
+
 
 #### V1.4
 

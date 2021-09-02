@@ -35,6 +35,14 @@ Consensus disorder scores are really useful as they distribute the biases and un
 The major advantages that **metapredict** offers over existing predictors is performance, ease of use, and ease of installation. Given **metapredict** uses a pre-trained bidirectional recurrent neural network, on hardware we've tested **metapredict** gives ~10,000 residues per second prediction power. This means that predicting disorder across entire proteomes is accessible in minutes - for example it takes ~20 minutes to predict disorder for every human protein in the reviewed human proteome (~23000 sequences). We provide **metapredict** as a simple-to-use Python library to integrate into existing Python workflows, and as a set of command-line tools for the stand-alone prediction of data from direct input or from FASTA files.
 
 
+How to cite metapredict
+===========================
+
+If you use metapredict for your work, please cite the metapredict paper - 
+ 
+Emenecker RJ, Griffith D, Holehouse AS, metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure, Biophysical Journal (2021), doi: https:// doi.org/10.1016/j.bpj.2021.08.039.
+
+
 Installation
 ==============
 **metapredict** is available through GitHub or the Python Package Index (PyPI). To install through PyPI, run

@@ -17,6 +17,7 @@ Welcome to metapredict's documentation!
    usage/acknowledgements
    usage/troubleshooting
    changes
+   how_to_cite
 
 
 

@@ -6,6 +6,13 @@ About
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
 
+V1.5
+-----
+Changes:
+Fixed bug causing some functions to fail when getting sequences from Uniprot.
+Added information on citing metapredict because the final publication went live.
+
+
 V1.4
 -----
 Change:
