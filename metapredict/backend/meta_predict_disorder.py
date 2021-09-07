@@ -24,14 +24,25 @@ from metapredict.backend import brnn_architecture
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 # Setting predictor equal to location of weighted values.
+
+# originl network
 predictor = "{}/networks/meta_predict_disorder_100e_v1.pt".format(PATH)
 
+# V2 network holds slight increases in accuracy but is still undergoing testing.
+# so far, 0.5% increase in accuracy has been consistently seen. V1 is the published
+# network though, so leaving fo the time being.
+# predictor = "{}/networks/metapredict_network_v2_200epochs_nl1_hs20.pt".format(PATH)
 
 ##################################################################################################
 # hyperparameters used by when metapredict was trained. Manually setting them here for clarity.
 ##################################################################################################
 # This is defined externally so its read in and loaded one time on the initial import
 #
+
+
+'''
+meta_predict_disorder_100e_v1 paramters
+# original published network!
 
 
 device = 'cpu'
@@ -42,6 +53,32 @@ num_classes = 1
 encoding_scheme = 'onehot'
 input_size = 20
 problem_type = 'regression'
+
+
+# metapredict_network_v2_200epochs_nl1_hs20 parameters 
+# if you want to use V2 network, move this code out of
+commented out section and delete similar code below.
+
+device = 'cpu'
+hidden_size = 20
+num_layers = 1
+dtype = 'residues'
+num_classes = 1
+encoding_scheme = 'onehot'
+input_size = 20
+problem_type = 'regression'
+'''
+
+
+device = 'cpu'
+hidden_size = 5
+num_layers = 1
+dtype = 'residues'
+num_classes = 1
+encoding_scheme = 'onehot'
+input_size = 20
+problem_type = 'regression'
+
 
 # set location of saved_weights for load_state_dict
 saved_weights = predictor
