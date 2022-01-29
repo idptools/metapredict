@@ -36,7 +36,8 @@ from metapredict.backend.uniprot_predictions import fetch_sequence as _fetch_seq
 from metapredict.metapredict_exceptions import MetapredictError
 
 
-
+# ..........................................................................................
+#
 def predict_disorder_domains_from_external_scores(disorder, 
                                                   sequence=None,
                                                   disorder_threshold=0.5, 
@@ -173,10 +174,8 @@ def predict_disorder_domains_from_external_scores(disorder,
         return [return_tuple[0],IDRs, FDs]
 
 
-    
-
-
-
+# ..........................................................................................
+#
 def predict_disorder_domains(sequence, 
                              disorder_threshold=0.42, 
                              minimum_IDR_size=12, 
@@ -261,6 +260,8 @@ def predict_disorder_domains(sequence,
     return [disorder, return_tuple[0], return_tuple[1], return_tuple[2]]
 
 
+# ..........................................................................................
+#
 def predict_disorder(sequence, normalized=True):
     """
     Function to return disorder of a single input sequence. Returns the
@@ -367,6 +368,9 @@ def graph_disorder(sequence,
         shaded_region_color = shaded_region_color, 
         DPI=DPI, output_file = output_file) 
 
+
+# ..........................................................................................
+#
 def predict_pLDDT(sequence):
     """
     Function to return predicted pLDDT scores from
@@ -392,6 +396,8 @@ def predict_pLDDT(sequence):
     return _AF2pLDDTscores.predict(sequence)
 
 
+# ..........................................................................................
+#
 def graph_pLDDT(sequence, 
                    title = 'Predicted AF2 pLDDT Confidence Score',
                    pLDDT_scores=True,
@@ -453,7 +459,6 @@ def graph_pLDDT(sequence,
 
     """
 
-
     # ensure sequence is upper case
     sequence = sequence.upper()
 
@@ -466,8 +471,8 @@ def graph_pLDDT(sequence,
         shaded_region_color = shaded_region_color, 
         DPI=DPI, output_file = output_file) 
 
-
-
+# ..........................................................................................
+#
 def percent_disorder(sequence, cutoff=0.3):
     """
     function to return the percent disorder for any given protein.
@@ -610,6 +615,9 @@ def predict_disorder_fasta(filepath,
     else:
         _meta_tools.write_csv(disorder_dict, output_file)
 
+
+# ..........................................................................................
+#
 def predict_pLDDT_fasta(filepath, 
                            output_file = None,
                            invalid_sequence_action='convert'):
@@ -688,8 +696,8 @@ def predict_pLDDT_fasta(filepath,
         _meta_tools.write_csv(confidence_dict, output_file)
 
 
-
-
+# ..........................................................................................
+#
 def graph_disorder_fasta(filepath, 
                          pLDDT_scores=False,
                          disorder_threshold = 0.3,
@@ -809,6 +817,9 @@ def graph_disorder_fasta(filepath,
             title = idx[0:14]            
             graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI)
 
+
+# ..........................................................................................
+#
 def graph_pLDDT_fasta(filepath, 
                          DPI=150, 
                          output_dir = None,
@@ -917,7 +928,8 @@ def graph_pLDDT_fasta(filepath,
             graph_pLDDT(local_sequence, title=title, DPI=DPI)
 
 
-
+# ..........................................................................................
+#
 def predict_disorder_uniprot(uniprot_id, normalized=True):
     """
     Function to return disorder of a single input sequence. Uses a 
@@ -947,7 +959,8 @@ def predict_disorder_uniprot(uniprot_id, normalized=True):
     return _meta_predict(sequence, normalized)
 
 
-
+# ..........................................................................................
+#
 def predict_pLDDT_uniprot(uniprot_id):
     """
     Function to return pLDDT score of a single input sequence. Uses a 
@@ -974,7 +987,8 @@ def predict_pLDDT_uniprot(uniprot_id):
     return _AF2pLDDTscores.predict(sequence)
 
 
-
+# ..........................................................................................
+#
 def graph_disorder_uniprot(uniprot_id, 
                            title = 'Predicted protein disorder',
                            pLDDT_scores=False, 
@@ -1045,8 +1059,8 @@ def graph_disorder_uniprot(uniprot_id,
     _graph(sequence, title=title, pLDDT_scores=pLDDT_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
     
 
-
-
+# ..........................................................................................
+#
 def graph_pLDDT_uniprot(uniprot_id, 
                            title = 'Predicted AF2 pLDDT Scores', 
                            shaded_regions = None,
@@ -1104,9 +1118,8 @@ def graph_pLDDT_uniprot(uniprot_id,
     # graph sequence
     _graph(sequence, title=title, disorder_scores=False, pLDDT_scores=True, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
     
-
-
-
+# ..........................................................................................
+#
 def predict_disorder_domains_uniprot(uniprot_id, 
                              disorder_threshold=0.42, 
                              minimum_IDR_size=12, 
