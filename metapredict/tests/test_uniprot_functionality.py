@@ -42,7 +42,7 @@ def test_predict_disorder_uniprot():
 
     # check summed disorder is right when we don't normalize (these are not magic values,
     # just the expected 'truth' for the 1.0 release
-    assert np.sum(meta.predict_disorder_uniprot(P53_UID,normalized=False)) == 173.524
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID,normalized=False)),173.524)
 
 
 # ....................................................................................
@@ -73,7 +73,8 @@ def test_predict_disorder_domains_uniprot_():
     assert len(dis_domains[0]) == 393
     assert len(dis_domains[1]) == 393
     assert np.sum(dis_domains[0]) == 172.965
-    assert np.sum(dis_domains[1]) == 173.04537763974946
+    v = np.sum(dis_domains[1])
+    assert np.isclose(v, 172.91894834295928)
 
     # did we find 2 IDRs
     assert len(dis_domains[2]) == 2

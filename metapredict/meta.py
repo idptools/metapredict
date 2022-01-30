@@ -8,23 +8,25 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
+__all__ =  ['predict_disorder_domains_hybrid', 'predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
  
 import os
 import sys
+import numpy as np
 
-
-# note - we imort packages below with a leading _ which means they are ignored in the import
+# note - we import packages below with a leading _ which means they are ignored in the import
 
 #import protfasta to read .fasta files
 import protfasta as _protfasta
 
 # import stuff for confidence score predictions
 from alphaPredict import alpha as _AF2pLDDTscores
+from metapredict import parameters
 
 # import stuff for IDR predictor from backend. Note the 'as _*' hides the imported
 # module from the user
 from metapredict.backend.meta_predict_disorder import meta_predict as _meta_predict
+from metapredict.backend.meta_predict_disorder import meta_predict_hybrid as _meta_predict_hybrid
 from metapredict.backend import meta_tools as _meta_tools
 
 #import stuff for graphing from backend
@@ -35,6 +37,138 @@ from metapredict.backend import domain_definition as _domain_definition
 from metapredict.backend.uniprot_predictions import fetch_sequence as _fetch_sequence
 from metapredict.metapredict_exceptions import MetapredictError
 
+
+# stuff for data structures
+from metapredict.backend.data_structures import DisorderObject as _DisorderObject
+
+
+
+# ..........................................................................................
+#
+
+def predict_disorder_domains_hybrid(sequence,
+                                    disorder_threshold=None, 
+                                    minimum_IDR_size=10, 
+                                    minimum_folded_domain=40,
+                                    gap_closure=10,
+                                    return_numpy = True,
+                                    cooperative = True):
+                                         
+
+    """
+    Function that integrates predicted pLDDT and predicted disorder to generate
+    a new hybrid structure/disorder score and uses that to extract disordered 
+    domains.  This function takes ~2x as long as the normal 
+    predict_disordered_domains(), but is more accurate. Note that to keep 
+    things simple, this function returns a data structure (rather than a tuple) 
+    that provides dot-reference access into the generated output data which 
+    include (1) The metapredict profile, (2) the predicted pLDDT score (3) the
+    combined profile.
+
+    Note that this function explicitly finds LONG IDR regions - i.e. we will miss
+    shorter disordered loops and short (<20 residue) linkers that connect two 
+    folded domains.
+    
+
+    Parameters
+    -------------
+
+    sequence : str
+        Amino acid sequence
+
+    disorder_threshold : float
+        Value that defines what 'disordered' is based on the integrated 
+        metapredict/pLDDT score. The default of 0.50 has been optimized based
+        on known data and works with the other default parameters, but you
+        are welcome to play with this threshold if that is of interest.
+        Default = 0.5
+
+    minimum_IDR_size : int
+        Defines the smallest possible IDR. This is a hard limit - i.e. 
+        we CANNOT get IDRs smaller than this. Default = 12.
+
+    minimum_folded_domain : int
+        Defines where we expect the limit of small folded domains to be. 
+        Default = 40.
+
+    gap_closure : int
+        Defines the largest gap that would be 'closed'. Gaps here refer to 
+        a scenario in which you have two groups of disordered residues seprated 
+        by a 'gap' of un-disordered residues. In general large gap sizes will 
+        favour larger contigous IDRs. It's worth noting that gap_closure 
+        becomes relevant only when minimum_region_size becomes very small 
+        (i.e. < 5) because really gaps emerge when the smoothed disorder fit 
+        is "noisy", but when smoothed gaps are increasingly rare. Default=10.
+
+    return_numpy : bool
+        Flag which if set to true means all numerical types are returned
+        as numpy.ndlist. Default is True
+
+    cooperative : bool
+        Flag which defines if cooperative or non-cooperative mode
+        should be used. Both are provided for now but we may remove
+        non-cooperative given the cooperative mode seems to always
+        offer better performance.
+        Default = True
+
+    Returns
+    ------------
+    DisorderObject
+        Returns a DisorderObject. DisorderObject has 7 dot variables:
+
+        .seq : str    
+            Amino acid sequence 
+
+        .disorder : list or np.ndaarray
+            Hybrid disorder score
+
+        .disorder_smoothed : list pr np.ndarray
+            Hybrid disorder score smoothed
+
+        .ppLDDT : 
+            Predicted pLDDT scores
+
+        .metapredict_disorder :
+            Niave metapredict score
+
+        .disorder_domain_boundaries : list
+            List of domain boundaries for IDRs using Python indexing
+
+        .folded_domain_boundaries : list
+            List of domain boundaries for folded domains using Python indexing
+
+        .disordered_domains : list
+            List of the actual sequences for IDRs
+
+        .folded_domains : list
+            List of the actual sequences for folded domains
+    
+
+    """
+
+    # assign defaults depending on if cooperative is set to 
+    # True or False
+    if disorder_threshold is None:
+        if cooperative is True:        
+            disorder_threshold = parameters.METAPREDICT_HYBRID_DISORDER_THRESHOLD_COOPERATIVE
+        else:
+            disorder_threshold = parameters.METAPREDICT_HYBRID_DISORDER_THRESHOLD_NONCOOPERATIVE
+    
+    # build 3 profiles (we only use hybrid to extract out domains)
+    (meta_disorder, hybrid, ppLDDT) = predict_all(sequence, cooperative=cooperative)
+
+    # extract subdomains
+    raw_out = predict_disorder_domains_from_external_scores(hybrid,
+                                                            sequence = sequence,
+                                                            disorder_threshold = disorder_threshold,
+                                                            minimum_IDR_size = minimum_IDR_size,
+                                                            gap_closure = gap_closure,
+                                                            minimum_folded_domain = minimum_folded_domain,
+                                                            override_folded_domain_minsize = True)
+
+
+    return _DisorderObject(sequence, meta_disorder, ppLDDT, hybrid, raw_out[0], raw_out[1], raw_out[2], return_numpy=return_numpy)
+    
 
 # ..........................................................................................
 #
@@ -48,23 +182,30 @@ def predict_disorder_domains_from_external_scores(disorder,
     
     """
 
-    This function takes in disorder scores generated from another predictor and applies the same domain-decomposition
-    algorithm as predict_disorder_domains() does to extract out congigous IDRs. For example, if one were to predict
-    disorder using the (excellent) ODiNPred, download the resulting scores, and read the scores into a list, that 
-    list could be passed as the $disorder argument to this function.
+    This function takes in disorder scores generated from another predictor 
+    and applies the same domain-decomposition algorithm as 
+    predict_disorder_domains() does to extract out congigous IDRs. For example, 
+    if one were to predict disorder using the (excellent) ODiNPred, download the 
+    resulting scores, and read the scores into a list, that list could be passed
+    as the $disorder argument to this function.
+    
+    Note that the settings used here may be inapplicable to another disorder 
+    predictor, so you may need to play around with the parameters including 
+    disorder_threshold, minimum_IDR_size, minimum_folded_domain and 
+    gap_closure.
 
-    Note that the settings used here may be inapplicable to another disorder predictor, so you may need to play
-    around with the parameters including disorder_threshold, minimum_IDR_size, minimum_folded_domain and gap_closure.
+    The return data is a tuple with the following elements:
 
-    the following information:
-
-        [0] -  Smoothed disorder score used to aid in domain boundary identification. This can be useful for 
-               understanding how IDRs/folded domains were identified, and will vary depending on the settings 
-               provided.
+        [0] -  Smoothed disorder score used to aid in domain boundary 
+               identification. This can be useful for understanding how 
+               IDRs/folded domains were identified, and will vary depending 
+               on the settings provided.
          
-        [1] - a list of elements, where each element defines the start and end position of each IDR 
+        [1] - a list of elements, where each element defines the start and 
+              end position of each IDR 
 
-        [2] - a list of elements, where each element defines the start and end position of each folded region  
+        [2] - a list of elements, where each element defines the start and 
+              end position of each folded region  
 
 
     Parameters
@@ -74,57 +215,76 @@ def predict_disorder_domains_from_external_scores(disorder,
         A list of per-residue disorder scores.
 
     sequence : str
-        An optional argument which, if provided, is assumed to reflect the the amino acid sequence from which the 
-        disorder scores were computed. Note if these do not match one another in length then the function raises
-        an exception. Default = None
+        An optional argument which, if provided, is assumed to reflect the the 
+        amino acid sequence from which the disorder scores were computed. Note 
+        if these do not match one another in length then the function raises        
+        an exception. 
+        Default = None
 
     disorder_threshold : float
-        Value that defines what 'disordered' is based on the input predictor score. The higher the value the more
-        stringent the cutoff. Default = 0.5. 
-
+        Value that defines what 'disordered' is based on the input predictor 
+        score. The higher the value the more stringent the cutoff.
+        Default = 0.5. 
+        
     minimum_IDR_size : int
-        Defines the smallest possible IDR. This is a hard limit - i.e. we CANNOT get IDRs smaller than this. Default = 12.
+        Defines the smallest possible IDR. This is a hard limit - i.e. we 
+        CANNOT get IDRs smaller than this. 
+        Default = 12.
 
     minimum_folded_domain : int
-        Defines where we expect the limit of small folded domains to be. This is NOT a hard limit and functions to modulate
-        the removal of large gaps (i.e. gaps less than this size are treated less strictly). Note that, in addition, 
-        gaps < 35 are evaluated with a threshold of 0.35*disorder_threshold and gaps < 20 are evaluated with a threshold 
-        of 0.25*disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which
-        are IDRs in isolation) often show up with reduced apparent disorder within IDRs, and but can be as short as 20-30 
-        residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain 
-        to be identified. Default=50.
+        Defines where we expect the limit of small folded domains to be. This 
+        is NOT a hard limit and functions to modulate the removal of large gaps 
+        (i.e. gaps less than this size are treated less strictly). Note that, in 
+        addition, gaps < 35 are evaluated with a threshold of 
+        0.35*disorder_threshold and gaps < 20 are evaluated with a threshold 
+        of 0.25*disorder_threshold. These two lengthscales were decided based on
+        the fact that coiled-coiled regions (which are IDRs in isolation) often 
+        show up with reduced apparent disorder within IDRs, and but can be as 
+        short as 20-30 residues. The folded_domain_threshold is used based on 
+        the idea that it allows a 'shortest reasonable' folded domain to be 
+        identified. 
+        Default = 50.
 
     gap_closure : int
-        Defines the largest gap that would be 'closed'. Gaps here refer to a scenario in which you have two groups
-        of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
-        larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes
-        very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
-        are increasingly rare. Default=10.
-
+        Defines the largest gap that would be 'closed'. Gaps here refer to a 
+        scenario in which you have two groups of disordered residues seprated 
+        by a 'gap' of un-disordered residues. In general large gap sizes will 
+        favour larger contigous IDRs. It's worth noting that gap_closure 
+        becomes  relevant only when minimum_region_size becomes very small 
+        (i.e. < 5)  because  really gaps emerge when the smoothed disorder 
+        fit is "noisy", but when smoothed gaps are increasingly rare. 
+        Default = 10.
+        
     override_folded_domain_minsize : bool
-        By default this function includes a fail-safe check that assumes folded domains
-        really shouldn't be less than 35 or 20 residues. However, for some approaches we
-        may wish to over-ride these thresholds to match the passed minimum_folded_domain
-        value. If this flag is set to True this override occurs. This is generally not 
-        recommended unless you expect there to be well-defined sharp boundaries which could
-        define small (20-30) residue folded domains. This is not provided as an option in the normal
-        predict_disorder_domains for metapredict. Default = False. 
-
+        By default this function includes a fail-safe check that assumes 
+        folded domains really shouldn't be less than 35 or 20 residues. 
+        However, for some approaches we may wish to over-ride these thresholds 
+        to match the passed minimum_folded_domain value. If this flag is set to 
+        True this override occurs. This is generally not recommended unless you
+        expect there to be well-defined sharp boundaries which could define
+        small (20-30) residue folded domains. This is not provided as an option 
+        in the normal predict_disorder_domains for metapredict. Default = False. 
 
     Returns
     ---------
     list
         Always returns a list with three elements, as outlined below.
 
-        [0] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding
-              how IDRs/folded domains were identified, and will vary depending on the settings provided
+        [0] - Smoothed disorder score used to aid in domain boundary 
+              identification. This can be useful for understanding
+              how IDRs/folded domains were identified, and will vary 
+              depending on the settings provided
 
-        [1] - a list of elements, where each element defines the start and end position of each IDR. If a sequence was provided
-              the third element in each sub-element is the IDR sequence. If no sequence was provided, then each sub-element is
+        [1] - a list of elements, where each element defines the start 
+              and end position of each IDR. If a sequence was provided
+              the third element in each sub-element is the IDR sequence. 
+              If no sequence was provided, then each sub-element is
               simply len=2.
  
-        [2] - a list of elements, where each element defines the start and end position of each folded region. If a sequence was 
-              provided the third element in each sub-element is the folded domain sequence. If no sequence was provided, then each 
+        [2] - a list of elements, where each element defines the start 
+              and end position of each folded region. If a sequence was 
+              provided the third element in each sub-element is the folded 
+              domain sequence. If no sequence was provided, then each 
               sub-element is simply len=2.
 
     """
@@ -148,7 +308,7 @@ def predict_disorder_domains_from_external_scores(disorder,
     # run the get_domains function, passing in parameters
     return_tuple = _domain_definition.get_domains(sequence, 
                                                   disorder, 
-                                                  disorder_threshold=disorder_threshold,                                            
+                                                  disorder_threshold=disorder_threshold,                                           
                                                   minimum_IDR_size=minimum_IDR_size, 
                                                   minimum_folded_domain=minimum_folded_domain,
                                                   gap_closure=gap_closure,
@@ -184,19 +344,26 @@ def predict_disorder_domains(sequence,
                              normalized=True):
     """
 
-    This function takes an amino acid sequence, a disorder score, and returns a 4-position tuple with
-    the following information:
+    This function takes an amino acid sequence, a disorder score, and 
+    returns a 4-position tuple with the following information:
+    
 
-    [0] - 'Raw' disorder score; i.e. disorder propensity as predicted by metapredict
+    [0] - 'Raw' disorder score; i.e. disorder propensity as predicted 
+    by metapredict
 
-    [1] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding
-          how IDRs/folded domains were identified, and will vary depending on minimum_region_size.
+    [1] - Smoothed disorder score used to aid in domain boundary 
+          identification. This can be useful for understanding
+          how IDRs/folded domains were identified, and will vary 
+          depending on minimum_region_size.
 
-    [2] - a list of elements, where each element is itself a list where position 0 and 1 define the IDR location 
+    [2] - a list of elements, where each element is itself a list 
+          where position 0 and 1 define the IDR location 
           and position 2 gives the actual IDR sequence
 
-    [3] - a list of elements, where each element is itself a list where position 0 and 1 define the folded domain 
-          location and position 2 gives the actual folded domain sequence.
+    [3] - a list of elements, where each element is itself a 
+          list where position 0 and 1 define the folded domain 
+          location and position 2 gives the actual folded domain 
+          sequence.
 
     Parameters
     -------------
@@ -205,26 +372,41 @@ def predict_disorder_domains(sequence,
         Amino acid sequence
 
     disorder_threshold : float
-        Value that defines what 'disordered' is based on the metapredict disorder score. The higher the value the more
+        Value that defines what 'disordered' is based on the 
+        metapredict disorder score. The higher the value the more
         stringent the cutoff. Default = 0.42
 
     minimum_IDR_size : int
-        Defines the smallest possible IDR. This is a hard limit - i.e. we CANNOT get IDRs smaller than this. Default = 12.
+        Defines the smallest possible IDR. This is a hard limit - 
+        i.e. we CANNOT get IDRs smaller than this. Default = 12.
 
     minimum_folded_domain : int
-        Defines where we expect the limit of small folded domains to be. This is NOT a hard limit and functions to modulate
-        the removal of large gaps (i.e. gaps less than this size are treated less strictly). Note that, in addition, 
-        gaps < 35 are evaluated with a threshold of 0.35*disorder_threshold and gaps < 20 are evaluated with a threshold 
-        of 0.25*disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which
-        are IDRs in isolation) often show up with reduced apparent disorder within IDRs, and but can be as short as 20-30 
-        residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain 
+        Defines where we expect the limit of small folded domains 
+        to be. This is NOT a hard limit and functions to modulate
+        the removal of large gaps (i.e. gaps less than this size 
+        are treated less strictly). Note that, in addition, 
+        gaps < 35 are evaluated with a threshold of 
+        0.35*disorder_threshold and gaps < 20 are evaluated with 
+        a threshold of 0.25*disorder_threshold. These two 
+        lengthscales were decided based on the fact that 
+        coiled-coiled regions (which are IDRs in isolation) 
+        often show up with reduced apparent disorder within IDRs, 
+        and but can be as short as 20-30 
+        
+        
+        residues. The folded_domain_threshold is used based on the 
+        idea that it allows a 'shortest reasonable' folded domain 
         to be identified. Default=50.
 
     gap_closure : int
-        Defines the largest gap that would be 'closed'. Gaps here refer to a scenario in which you have two groups
-        of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
-        larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes
-        very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
+        Defines the largest gap that would be 'closed'. Gaps here 
+        refer to a scenario in which you have two groups of 
+        disordered residues seprated by a 'gap' of un-disordered 
+        residues. In general large gap sizes will favour larger 
+        contigous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_region_size becomes very small 
+        (i.e. < 5) because really gaps emerge when the smoothed 
+        disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
 
     Returns
@@ -232,17 +414,23 @@ def predict_disorder_domains(sequence,
     list
         Always returns a list with 4 elements, as outlined below
 
-        [0] - List of floats - this is the 'raw' disorder score; i.e. disorder propensity as predicted by metapredict
+        [0] - List of floats - this is the 'raw' disorder score; i.e. 
+              disorder propensity as predicted by metapredict
 
-        [1] - List of floats - this is the smoothed disorder score used to aid in domain boundary identification. 
-              This can be useful for understanding how IDRs/folded domains were identified, and will vary depending on 
+        [1] - List of floats - this is the smoothed disorder score 
+              used to aid in domain boundary identification. 
+              This can be useful for understanding how IDRs/folded 
+              domains were identified, and will vary depending on 
               minimum_region_size.
           
-        [2] - a list of elements, where each element is itself a list where position 0 and 1 define the IDR location 
+        [2] - a list of elements, where each element is itself a 
+              list where position 0 and 1 define the IDR location 
               and position 2 gives the actual IDR sequence
 
-        [3] - a list of elements, where each element is itself a list where position 0 and 1 define the folded domain 
-              location and position 2 gives the actual folded domain sequence.
+        [3] - a list of elements, where each element is itself a 
+              list where position 0 and 1 define the folded domain 
+              location and position 2 gives the actual folded domain 
+              sequence.
 
 
     """
@@ -262,7 +450,7 @@ def predict_disorder_domains(sequence,
 
 # ..........................................................................................
 #
-def predict_disorder(sequence, normalized=True):
+def predict_disorder(sequence, normalized=True, return_numpy=False):
     """
     Function to return disorder of a single input sequence. Returns the
     predicted values as a list.
@@ -274,24 +462,132 @@ def predict_disorder(sequence, normalized=True):
         Input amino acid sequence (as string) to be predicted.
 
     normalized : bool
-        Flag which defines in the predictor should control and normalize such that all values fall 
-        between 0 and 1. The underlying learning model can, in fact output some negative values 
-        and some values greater than 1. Normalization controls for this. Default = True
+        Flag which defines in the predictor should control and normalize 
+        such that all values fall between 0 and 1. The underlying learning
+        model can, in fact output some negative values and some values 
+        greater than 1. Normalization controls for this.         
+        Default = True
+
+    return_numpy : bool
+        Flag which if set to true means the function returns a np.array.
 
     Returns
     --------
-    
-    list
-        Returns a list of floats that corresponds to the per-residue disorder score.
+     
+    list or np.ndarray
+        Returns a list of floats that corresponds to the per-residue 
+        disorder score.
 
     """
     # make all residues upper case 
     sequence = sequence.upper()
 
-    # return predicted values of disorder for sequence
-    return _meta_predict(sequence, normalized=normalized)
+
+    d = _meta_predict(sequence, normalized=normalized)
+
+    if return_numpy:
+        return np.array(d)
+    else:
+        return d
 
 
+# ..........................................................................................
+#
+def predict_all(sequence, cooperative=True):
+    """
+    Function to return all three types of predictions (metapredict,
+    metapredict-hybrid, and ppLDDT). Returns as a tuple of numpy 
+    arrays, with ppLDDT returned as normalized between 0 and 1 
+    (rather than 0 and 100) so can be plotted on same axis easily.
+
+    Parameters
+    ------------
+
+    sequence : str 
+        Input amino acid sequence (as string) to be predicted.
+
+    cooperative : bool
+        Flag which defines if cooperative or non-cooperative mode
+        should be used. Both are provided for now but we may remove
+        non-cooperative given the cooperative mode seems to always
+        offer better performance.
+        Default = True
+
+    Returns
+    --------
+     
+    tuple with three np.ndarrays:
+
+        [0] - metapredict disorder (vanialla metapredict disorder)
+        [1] - metapredict-hybrid disorder (disorder profile generated
+              based on both ppLDDT and vanilla metapredict scores
+        [2] - normalized ppLDDT scores
+
+    """
+
+    # make all residues upper case 
+    sequence = sequence.upper()
+
+    # compute pLDDT and metapredict disorder
+    ppLDDT = predict_pLDDT(sequence, return_numpy=True, return_normalized=True)
+    meta_disorder = predict_disorder(sequence, return_numpy=True)
+    hybrid = _meta_predict_hybrid(meta_disorder, ppLDDT, cooperative=cooperative)
+
+    return (meta_disorder, hybrid, ppLDDT)
+
+    
+# ..........................................................................................
+#
+def predict_disorder_hybrid(sequence, 
+                            cooperative=True, 
+                            return_numpy=False):
+    """
+    Function to return the disorder using metapredict-hybrid (MPH) of a
+    single input sequence. Returns the predicted values as a list or
+    a numpy array, as dictated by the return_numpy flag.
+    
+    Parameters
+    ------------
+
+    sequence : str 
+        Input amino acid sequence (as string) to be predicted.
+
+    cooperative : bool
+        Flag which defines if cooperative or non-cooperative mode
+        should be used. Both are provided for now but we may remove
+        non-cooperative given the cooperative mode seems to always
+        offer better performance.
+        Default = True
+
+    return_numpy : bool
+        Flag which if set to true means the function returns a np.array.
+        Default = False
+
+    Returns
+    --------
+     
+    list or np.ndarray
+        Returns a list of floats that corresponds to the per-residue disorder 
+        score.
+
+    """
+    # make all residues upper case 
+    sequence = sequence.upper()
+
+    # compute pLDDT and metapredict disorder
+    ppLDDT = predict_pLDDT(sequence, return_numpy=True, return_normalized=True)
+    meta_disorder = predict_disorder(sequence, return_numpy=True)
+
+    hybrid = _meta_predict_hybrid(meta_disorder, ppLDDT, cooperative)
+
+    if return_numpy is False:
+        return hybrid.tolist()
+    else:
+        return hybrid
+
+
+# ..........................................................................................
+#
 def graph_disorder(sequence, 
                    title = 'Predicted protein disorder', 
                    disorder_threshold = 0.3,
@@ -310,47 +606,49 @@ def graph_disorder(sequence,
         Input amino acid sequence (as string) to be predicted.
 
     title : str
-        Sets the title of the generated figure. Default = "Predicted protein disorder"
+        Sets the title of the generated figure. Default = "Predicted protein 
+        disorder"
 
     disorder_threshold : float
-        Sets a threshold which draws a horizontal black line as a visual guide along
-        the length of the figure. Must be a value between 0 and 1. Default = 0.3
-    
+        Sets a threshold which draws a horizontal black line as a visual 
+        guide along the length of the figure. Must be a value between 0 
+        and 1. Default = 0.3
+            
     pLDDT_scores : Bool
-        Sets whether to include the predicted confidence scores from
-        AlphaFold2
+        Sets whether to include the predicted pLDDT scores in the figure
 
     shaded_regions : list of lists
-        A list of lists, where sub-elements are of length 2 and contain start and end
-        values for regions to be shaded. Assumes that sanity checking on positions has
-        already been done. Default is None, but if there were specific regions you wanted
-        to highlight this might, for example, look like shaded_regions=[[1,10],[40,50]], 
-        which would shade between 1 and 10 and then between 40 and 50. This can be useful
+        A list of lists, where sub-elements are of length 2 and contain 
+        start and end values for regions to be shaded. Assumes that sanity 
+        checking on positions has already been done. Default is None, but 
+        if there were specific regions you wanted to highlight this might, 
+        for example, look like shaded_regions=[[1,10],[40,50]], which would 
+        shade between 1 and 10 and then between 40 and 50. This can be useful
         to either highlight specific IDRs or specific folded domains
 
     shaded_region_color : str
-        String that defines the color of the shaded region. The shaded region is always
-        set with an alpha of 0.3 but the color can be any valid matplotlib color name
-        or a hex color string (i.e. "#ff0000" is red).
+        String that defines the color of the shaded region. The shaded region 
+        is always set with an alpha of 0.3 but the color can be any valid 
+        matplotlib color name or a hex color string (i.e. "#ff0000" is red).
     
     DPI : int
-        Dots-per-inch. Defines the resolution of the generated figure. Passed to the
-        dpi argument in ``matplotlib.pyplot.savefig()``.
-
+        Dots-per-inch. Defines the resolution of the generated figure. 
+        Passed to the dpi argument in ``matplotlib.pyplot.savefig()``.
+        
     output_file : str
-        If provided, the output_file variable defines the location and type of the file
-        to be saved. This should be a file location and filename with a valid matplotlib
-        extension (such as .png, or .pdf) and, if provided, this value is passed directly
-        to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
+        If provided, the output_file variable defines the location and type 
+        of the file to be saved. This should be a file location and filename 
+        with a valid matplotlib extension (such as .png, or .pdf) and, if 
+        provided, this value is passed directly to the 
+        ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
     Returns
     --------
 
     None
-        No return object, but, the graph is saved to disk or displayed locally.
-
-
+        No return object, but, the graph is saved to disk or displayed 
+        locally.
     """
 
     # check that a valid range was passed for disorder_threshold
@@ -371,10 +669,18 @@ def graph_disorder(sequence,
 
 # ..........................................................................................
 #
-def predict_pLDDT(sequence):
+def predict_pLDDT(sequence, return_numpy=False, return_normalized=False):
     """
-    Function to return predicted pLDDT scores from
-    AlphaFold2 for an input sequeunce.
+    Function to return predicted pLDDT scores. pLDDT scores are the scores
+    reported by AlphaFold2 (AF2) that provide a measure of the confidence 
+    with which AF2 has on the local structure prediction. predicted_pLDDT
+    (ppLDDT for short) is a prediction of this confidence score generated
+    using a LSTM-BRNN network trained on ~360,000 protein structures.
+
+    In effect, this value should be considered a prediction of how 
+    confident we are that AF2 would be able to predict the structure. This
+    is a reasonably good proxy for the prediction that a region will be
+    structured but is not perfect. 
 
     Parameters
     ------------
@@ -382,30 +688,52 @@ def predict_pLDDT(sequence):
     sequence : str 
         Input amino acid sequence (as string) to be predicted.
 
+    return_numpy : bool
+        Flag which, if set to true, means the function returns a 
+        numpy array instead of a list.
+
+    return_normalized : bool
+        Flag which, if set to true, means the function returns values
+        scaled between 0 and 1 (rather than 0 and 100).
+
     Returns
     --------
     
-    list
-        Returns a list of floats that corresponds to the per-residue pLDDT score.
+    list or np.ndarray
+        Returns a list (or np.ndarray) of floats that corresponds to the 
+        per-residue pLDDT score. Return type depends on the flag 
+        return_numpy
 
     """
     # make all residues upper case 
     sequence = sequence.upper()
 
     # return predicted values of disorder for sequence
-    return _AF2pLDDTscores.predict(sequence)
+    ppLDDT =  _AF2pLDDTscores.predict(sequence)
+
+    # parse numpy flag
+    if return_numpy:
+        ppLDDT = np.array(ppLDDT)
+
+    # parse normalized flags
+    if return_normalized:
+        if return_numpy:
+            return ppLDDT*0.01
+        else:
+            return [i*0.01 for i in ppLDDT]
+    else:
+        return ppLDDT
 
 
 # ..........................................................................................
 #
 def graph_pLDDT(sequence, 
-                   title = 'Predicted AF2 pLDDT Confidence Score',
-                   pLDDT_scores=True,
-                   disorder_scores=False, 
-                   shaded_regions = None,
-                   shaded_region_color = 'red',
-                   DPI=150, 
-                   output_file=None):
+                title = 'Predicted AF2 pLDDT Confidence Score',
+                disorder_scores=False, 
+                shaded_regions = None,
+                shaded_region_color = 'red',
+                DPI=150, 
+                output_file=None):
     """
     Function to plot the AF2 pLDDT scores of an input sequece. Displays immediately.
 
@@ -416,38 +744,39 @@ def graph_pLDDT(sequence,
         Input amino acid sequence (as string) to be predicted.
 
     title : str
-        Sets the title of the generated figure. Default = "Predicted protein disorder"
-    
-    pLDDT_scores : Bool
-        Sets whether to include the predicted confidence scores from
-        AlphaFold2
+        Sets the title of the generated figure. 
+        Default = "Predicted AF2 pLDDT Confidence Score"
 
     disorder_scores : Bool
         Whether to include disorder scores. Can set to False if you
-        just want the AF2 confidence scores.
+        just want the AF2 confidence scores. 
+        Default = False
 
     shaded_regions : list of lists
-        A list of lists, where sub-elements are of length 2 and contain start and end
-        values for regions to be shaded. Assumes that sanity checking on positions has
-        already been done. Default is None, but if there were specific regions you wanted
-        to highlight this might, for example, look like shaded_regions=[[1,10],[40,50]], 
-        which would shade between 1 and 10 and then between 40 and 50. This can be useful
-        to either highlight specific IDRs or specific folded domains
+        A list of lists, where sub-elements are of length 2 and contain 
+        start and end values for regions to be shaded. Assumes that sanity 
+        checking on positions has already been done. Default is None, but 
+        if there were specific regions you wanted to highlight this might, 
+        for example, look like shaded_regions=[[1,10],[40,50]], which would 
+        shade between 1 and 10 and then between 40 and 50. This can be useful
+        to either highlight specific IDRs or specific folded domains.
+        Default = None
 
     shaded_region_color : str
-        String that defines the color of the shaded region. The shaded region is always
-        set with an alpha of 0.3 but the color can be any valid matplotlib color name
-        or a hex color string (i.e. "#ff0000" is red).
-    
-    DPI : int
-        Dots-per-inch. Defines the resolution of the generated figure. Passed to the
-        dpi argument in ``matplotlib.pyplot.savefig()``.
+        String that defines the color of the shaded region. The shaded region 
+        is always set with an alpha of 0.3 but the color can be any valid 
+        matplotlib color name or a hex color string (i.e. "#ff0000" is red).
 
+    DPI : int
+        Dots-per-inch. Defines the resolution of the generated figure. 
+        Passed to the dpi argument in ``matplotlib.pyplot.savefig()``.
+        
     output_file : str
-        If provided, the output_file variable defines the location and type of the file
-        to be saved. This should be a file location and filename with a valid matplotlib
-        extension (such as .png, or .pdf) and, if provided, this value is passed directly
-        to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
+        If provided, the output_file variable defines the location and type 
+        of the file to be saved. This should be a file location and filename 
+        with a valid matplotlib extension (such as .png, or .pdf) and, if 
+        provided, this value is passed directly to the 
+        ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
     Returns
@@ -466,18 +795,21 @@ def graph_pLDDT(sequence,
     _meta_tools.valid_shaded_region(shaded_regions, len(sequence))
 
     # call the graph function
-    _graph(sequence, title = title, pLDDT_scores = pLDDT_scores,
+    _graph(sequence, title = title, pLDDT_scores = True,
         disorder_scores=disorder_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
         DPI=DPI, output_file = output_file) 
 
 # ..........................................................................................
 #
-def percent_disorder(sequence, cutoff=0.3):
+def percent_disorder(sequence, cutoff=0.3, mode='metapredict'):
     """
     function to return the percent disorder for any given protein.
     By default, uses 0.3 as a cutoff (values greater than or equal
     to 0.3 will be considered disordered).
+
+    Note this function uses the stanard metapredict disorder
+    score and 
 
     This function rounds to a single decimal place.
     
@@ -499,11 +831,17 @@ def percent_disorder(sequence, cutoff=0.3):
         percentage of the sequence is considered disordered.
 
     """
+    if mode not in ['metapredict', 'metapredict-hybrid']:
+        raise MetapredictError("Mode passed to percent_disorder was not one of 'metapredict' or 'metapredict-hybrid'")
+
     # make all residues upper case 
     sequence = sequence.upper()
 
     # set dis equal to the predicted disorder for the input sequence
-    dis = _meta_predict(sequence)
+    if mode == 'metapredict':
+        dis = predict_disorder(sequence)
+    elif mode == 'metapredict-hybrid':
+        dis = predict_disorder_hybrid(sequence)
 
     # set arbitrarily chosen variable n to equal 0
     n = 0
@@ -520,8 +858,9 @@ def percent_disorder(sequence, cutoff=0.3):
     input sequence.
     """
     percent_disordered = 100*round((n / len(dis)), 3)
-    #return percent_disordered
-    return(percent_disordered)
+
+
+    return percent_disordered
 
 
 
@@ -1121,26 +1460,33 @@ def graph_pLDDT_uniprot(uniprot_id,
 # ..........................................................................................
 #
 def predict_disorder_domains_uniprot(uniprot_id, 
-                             disorder_threshold=0.42, 
+                             disorder_threshold=parameters.METAPREDICT_DISORDER_THRESHOLD, 
                              minimum_IDR_size=12, 
                              minimum_folded_domain=50,
                              gap_closure=10, 
                              normalized=True):
     """
 
-    This function takes an amino acid sequence, a disorder score, and returns a 4-position tuple with
-    the following information:
+    This function takes an amino acid sequence, a disorder score, and 
+    returns a 4-position tuple with the following information:
+    
 
-    [0] - 'Raw' disorder score; i.e. disorder propensity as predicted by metapredict
+    [0] - 'Raw' disorder score; i.e. disorder propensity as predicted by 
+           metapredict
 
-    [1] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding
-          how IDRs/folded domains were identified, and will vary depending on minimum_region_size.
+    [1] - Smoothed disorder score used to aid in domain boundary 
+          identification. This can be useful for understanding
+          how IDRs/folded domains were identified, and will vary 
+          depending on minimum_region_size.
 
-    [2] - a list of elements, where each element is itself a list where position 0 and 1 define the IDR location 
+    [2] - a list of elements, where each element is itself a list 
+          where position 0 and 1 define the IDR location 
           and position 2 gives the actual IDR sequence
 
-    [3] - a list of elements, where each element is itself a list where position 0 and 1 define the folded domain 
-          location and position 2 gives the actual folded domain sequence.
+    [3] - a list of elements, where each element is itself a list 
+          where position 0 and 1 define the folded domain 
+          location and position 2 gives the actual folded domain 
+          sequence.
 
 
     Parameters
@@ -1153,27 +1499,36 @@ def predict_disorder_domains_uniprot(uniprot_id,
         Amino acid sequence
 
     disorder_threshold : float
-        Value that defines what 'disordered' is based on the metapredict disorder score. The higher the value the more
-        stringent the cutoff. Default = 0.42
+        Value that defines what 'disordered' is based on the metapredict 
+        disorder score. The higher the value the more stringent the cutoff. 
+        Default = 0.42 (defined in metapredict.parameters).
 
     minimum_IDR_size : int
-        Defines the smallest possible IDR. This is a hard limit - i.e. we CANNOT get IDRs smaller than this. Default = 12.
+        Defines the smallest possible IDR. This is a hard limit - i.e. we 
+        CANNOT get IDRs smaller than this. Default = 12.
 
     minimum_folded_domain : int
-        Defines where we expect the limit of small folded domains to be. This is NOT a hard limit and functions to modulate
-        the removal of large gaps (i.e. gaps less than this size are treated less strictly). Note that, in addition, 
-        gaps < 35 are evaluated with a threshold of 0.35*disorder_threshold and gaps < 20 are evaluated with a threshold 
-        of 0.25*disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which
-        are IDRs in isolation) often show up with reduced apparent disorder within IDRs, and but can be as short as 20-30 
-        residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain 
+        Defines where we expect the limit of small folded domains to be. 
+        This is NOT a hard limit and functions to modulate the removal of 
+        large gaps (i.e. gaps less than this size are treated less strictly). 
+        Note that, in addition, gaps < 35 are evaluated with a threshold of 
+        0.35*disorder_threshold and gaps < 20 are evaluated with a threshold         
+        of 0.25*disorder_threshold. These two lengthscales were decided based 
+        on the fact that coiled-coiled regions (which are IDRs in isolation) 
+        often show up with reduced apparent disorder within IDRs, and but can 
+        be as short as 20-30 residues. The folded_domain_threshold is used 
+        based on the idea that it allows a 'shortest reasonable' folded domain 
         to be identified. Default=50.
 
     gap_closure : int
-        Defines the largest gap that would be 'closed'. Gaps here refer to a scenario in which you have two groups
-        of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
-        larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes
-        very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
-        are increasingly rare. Default=10.
+        Defines the largest gap that would be 'closed'. Gaps here refer to a 
+        scenario in which you have two groups of disordered residues seprated 
+        by a 'gap' of un-disordered residues. In general large gap sizes will 
+        favour larger contigous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_region_size becomes very small (i.e. < 5) 
+        because really gaps emerge when the smoothed disorder fit is "noisy", but 
+        when smoothed gaps are increasingly rare. Default=10.
+
 
     Returns
     ----------
@@ -1181,18 +1536,22 @@ def predict_disorder_domains_uniprot(uniprot_id,
     list
         Always returns a list with 4 elements, as outlined below
 
-        [0] - List of floats - this is the 'raw' disorder score; i.e. disorder propensity as predicted by metapredict
+        [0] - List of floats - this is the 'raw' disorder score; i.e. disorder 
+              propensity as predicted by metapredict
 
-        [1] - List of floats - this is the smoothed disorder score used to aid in domain boundary identification. 
-              This can be useful for understanding how IDRs/folded domains were identified, and will vary depending on 
+        [1] - List of floats - this is the smoothed disorder score used to aid in 
+              domain boundary identification. This can be useful for understanding 
+              how IDRs/folded domains were identified, and will vary depending on               
               minimum_region_size.
           
-        [2] - a list of elements, where each element is itself a list where position 0 and 1 define the IDR location 
-              and position 2 gives the actual IDR sequence
+        [2] - a list of elements, where each element is itself a list where position
+              0 and 1 define the IDR location and position 2 gives the actual IDR 
+              sequence.
+              
 
-        [3] - a list of elements, where each element is itself a list where position 0 and 1 define the folded domain 
-              location and position 2 gives the actual folded domain sequence.
-
+        [3] - a list of elements, where each element is itself a list where position 
+              0 and 1 define the folded domain location and position 2 gives the actual 
+              folded domain sequence.
 
     """
     sequence = _fetch_sequence(uniprot_id)

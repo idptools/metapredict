@@ -50,11 +50,13 @@ def test_predict_disordered_domains_external_scores_basic():
     assert idrs[1][0][2] == 'MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKTY'
 
 
+    # check that passing a disorder threshold of 1 we get no IDRs 
     idrs = meta.predict_disorder_domains_from_external_scores(disorder, disorder_threshold=1, sequence=local_sequence)
-    assert len(idrs[1]) == 1
-    assert idrs[1][0][2] == 'ELPPGSTKRALPNNTSSSPQPKK'
+    assert len(idrs[1]) == 0
 
 
     idrs = meta.predict_disorder_domains_from_external_scores(disorder, disorder_threshold=0, sequence=local_sequence)
+
+
     assert len(idrs[1]) == 1
     assert idrs[1][0][2] == local_sequence
