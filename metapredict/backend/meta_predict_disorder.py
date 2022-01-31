@@ -33,6 +33,12 @@ predictor = "{}/networks/meta_predict_disorder_100e_v1.pt".format(PATH)
 # network though, so leaving fo the time being.
 # predictor = "{}/networks/metapredict_network_v2_200epochs_nl1_hs20.pt".format(PATH)
 
+# v3 network has significant increase in accuracy of predicting the actual consensus
+# score values. Actual accuracy from predicting disorder values using the Disprot-PDB
+# testing (as in the paper) were negligent. Therefore, we will not use it as the
+# main network and will continue using V1. 
+
+
 ##################################################################################################
 # hyperparameters used by when metapredict was trained. Manually setting them here for clarity.
 ##################################################################################################
@@ -67,6 +73,26 @@ num_classes = 1
 encoding_scheme = 'onehot'
 input_size = 20
 problem_type = 'regression'
+
+
+# metapredict_network_v3_200epochs_nl2_hs20 parameters 
+# if you want to use V3 network, move this code out of
+commented out section and delete similar code below.
+
+The V3 network was not significantly better at predicting
+the disprot-pdb dataset as far as disorder predictions. 
+It was better at predicting consensus values from MobiDB by
+a substantial margin (V1 R^2 was 0.878, V3 R^2 was 0.966)
+
+device = 'cpu'
+hidden_size = 20
+num_layers = 2
+dtype = 'residues'
+num_classes = 1
+encoding_scheme = 'onehot'
+input_size = 20
+problem_type = 'regression'
+
 '''
 
 
@@ -86,7 +112,10 @@ saved_weights = predictor
 ###############################################################################
 # Initialize network architecture using previously defined hyperparameters
 ###############################################################################
+
 brnn_network = brnn_architecture.BRNN_MtM(input_size, hidden_size, num_layers, num_classes, device).to(device)
+# if you want to use the V3 network, uncomment line below and comment out line above.
+#brnn_network = nn.DataParallel(brnn_architecture.BRNN_MtM(input_size, hidden_size, num_layers, num_classes, device).to(device))
 brnn_network.load_state_dict(torch.load(saved_weights, map_location=torch.device(device)))
 ###############################################################################
 

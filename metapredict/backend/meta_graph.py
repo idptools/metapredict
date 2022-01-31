@@ -179,13 +179,21 @@ def graph(sequence,
             axes.plot([0, n_res+2], [i, i], color="black", linestyle="dashed", linewidth="0.5")
 
     
+    # make the shaded_region_color into a list
+    if type(shaded_region_color) != list:
+        shaded_region_color=list(shaded_region_color)
 
     # if we want shaded regions
     if shaded_regions is not None:
-        for boundaries in shaded_regions:
-            start = boundaries[0]
-            end = boundaries[1]
-            axes.axvspan(start, end, alpha=0.2, color=shaded_region_color)
+        for boundary in range(0, len(shaded_regions)):
+            cur_boundary = shaded_regions[boundary]
+            start = cur_boundary[0]
+            end = cur_boundary[1]
+            if len(shaded_region_color) == len(shaded_regions):
+                cur_color = shaded_region_color[boundary]
+            else:
+                cur_color = shaded_region_color[0]
+            axes.axvspan(start, end, alpha=0.2, color=cur_color)
 
     # if graphing both confidence and disorder
     if pLDDT_scores == True and disorder_scores==True:
