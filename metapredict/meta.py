@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains_hybrid', 'predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
+__all__ =  ['predict_disorder_domains_hybrid', 'predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'predict_disorder_hybrid', 'percent_disorder', 'predict_disorder_fasta', 'predict_hybrid_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
  
 import os
 import sys
@@ -953,6 +953,102 @@ def predict_disorder_fasta(filepath,
     # else write to disk 
     else:
         _meta_tools.write_csv(disorder_dict, output_file)
+
+#./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\
+#./\./\./\./\./\./\./\./\./\./\./\./\.FASTA STUFF./\./\./\./\./\./\./\./\./\./\./\./\
+#./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\././\./\
+
+#Various functions for working with fasta files to make everyones life easier.
+
+
+def predict_hybrid_fasta(filepath, 
+                           output_file = None,
+                           normalized=True,
+                           invalid_sequence_action='convert'):
+    """
+    Function to read in a .fasta file from a specified filepath.
+    Returns a dictionary of disorder values where the key is the 
+    fasta header and the values are the predicted hybrid values.
+    
+    Parameters
+    -------------
+
+    filepath : str 
+        The path to where the .fasta file is located. The filepath should end in the file name. 
+        For example (on MacOS):filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
+
+    output_file : str
+        By default, a dictionary of predicted values is returned immediately. However, you can specify 
+        an output filename and path and a .csv file will be saved. This should include any file extensions.
+        Default = None.
+
+    normalized : bool
+        Flag which defines in the predictor should control and normalize such that all values fall 
+        between 0 and 1. The underlying learning model can, in fact output some negative values 
+        and some values greater than 1. Normalization controls for this. Default = True
+
+    invalid_sequence_action : str
+        Tells the function how to deal with sequences that lack standard amino acids. Default is 
+        convert, which as the name implies converts via standard rules. See 
+        https://protfasta.readthedocs.io/en/latest/read_fasta.html for more information.
+
+
+    Returns
+    --------
+
+    dict or None
+        If output_file is set to None (as default) then this fiction returns a dictionary of sequence ID to
+        disorder vector. If output_file is set to a filename then a .csv file will instead be written and 
+        no return data will be provided.
+
+    """
+
+    # Importantly, by default this function corrects invalid residue
+    # values using protfasta.read_fasta() because the disorder predictor
+    # cannot have non-amino acid values as an input.
+
+    # Test to see if the data_file exists
+    test_data_file = os.path.abspath(filepath)
+
+    if not os.path.isfile(test_data_file):
+        raise FileNotFoundError('Datafile does not exist.')
+
+    protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
+
+    # initialize empty dictionary to be populated with the the fasta headers (key) 
+    # and the predicted disorder values (value)
+    disorder_dict = {}
+
+    # for the sequences in the protffasta_seqs list:
+    for seqs in protfasta_seqs:
+
+        # set cur_header equal to the fasta header
+        cur_header = seqs[0]
+
+        # set cur_seq equal to the sequence associated with the fasta header
+        cur_seq = seqs[1]
+
+        # make all values for curSeq uppercase so they work with predictor
+        cur_seq = cur_seq.upper()
+
+        # set cur_disorder equal to the predicted values for cur_seq
+        cur_disorder = predict_disorder_hybrid(cur_seq)
+
+        disorder_dict[cur_header] = cur_disorder
+
+    # if we did not request an output file 
+    if output_file is None:
+        return disorder_dict
+
+    # else write to disk 
+    else:
+        _meta_tools.write_csv(disorder_dict, output_file)
+
+
+# ..........................................................................................
+#
+
+
 
 
 # ..........................................................................................

@@ -32,67 +32,52 @@ def graph(sequence,
     where the script is (which isn't ideal). However, you can specify outputFile as the
     file path followed by the name of the saved file with the proper extension (.png by default).
     This is the backend for the meta.py graphing functions.
-
     Parameters
     -----------
-
     sequence : str 
         Input amino acid sequence (as string) to be predicted.
-
     title : str
         Sets the title of the generated figure. Default = "Predicted protein disorder"
-
     pLDDT_scores : Bool
         Sets whether to include the predicted confidence scores from
         AlphaFold2
-
     disorder_scores : Bool
         Whether to include disorder scores. Can set to False if you
         just want the AF2 confidence scores.
-
     disorder_threshold : float
         Sets a threshold which draws a horizontal black line as a visual guide along
         the length of the figure. Must be a value between 0 and 1. Default = 0.3
-
     shaded_regions : list of lists
         A list of lists, where sub-elements are of length 2 and contain start and end
         values for regions to be shaded. Assumes that sanity checking on positions has
         already been done. Default is None.
-
     shaded_region_color : str
         String that defines the color of the shaded region. The shaded region is always
         set with an alpha of 0.3 but the color can be any valid matplotlib color name
         or a hex color string (i.e. "#ff0000" is red). Default = 'red'.
-
     disorder_line_color : str
         String that defines the color of the traced disorder score.  Can
         be any standard matplotlib color name or a hex-value (see above). 
         Default = 'blue'.
-
     threshold_line_color : str
         String that defines the color of the traced disorder score. Can
         be any standard matplotlib color name or a hex-value (see above). 
         Default = 'black'.
-
     DPI : int
         Dots-per-inch. Defines the resolution of the generated .png figure. Note that
         if an alternative filetype is pathed the matplotlib backened will automatically
         generate a file of the relevant type (e.g. .pdf, .jpg, or .eps).
-
     output_file : str
         If provided, the output_file variable defines the location and type of the file
         to be saved. This should be a file location and filename with a valid matplotlib
         extension (such as .png, .jpg, .pdf) and, if provided, this value is passed directly
         to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
-
-
     Returns
     -----------
     None 
         No return type, but will either generate an on-screen plot OR will save a file to disk,
         depending on if output_file is provided (or not).
-
     """
     # make sure confidence scores and disorder scores not both false
     if pLDDT_scores == False and disorder_scores == False:
@@ -213,3 +198,4 @@ def graph(sequence,
     else:
         plt.savefig(fname=output_file, dpi=DPI)
         plt.close()
+        
