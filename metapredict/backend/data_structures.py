@@ -1,6 +1,18 @@
 import numpy as np
 
-class DisorderObject:
+
+
+'''
+The DisorderObjectHybrid class was originally used for a hybrid version of metapredict
+where ppLDDT scores and the original metapredict network were combined to generate
+predicted disorder scores. This is no longer user facing, so it was renamed from 
+DisorderObject to DisorderObjectHybrid such that DisorderObject could be used in 
+the predict_disorder_domains() function. The code is kept in case for some reason anyone
+wants to go back and use the hybrid predictor.
+'''
+
+
+class DisorderObjectHybrid:
     """
     Simple datastructure that is returned from predict_disorder_domains_hybrid()
     and provides dot-notation access to key variables.
@@ -62,4 +74,57 @@ class DisorderObject:
         for local in b:
             doms.append(self.sequence[local[0]:local[1]])
         return doms
+
+
+
+class DisorderObject:
+    """
+    Simple datastructure that is returned from predict_disorder_domains
+    and provides dot-notation access to key variables.
+    """
+
+    def __init__(self, seq, meta, disordered_domains, folded_domains, return_numpy=False):
+        """
+        Constructor
+        """
+        self.sequence = seq
+
+        self.disorder = meta 
+
+        self.disordered_domain_boundaries = disordered_domains
+
+        self.folded_domain_boundaries = folded_domains
+
+        # convert numerical vector types as per input argument
+        if return_numpy:
+            if type(meta) is not np.ndarray:
+                self.disorder = np.array(meta)
+
+            if type(meta) is not np.ndarray:
+                self.meta = np.array(meta)
+        
+        else:
+
+            if type(meta) is np.ndarray:
+                self.disorder = meta.tolist()
+
+            if type(meta) is np.ndarray:
+                self.meta = meta.tolist()
+            
+
+    @property
+    def disordered_domains(self):
+        return self.__get_domains(self.disordered_domain_boundaries)
+
+
+    @property
+    def folded_domains(self):
+        return self.__get_domains(self.folded_domain_boundaries)
+            
+    def __get_domains(self, b):
+        doms = []
+        for local in b:
+            doms.append(self.sequence[local[0]:local[1]])
+        return doms
+
 

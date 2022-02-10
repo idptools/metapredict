@@ -20,6 +20,8 @@ if __name__ == "__main__":
 
     parser.add_argument('-o', '--output-file', help='Filename for where to save the outputfile. Default = idrs_shephard.tsv', default='idrs_shephard.tsv')
 
+    parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')
+
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert' ", default='convert')
 
     parser.add_argument('--mode', help='Defines the mode in which IDRs are reported. By default this generates a FASTA file with header format that matches  the input file with an additional set of fields that are "IDR_START=$START   IDR_END=$END" where $START and $END are the starting and ending IDRs. If mode is set to shephard-domains than a SHEPHAD-compliant domains file is generated. If shephard-domains-uniprot the uniprot ID is extracted from the header assuming standard uniprot formatting. Default = fasta', default='fasta')
@@ -31,7 +33,21 @@ if __name__ == "__main__":
 
     if args.mode not in ['fasta', 'shephard-domains','shephard-domains-uniprot', ]:
         raise Exception("--mode must be set to one of 'fasta' or 'shephard-domains'")
+    
+    if args.legacy:
+        use_legacy = True
+        threshold_val = args.threshold_val
 
+
+    else:
+        use_legacy=False
+        # if not using legacy and the default legacy value is still being used, adjust it to 0.5.
+        if args.threshold == 0.42:
+            threshold_val = 0.5
+
+        # if the user sets their own threshold value that isn't 0.42, keep it.
+        else:
+            threshold_val = args.threshold
     
     if not os.path.isfile(args.data_file):
         print('Error: Could not find passed fasta file [%s]'%(args.data_file))
@@ -47,7 +63,7 @@ if __name__ == "__main__":
     n_seqs = len(sequences)
     for s in sequences:
         c=c+1
-        idrs[s] = meta.predict_disorder_domains(sequences[s], disorder_threshold=args.threshold)
+        idrs[s] = meta.predict_disorder_domains(sequences[s], disorder_threshold=threshold_val, legacy=use_legacy, return_list=True)
 
         if n_seqs > 500:
             if args.verbose:

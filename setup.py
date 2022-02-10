@@ -52,7 +52,8 @@ setup(
              'scripts/metapredict-predict-idrs',
              'scripts/metapredict-graph-pLDDT',
              'scripts/metapredict-predict-pLDDT',
-             'scripts/metapredict-predict-hybrid'],
+             'scripts/metapredict-predict-hybrid',
+             'scripts/hybrid-uniprot'],
              
          
 

@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains_hybrid', 'predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'predict_disorder_hybrid', 'percent_disorder', 'predict_disorder_fasta', 'predict_hybrid_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
  
 import os
 import sys
@@ -26,7 +26,7 @@ from metapredict import parameters
 # import stuff for IDR predictor from backend. Note the 'as _*' hides the imported
 # module from the user
 from metapredict.backend.meta_predict_disorder import meta_predict as _meta_predict
-from metapredict.backend.meta_predict_disorder import meta_predict_hybrid as _meta_predict_hybrid
+from metapredict.backend.metameta_hybrid_predict import metameta_predict as _metameta_predict
 from metapredict.backend import meta_tools as _meta_tools
 
 #import stuff for graphing from backend
@@ -37,138 +37,9 @@ from metapredict.backend import domain_definition as _domain_definition
 from metapredict.backend.uniprot_predictions import fetch_sequence as _fetch_sequence
 from metapredict.metapredict_exceptions import MetapredictError
 
-
 # stuff for data structures
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 
-
-
-# ..........................................................................................
-#
-
-def predict_disorder_domains_hybrid(sequence,
-                                    disorder_threshold=None, 
-                                    minimum_IDR_size=10, 
-                                    minimum_folded_domain=40,
-                                    gap_closure=10,
-                                    return_numpy = True,
-                                    cooperative = True):
-                                         
-
-    """
-    Function that integrates predicted pLDDT and predicted disorder to generate
-    a new hybrid structure/disorder score and uses that to extract disordered 
-    domains.  This function takes ~2x as long as the normal 
-    predict_disordered_domains(), but is more accurate. Note that to keep 
-    things simple, this function returns a data structure (rather than a tuple) 
-    that provides dot-reference access into the generated output data which 
-    include (1) The metapredict profile, (2) the predicted pLDDT score (3) the
-    combined profile.
-
-    Note that this function explicitly finds LONG IDR regions - i.e. we will miss
-    shorter disordered loops and short (<20 residue) linkers that connect two 
-    folded domains.
-    
-
-    Parameters
-    -------------
-
-    sequence : str
-        Amino acid sequence
-
-    disorder_threshold : float
-        Value that defines what 'disordered' is based on the integrated 
-        metapredict/pLDDT score. The default of 0.50 has been optimized based
-        on known data and works with the other default parameters, but you
-        are welcome to play with this threshold if that is of interest.
-        Default = 0.5
-
-    minimum_IDR_size : int
-        Defines the smallest possible IDR. This is a hard limit - i.e. 
-        we CANNOT get IDRs smaller than this. Default = 12.
-
-    minimum_folded_domain : int
-        Defines where we expect the limit of small folded domains to be. 
-        Default = 40.
-
-    gap_closure : int
-        Defines the largest gap that would be 'closed'. Gaps here refer to 
-        a scenario in which you have two groups of disordered residues seprated 
-        by a 'gap' of un-disordered residues. In general large gap sizes will 
-        favour larger contigous IDRs. It's worth noting that gap_closure 
-        becomes relevant only when minimum_region_size becomes very small 
-        (i.e. < 5) because really gaps emerge when the smoothed disorder fit 
-        is "noisy", but when smoothed gaps are increasingly rare. Default=10.
-
-    return_numpy : bool
-        Flag which if set to true means all numerical types are returned
-        as numpy.ndlist. Default is True
-
-    cooperative : bool
-        Flag which defines if cooperative or non-cooperative mode
-        should be used. Both are provided for now but we may remove
-        non-cooperative given the cooperative mode seems to always
-        offer better performance.
-        Default = True
-
-    Returns
-    ------------
-    DisorderObject
-        Returns a DisorderObject. DisorderObject has 7 dot variables:
-
-        .seq : str    
-            Amino acid sequence 
-
-        .disorder : list or np.ndaarray
-            Hybrid disorder score
-
-        .disorder_smoothed : list pr np.ndarray
-            Hybrid disorder score smoothed
-
-        .ppLDDT : 
-            Predicted pLDDT scores
-
-        .metapredict_disorder :
-            Niave metapredict score
-
-        .disorder_domain_boundaries : list
-            List of domain boundaries for IDRs using Python indexing
-
-        .folded_domain_boundaries : list
-            List of domain boundaries for folded domains using Python indexing
-
-        .disordered_domains : list
-            List of the actual sequences for IDRs
-
-        .folded_domains : list
-            List of the actual sequences for folded domains
-    
-
-    """
-
-    # assign defaults depending on if cooperative is set to 
-    # True or False
-    if disorder_threshold is None:
-        if cooperative is True:        
-            disorder_threshold = parameters.METAPREDICT_HYBRID_DISORDER_THRESHOLD_COOPERATIVE
-        else:
-            disorder_threshold = parameters.METAPREDICT_HYBRID_DISORDER_THRESHOLD_NONCOOPERATIVE
-    
-    # build 3 profiles (we only use hybrid to extract out domains)
-    (meta_disorder, hybrid, ppLDDT) = predict_all(sequence, cooperative=cooperative)
-
-    # extract subdomains
-    raw_out = predict_disorder_domains_from_external_scores(hybrid,
-                                                            sequence = sequence,
-                                                            disorder_threshold = disorder_threshold,
-                                                            minimum_IDR_size = minimum_IDR_size,
-                                                            gap_closure = gap_closure,
-                                                            minimum_folded_domain = minimum_folded_domain,
-                                                            override_folded_domain_minsize = True)
-
-
-    return _DisorderObject(sequence, meta_disorder, ppLDDT, hybrid, raw_out[0], raw_out[1], raw_out[2], return_numpy=return_numpy)
-    
 
 # ..........................................................................................
 #
@@ -178,7 +49,8 @@ def predict_disorder_domains_from_external_scores(disorder,
                                                   minimum_IDR_size=12, 
                                                   minimum_folded_domain=50,
                                                   gap_closure=10,
-                                                  override_folded_domain_minsize=False):
+                                                  override_folded_domain_minsize=False,
+                                                  return_numpy=True):
     
     """
 
@@ -215,11 +87,8 @@ def predict_disorder_domains_from_external_scores(disorder,
         A list of per-residue disorder scores.
 
     sequence : str
-        An optional argument which, if provided, is assumed to reflect the the 
-        amino acid sequence from which the disorder scores were computed. Note 
-        if these do not match one another in length then the function raises        
-        an exception. 
-        Default = None
+        The protein sequence as a string. If no sequence is passed, 
+        calling DisorderObject.sequence will return an fake sequence.
 
     disorder_threshold : float
         Value that defines what 'disordered' is based on the input predictor 
@@ -265,27 +134,31 @@ def predict_disorder_domains_from_external_scores(disorder,
         small (20-30) residue folded domains. This is not provided as an option 
         in the normal predict_disorder_domains for metapredict. Default = False. 
 
+    return_numpy : bool
+        Flag which if set to true means all numerical types are returned
+        as numpy.ndlist. Default is True
+
     Returns
     ---------
-    list
-        Always returns a list with three elements, as outlined below.
+    DisorderObject
+        Returns a DisorderObject. DisorderObject has 7 dot variables:
+        .sequence : str    
+            Amino acid sequence 
 
-        [0] - Smoothed disorder score used to aid in domain boundary 
-              identification. This can be useful for understanding
-              how IDRs/folded domains were identified, and will vary 
-              depending on the settings provided
+        .disorder : list or np.ndaarray
+            Hybrid disorder score
 
-        [1] - a list of elements, where each element defines the start 
-              and end position of each IDR. If a sequence was provided
-              the third element in each sub-element is the IDR sequence. 
-              If no sequence was provided, then each sub-element is
-              simply len=2.
- 
-        [2] - a list of elements, where each element defines the start 
-              and end position of each folded region. If a sequence was 
-              provided the third element in each sub-element is the folded 
-              domain sequence. If no sequence was provided, then each 
-              sub-element is simply len=2.
+        .disordered_domain_boundaries : list
+            List of domain boundaries for IDRs using Python indexing
+
+        .folded_domain_boundaries : list
+            List of domain boundaries for folded domains using Python indexing
+
+        .disordered_domains : list
+            List of the actual sequences for IDRs
+
+        .folded_domains : list
+            List of the actual sequences for folded domains
 
     """
 
@@ -293,7 +166,7 @@ def predict_disorder_domains_from_external_scores(disorder,
     if sequence is not None:
         try:
             if len(sequence) != len(disorder):
-                raise MetapredictError('Disorder and sequence info are not length matched [disorder length = {len(disorder)}, sequence length = {len(sequence)}')
+                raise MetapredictError(f'Disorder and sequence info are not length matched [disorder length = {len(disorder)}, sequence length = {len(sequence)}')
         except Exception:
             raise MetapredictError('Could not compare length of disorder and sequence parameters. Make sure sequence is a str and disorder a list')
 
@@ -316,32 +189,33 @@ def predict_disorder_domains_from_external_scores(disorder,
                                                  
     
 
-    # if we are going to use the sequence then return 
-    if return_sequence:
-        return [return_tuple[0], return_tuple[1], return_tuple[2]]
+    # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
+    IDRs = []
 
-    # if we are not using the sequence
-    else:
-        # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
-        IDRs = []
-        for local_idr in return_tuple[1]:
-            IDRs.append([local_idr[0],local_idr[1]])
+    for local_idr in return_tuple[1]:
+        IDRs.append([local_idr[0], local_idr[1]])
 
-        FDs = []
-        for local_fd in return_tuple[2]:
-            FDs.append([local_fd[0],local_fd[1]])
-            
-        return [return_tuple[0],IDRs, FDs]
+    FDs = []
+
+    for local_fd in return_tuple[2]:
+        FDs.append([local_fd[0], local_fd[1]])
+
+                                         
+    # return DisorderObject
+    return _DisorderObject(sequence, disorder, IDRs, FDs, return_numpy=return_numpy)
 
 
 # ..........................................................................................
 #
 def predict_disorder_domains(sequence, 
-                             disorder_threshold=0.42, 
+                             disorder_threshold=None, 
                              minimum_IDR_size=12, 
                              minimum_folded_domain=50,
                              gap_closure=10, 
-                             normalized=True):
+                             normalized=True,
+                             return_numpy=True,
+                             legacy=False,
+                             return_list=False):
     """
 
     This function takes an amino acid sequence, a disorder score, and 
@@ -372,9 +246,13 @@ def predict_disorder_domains(sequence,
         Amino acid sequence
 
     disorder_threshold : float
+        Set to None such that it will change to 0.42 for legacy
+        and 0.5 for metapredict. Can still manually set value.
+
         Value that defines what 'disordered' is based on the 
         metapredict disorder score. The higher the value the more
-        stringent the cutoff. Default = 0.42
+        stringent the cutoff. Default = 0.5 for new version
+        and 0.42 for legacy metapredict.
 
     minimum_IDR_size : int
         Defines the smallest possible IDR. This is a hard limit - 
@@ -409,33 +287,73 @@ def predict_disorder_domains(sequence,
         disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
 
+    normalized : bool
+        whether the disorder scores are normalized between zero and
+        one, default is true
+
+    return_numpy : bool
+        Flag which if set to true means all numerical types are returned
+        as numpy.ndlist. Default is True
+
+    legacy : bool
+        Whether to use the original metapredict network
+
+    return_list : bool
+        whether to return the old format where a tuple is returned
+
+    Returns
+    ---------
+    DisorderObject
+        Returns a DisorderObject. DisorderObject has 7 dot variables:
+        .sequence : str    
+            Amino acid sequence 
+
+        .disorder : list or np.ndaarray
+            disorder scores
+
+        .disordered_domain_boundaries : list
+            List of domain boundaries for IDRs using Python indexing
+
+        .folded_domain_boundaries : list
+            List of domain boundaries for folded domains using Python indexing
+
+        .disordered_domains : list
+            List of the actual sequences for IDRs
+
+        .folded_domains : list
+            List of the actual sequences for folded domains
+
+    
+    unles return_list == True. Then - 
+
     Returns
     ---------
     list
-        Always returns a list with 4 elements, as outlined below
-
-        [0] - List of floats - this is the 'raw' disorder score; i.e. 
-              disorder propensity as predicted by metapredict
-
-        [1] - List of floats - this is the smoothed disorder score 
-              used to aid in domain boundary identification. 
-              This can be useful for understanding how IDRs/folded 
-              domains were identified, and will vary depending on 
-              minimum_region_size.
-          
-        [2] - a list of elements, where each element is itself a 
-              list where position 0 and 1 define the IDR location 
-              and position 2 gives the actual IDR sequence
-
-        [3] - a list of elements, where each element is itself a 
-              list where position 0 and 1 define the folded domain 
-              location and position 2 gives the actual folded domain 
-              sequence.
+        Always returns a list with three elements, as outlined below.
+        [0] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding
+              how IDRs/folded domains were identified, and will vary depending on the settings provided
+        [1] - a list of elements, where each element defines the start and end position of each IDR. If a sequence was provided
+              the third element in each sub-element is the IDR sequence. If no sequence was provided, then each sub-element is
+              simply len=2.
+ 
+        [2] - a list of elements, where each element defines the start and end position of each folded region. If a sequence was 
+              provided the third element in each sub-element is the folded domain sequence. If no sequence was provided, then each 
+              sub-element is simply len=2.    
 
 
-    """
-    
-    disorder = predict_disorder(sequence, normalized)
+    """    
+
+
+    if disorder_threshold == None:
+        if legacy == True:
+            disorder_threshold = 0.42
+        else:
+            disorder_threshold = 0.5
+
+    # check that a valid range was passed for disorder_threshold
+    _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
+
+    disorder = predict_disorder(sequence, normalized, legacy=legacy)
 
     return_tuple = _domain_definition.get_domains(sequence, 
                                                  disorder, 
@@ -443,14 +361,33 @@ def predict_disorder_domains(sequence,
                                                  minimum_IDR_size=minimum_IDR_size, 
                                                  minimum_folded_domain=minimum_folded_domain,
                                                  gap_closure=gap_closure)
-                                                 
-    
-    return [disorder, return_tuple[0], return_tuple[1], return_tuple[2]]
+
+    # if returning the old style list of tuples
+    if return_list == True:
+        return [disorder, return_tuple[0], return_tuple[1], return_tuple[2]]
+
+    else:
+
+        # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
+        IDRs = []
+
+        for local_idr in return_tuple[1]:
+            IDRs.append([local_idr[0], local_idr[1]])
+
+        FDs = []
+
+        for local_fd in return_tuple[2]:
+            FDs.append([local_fd[0], local_fd[1]])
+
+                                             
+        # return DisorderObject
+        return _DisorderObject(sequence, disorder, IDRs, FDs, return_numpy=return_numpy)
 
 
 # ..........................................................................................
 #
-def predict_disorder(sequence, normalized=True, return_numpy=False):
+
+def predict_disorder(sequence, normalized=True, return_numpy=False, legacy=False):
     """
     Function to return disorder of a single input sequence. Returns the
     predicted values as a list.
@@ -471,6 +408,9 @@ def predict_disorder(sequence, normalized=True, return_numpy=False):
     return_numpy : bool
         Flag which if set to true means the function returns a np.array.
 
+    legacy : bool
+        Whether to use the original metapredict disorder predictor.
+
     Returns
     --------
      
@@ -482,11 +422,14 @@ def predict_disorder(sequence, normalized=True, return_numpy=False):
     # make all residues upper case 
     sequence = sequence.upper()
 
-
-    d = _meta_predict(sequence, normalized=normalized)
+    if legacy == True:
+        d = _meta_predict(sequence, normalized=normalized)
+    else:
+        d = _metameta_predict(sequence, normalized = normalized)
 
     if return_numpy:
         return np.array(d)
+
     else:
         return d
 
@@ -495,8 +438,8 @@ def predict_disorder(sequence, normalized=True, return_numpy=False):
 #
 def predict_all(sequence, cooperative=True):
     """
-    Function to return all three types of predictions (metapredict,
-    metapredict-hybrid, and ppLDDT). Returns as a tuple of numpy 
+    Function to return all three types of predictions (legacy_metapredict,
+    metapredict, and ppLDDT). Returns as a tuple of numpy 
     arrays, with ppLDDT returned as normalized between 0 and 1 
     (rather than 0 and 100) so can be plotted on same axis easily.
 
@@ -518,9 +461,8 @@ def predict_all(sequence, cooperative=True):
      
     tuple with three np.ndarrays:
 
-        [0] - metapredict disorder (vanialla metapredict disorder)
-        [1] - metapredict-hybrid disorder (disorder profile generated
-              based on both ppLDDT and vanilla metapredict scores
+        [0] - metapredict disorder scores (updated metapredict disorder)
+        [1] - legacy metapredict disorder (original metapredict disorder)
         [2] - normalized ppLDDT scores
 
     """
@@ -529,73 +471,26 @@ def predict_all(sequence, cooperative=True):
     sequence = sequence.upper()
 
     # compute pLDDT and metapredict disorder
+    meta_disorder = predict_disorder(sequence, return_numpy = True)
     ppLDDT = predict_pLDDT(sequence, return_numpy=True, return_normalized=True)
-    meta_disorder = predict_disorder(sequence, return_numpy=True)
-    hybrid = _meta_predict_hybrid(meta_disorder, ppLDDT, cooperative=cooperative)
-
-    return (meta_disorder, hybrid, ppLDDT)
-
+    legacy_disorder = predict_disorder(sequence, return_numpy=True, legacy=True)
     
-# ..........................................................................................
-#
-def predict_disorder_hybrid(sequence, 
-                            cooperative=True, 
-                            return_numpy=False):
-    """
-    Function to return the disorder using metapredict-hybrid (MPH) of a
-    single input sequence. Returns the predicted values as a list or
-    a numpy array, as dictated by the return_numpy flag.
-    
-    Parameters
-    ------------
 
-    sequence : str 
-        Input amino acid sequence (as string) to be predicted.
+    return (meta_disorder, legacy_disorder, ppLDDT)
 
-    cooperative : bool
-        Flag which defines if cooperative or non-cooperative mode
-        should be used. Both are provided for now but we may remove
-        non-cooperative given the cooperative mode seems to always
-        offer better performance.
-        Default = True
-
-    return_numpy : bool
-        Flag which if set to true means the function returns a np.array.
-        Default = False
-
-    Returns
-    --------
-     
-    list or np.ndarray
-        Returns a list of floats that corresponds to the per-residue disorder 
-        score.
-
-    """
-    # make all residues upper case 
-    sequence = sequence.upper()
-
-    # compute pLDDT and metapredict disorder
-    ppLDDT = predict_pLDDT(sequence, return_numpy=True, return_normalized=True)
-    meta_disorder = predict_disorder(sequence, return_numpy=True)
-
-    hybrid = _meta_predict_hybrid(meta_disorder, ppLDDT, cooperative)
-
-    if return_numpy is False:
-        return hybrid.tolist()
-    else:
-        return hybrid
 
 
 # ..........................................................................................
 #
 def graph_disorder(sequence, 
                    title = 'Predicted protein disorder', 
-                   disorder_threshold = 0.3,
+                   disorder_threshold = None,
                    pLDDT_scores=False,
                    shaded_regions = None,
                    shaded_region_color = 'red',
                    DPI=150, 
-                   output_file=None):
+                   output_file=None,
+                   legacy=False):
     """
     Function to plot the disorder of an input sequece. Displays immediately.
 
@@ -610,9 +505,13 @@ def graph_disorder(sequence,
         disorder"
 
     disorder_threshold : float
+        Set to None by default such that if the user chooses to set
+        legacy=True, the threshhold line will be at 0.3 and if legacy
+        is set to false (default) then the threshold line will be at 0.5.
+
         Sets a threshold which draws a horizontal black line as a visual 
         guide along the length of the figure. Must be a value between 0 
-        and 1. Default = 0.3
+        and 1. Default = 0.3 for legacy and 0.5 for new version of metapredict.
             
     pLDDT_scores : Bool
         Sets whether to include the predicted pLDDT scores in the figure
@@ -643,6 +542,9 @@ def graph_disorder(sequence,
         ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
+    legacy : bool
+        whether to use the legacy metapredict predictions
+
     Returns
     --------
 
@@ -650,6 +552,12 @@ def graph_disorder(sequence,
         No return object, but, the graph is saved to disk or displayed 
         locally.
     """
+
+    if disorder_threshold == None:
+        if legacy == True:
+            disorder_threshold = 0.3
+        else:
+            disorder_threshold = 0.5
 
     # check that a valid range was passed for disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -664,7 +572,7 @@ def graph_disorder(sequence,
     _graph(sequence, title = title, disorder_threshold = disorder_threshold, 
         pLDDT_scores = pLDDT_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
-        DPI=DPI, output_file = output_file) 
+        DPI=DPI, output_file = output_file, legacy_metapredict=legacy) 
 
 
 # ..........................................................................................
@@ -802,11 +710,13 @@ def graph_pLDDT(sequence,
 
 # ..........................................................................................
 #
-def percent_disorder(sequence, cutoff=0.3, mode='metapredict'):
+def percent_disorder(sequence, cutoff=None, legacy=False):
     """
     function to return the percent disorder for any given protein.
-    By default, uses 0.3 as a cutoff (values greater than or equal
-    to 0.3 will be considered disordered).
+    By default, uses 0.5 as a cutoff for the new version of metapredict
+    and 0.3 for the legacy version of metapredict (values greater than or equal
+    to 0.5 will be considered disordered). If a value for cutoff is specified,
+    that value will be used.
 
     Note this function uses the stanard metapredict disorder
     score and 
@@ -820,8 +730,15 @@ def percent_disorder(sequence, cutoff=0.3, mode='metapredict'):
         Input amino acid sequence (as string) to be predicted.
 
     disorder_threshold : float
+        Set to None by default such that it will change depending
+        on whether legacy is set to True or False.
+
         Sets a threshold which defines if a residue is considered disordered
-        or not. Default = 0.3.
+        or not. Default for new metapredict = 0.5. Default for legacy metapredict
+        is 0.3.
+
+    legacy : bool
+        Whether or not to use the legacy metapredict. 
 
     Returns
     -----------
@@ -831,17 +748,19 @@ def percent_disorder(sequence, cutoff=0.3, mode='metapredict'):
         percentage of the sequence is considered disordered.
 
     """
-    if mode not in ['metapredict', 'metapredict-hybrid']:
-        raise MetapredictError("Mode passed to percent_disorder was not one of 'metapredict' or 'metapredict-hybrid'")
 
     # make all residues upper case 
     sequence = sequence.upper()
 
     # set dis equal to the predicted disorder for the input sequence
-    if mode == 'metapredict':
+    if legacy == True:
+        dis = predict_disorder(sequence, legacy=True)
+        if cutoff == None:
+            cutoff = 0.3
+    else:
         dis = predict_disorder(sequence)
-    elif mode == 'metapredict-hybrid':
-        dis = predict_disorder_hybrid(sequence)
+        if cutoff == None:
+            cutoff = 0.5
 
     # set arbitrarily chosen variable n to equal 0
     n = 0
@@ -857,7 +776,8 @@ def percent_disorder(sequence, cutoff=0.3, mode='metapredict'):
     value >= cutoff) divided by the total number of residues in the
     input sequence.
     """
-    percent_disordered = 100*round((n / len(dis)), 3)
+
+    percent_disordered = round(100*((n / len(dis))), 3)
 
 
     return percent_disordered
@@ -874,7 +794,8 @@ def percent_disorder(sequence, cutoff=0.3, mode='metapredict'):
 def predict_disorder_fasta(filepath, 
                            output_file = None,
                            normalized=True,
-                           invalid_sequence_action='convert'):
+                           invalid_sequence_action='convert',
+                           legacy=False):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of disorder values where the key is the 
@@ -902,95 +823,8 @@ def predict_disorder_fasta(filepath,
         convert, which as the name implies converts via standard rules. See 
         https://protfasta.readthedocs.io/en/latest/read_fasta.html for more information.
 
-
-    Returns
-    --------
-
-    dict or None
-        If output_file is set to None (as default) then this fiction returns a dictionary of sequence ID to
-        disorder vector. If output_file is set to a filename then a .csv file will instead be written and 
-        no return data will be provided.
-
-    """
-
-    # Importantly, by default this function corrects invalid residue
-    # values using protfasta.read_fasta() because the disorder predictor
-    # cannot have non-amino acid values as an input.
-
-    # Test to see if the data_file exists
-    test_data_file = os.path.abspath(filepath)
-
-    if not os.path.isfile(test_data_file):
-        raise FileNotFoundError('Datafile does not exist.')
-
-    protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
-
-    # initialize empty dictionary to be populated with the the fasta headers (key) 
-    # and the predicted disorder values (value)
-    disorder_dict = {}
-
-    # for the sequences in the protffasta_seqs list:
-    for seqs in protfasta_seqs:
-
-        # set cur_header equal to the fasta header
-        cur_header = seqs[0]
-
-        # set cur_seq equal to the sequence associated with the fasta header
-        cur_seq = seqs[1]
-
-        # make all values for curSeq uppercase so they work with predictor
-        cur_seq = cur_seq.upper()
-
-        # set cur_disorder equal to the predicted values for cur_seq
-        cur_disorder = _meta_predict(cur_seq, normalized=normalized)
-
-        disorder_dict[cur_header] = cur_disorder
-
-    # if we did not request an output file 
-    if output_file is None:
-        return disorder_dict
-
-    # else write to disk 
-    else:
-        _meta_tools.write_csv(disorder_dict, output_file)
-
-#./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\
-#./\./\./\./\./\./\./\./\./\./\./\./\.FASTA STUFF./\./\./\./\./\./\./\./\./\./\./\./\
-#./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\./\././\./\
-
-#Various functions for working with fasta files to make everyones life easier.
-
-
-def predict_hybrid_fasta(filepath, 
-                           output_file = None,
-                           normalized=True,
-                           invalid_sequence_action='convert'):
-    """
-    Function to read in a .fasta file from a specified filepath.
-    Returns a dictionary of disorder values where the key is the 
-    fasta header and the values are the predicted hybrid values.
-    
-    Parameters
-    -------------
-
-    filepath : str 
-        The path to where the .fasta file is located. The filepath should end in the file name. 
-        For example (on MacOS):filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
-
-    output_file : str
-        By default, a dictionary of predicted values is returned immediately. However, you can specify 
-        an output filename and path and a .csv file will be saved. This should include any file extensions.
-        Default = None.
-
-    normalized : bool
-        Flag which defines in the predictor should control and normalize such that all values fall 
-        between 0 and 1. The underlying learning model can, in fact output some negative values 
-        and some values greater than 1. Normalization controls for this. Default = True
-
-    invalid_sequence_action : str
-        Tells the function how to deal with sequences that lack standard amino acids. Default is 
-        convert, which as the name implies converts via standard rules. See 
-        https://protfasta.readthedocs.io/en/latest/read_fasta.html for more information.
+    legacy : bool
+        Whether to use the legacy metapredict predictor.
 
 
     Returns
@@ -1032,7 +866,7 @@ def predict_hybrid_fasta(filepath,
         cur_seq = cur_seq.upper()
 
         # set cur_disorder equal to the predicted values for cur_seq
-        cur_disorder = predict_disorder_hybrid(cur_seq)
+        cur_disorder = predict_disorder(cur_seq, normalized=normalized, legacy=legacy)
 
         disorder_dict[cur_header] = cur_disorder
 
@@ -1043,10 +877,6 @@ def predict_hybrid_fasta(filepath,
     # else write to disk 
     else:
         _meta_tools.write_csv(disorder_dict, output_file)
-
-
-# ..........................................................................................
-#
 
 
 
@@ -1135,12 +965,13 @@ def predict_pLDDT_fasta(filepath,
 #
 def graph_disorder_fasta(filepath, 
                          pLDDT_scores=False,
-                         disorder_threshold = 0.3,
+                         disorder_threshold = None,
                          DPI=150, 
                          output_dir = None,
                          output_filetype='png', 
                          invalid_sequence_action='convert',
-                         indexed_filenames=False):
+                         indexed_filenames=False,
+                         legacy=False):
 
     """
     Function to make graphs of predicted disorder from the sequences
@@ -1194,6 +1025,8 @@ def graph_disorder_fasta(filepath,
     indexed_filenames : bool
         Bool which, if set to true, means filenames start with an unique integer.
 
+    legacy : bool
+        Whether to use the legacy metapredict predictor.
 
     Returns
     ---------
@@ -1202,6 +1035,12 @@ def graph_disorder_fasta(filepath,
         No return object, but, the graph is saved to disk or displayed locally.
 
     """
+
+    if disorder_threshold == None:
+        if legacy == True:
+            disorder_threshold = 0.3
+        else:
+            disorder_threshold = 0.5
 
     # Test to see if the data_file exists
     if not os.path.isfile(filepath):
@@ -1244,13 +1083,13 @@ def graph_disorder_fasta(filepath,
             title = idx[0:14]
 
             # plot!        
-            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, output_file=filename)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, output_file=filename, legacy=legacy)
 
         # if no output_dir specified just graph the seq        
         else:
             # define title (including bad chars)
             title = idx[0:14]            
-            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, legacy=legacy)
 
 
 # ..........................................................................................
@@ -1365,7 +1204,7 @@ def graph_pLDDT_fasta(filepath,
 
 # ..........................................................................................
 #
-def predict_disorder_uniprot(uniprot_id, normalized=True):
+def predict_disorder_uniprot(uniprot_id, normalized=True, legacy=False):
     """
     Function to return disorder of a single input sequence. Uses a 
     Uniprot ID to get the sequence.
@@ -1391,7 +1230,7 @@ def predict_disorder_uniprot(uniprot_id, normalized=True):
     sequence = _fetch_sequence(uniprot_id)
         
     # return predicted values of disorder for sequence
-    return _meta_predict(sequence, normalized)
+    return predict_disorder(sequence, normalized, legacy=legacy)
 
 
 # ..........................................................................................
@@ -1427,11 +1266,12 @@ def predict_pLDDT_uniprot(uniprot_id):
 def graph_disorder_uniprot(uniprot_id, 
                            title = 'Predicted protein disorder',
                            pLDDT_scores=False, 
-                           disorder_threshold = 0.3,
+                           disorder_threshold = None,
                            shaded_regions = None,
                            shaded_region_color = 'red',
                            DPI=150, 
-                           output_file=None):
+                           output_file=None,
+                           legacy=False):
 
     """
     Function to plot the disorder of an input sequece. Displays immediately.
@@ -1450,6 +1290,9 @@ def graph_disorder_uniprot(uniprot_id,
         AlphaFold2
 
     disorder_threshold : float
+        Set to None by default such that it will change depending of if the user
+        sets legacy to True of if legacy remains = False. Can still be set manually.
+
         Sets a threshold which draws a horizontal black line as a visual guide along
         the length of the figure. Must be a value between 0 and 1.
     
@@ -1477,6 +1320,9 @@ def graph_disorder_uniprot(uniprot_id,
         to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
+    legacy : bool
+        whether to use the legacy metapredict predictor
+
     Returns
     ----------
 
@@ -1484,6 +1330,12 @@ def graph_disorder_uniprot(uniprot_id,
         No return object, but, the graph is saved to disk or displayed locally.
     
     """
+    if disorder_threshold == None:
+        if legacy == True:
+            disorder_threshold = 0.3
+        else:
+            disorder_threshold = 0.5
+
     # check that a valid range was passed for 
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
 
@@ -1491,7 +1343,7 @@ def graph_disorder_uniprot(uniprot_id,
     sequence = _fetch_sequence(uniprot_id)
 
     # graph sequence
-    _graph(sequence, title=title, pLDDT_scores=pLDDT_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
+    _graph(sequence, title=title, pLDDT_scores=pLDDT_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file, legacy_metapredict=legacy) 
     
 
 # ..........................................................................................
@@ -1556,11 +1408,13 @@ def graph_pLDDT_uniprot(uniprot_id,
 # ..........................................................................................
 #
 def predict_disorder_domains_uniprot(uniprot_id, 
-                             disorder_threshold=parameters.METAPREDICT_DISORDER_THRESHOLD, 
+                             disorder_threshold=None, 
                              minimum_IDR_size=12, 
                              minimum_folded_domain=50,
                              gap_closure=10, 
-                             normalized=True):
+                             normalized=True,
+                             return_numpy=True,
+                             legacy = False):
     """
 
     This function takes an amino acid sequence, a disorder score, and 
@@ -1595,9 +1449,12 @@ def predict_disorder_domains_uniprot(uniprot_id,
         Amino acid sequence
 
     disorder_threshold : float
+        Set to None by default such that the threshold value is is dependent
+        on whether legacy is set to True. The default for legacy is 0.42, the
+        default for the new metapredict is 0.5.
+
         Value that defines what 'disordered' is based on the metapredict 
-        disorder score. The higher the value the more stringent the cutoff. 
-        Default = 0.42 (defined in metapredict.parameters).
+        disorder score. 
 
     minimum_IDR_size : int
         Defines the smallest possible IDR. This is a hard limit - i.e. we 
@@ -1625,34 +1482,45 @@ def predict_disorder_domains_uniprot(uniprot_id,
         because really gaps emerge when the smoothed disorder fit is "noisy", but 
         when smoothed gaps are increasingly rare. Default=10.
 
+    return_numpy : bool
+        Flag which if set to true means all numerical types are returned
+        as numpy.ndlist. Default is True
+
 
     Returns
-    ----------
+    ---------
+    DisorderObject
+        Returns a DisorderObject. DisorderObject has 7 dot variables:
+        .sequence : str    
+            Amino acid sequence 
 
-    list
-        Always returns a list with 4 elements, as outlined below
+        .disorder : list or np.ndaarray
+            Hybrid disorder score
 
-        [0] - List of floats - this is the 'raw' disorder score; i.e. disorder 
-              propensity as predicted by metapredict
+        .disordered_domain_boundaries : list
+            List of domain boundaries for IDRs using Python indexing
 
-        [1] - List of floats - this is the smoothed disorder score used to aid in 
-              domain boundary identification. This can be useful for understanding 
-              how IDRs/folded domains were identified, and will vary depending on               
-              minimum_region_size.
-          
-        [2] - a list of elements, where each element is itself a list where position
-              0 and 1 define the IDR location and position 2 gives the actual IDR 
-              sequence.
-              
+        .folded_domain_boundaries : list
+            List of domain boundaries for folded domains using Python indexing
 
-        [3] - a list of elements, where each element is itself a list where position 
-              0 and 1 define the folded domain location and position 2 gives the actual 
-              folded domain sequence.
+        .disordered_domains : list
+            List of the actual sequences for IDRs
+
+        .folded_domains : list
+            List of the actual sequences for folded domains
+
 
     """
+
+    if disorder_threshold == None:
+        if legacy == True:
+            disorder_threshold = 0.42
+        else:
+            disorder_threshold = 0.5
+
     sequence = _fetch_sequence(uniprot_id)
 
-    disorder = predict_disorder(sequence, normalized=normalized)
+    disorder = predict_disorder(sequence, normalized=normalized, legacy=legacy)
 
     return_tuple = _domain_definition.get_domains(sequence, 
                                                  disorder, 
@@ -1661,8 +1529,19 @@ def predict_disorder_domains_uniprot(uniprot_id,
                                                  minimum_folded_domain=minimum_folded_domain,
                                                  gap_closure=gap_closure)
                                                  
-    
-    return [disorder, return_tuple[0], return_tuple[1], return_tuple[2]]
 
+    # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
+    IDRs = []
+
+    for local_idr in return_tuple[1]:
+        IDRs.append([local_idr[0], local_idr[1]])
+
+    FDs = []
+
+    for local_fd in return_tuple[2]:
+        FDs.append([local_fd[0], local_fd[1]])
+
+    # return DisorderObject
+    return _DisorderObject(sequence, disorder, IDRs, FDs, return_numpy=return_numpy)
 
 
