@@ -135,3 +135,94 @@ def sanitize_filename(input_filename):
     # WORD character (i.e. alphanumeric or underscore) with a space
     s = re.sub(r'\W+', '_', input_filename)
     return s
+
+
+def get_binary_prediction(confidence_value, cutoff_value):
+    '''
+    function to turn a disorder sore into a binary classification
+    where 1 is disordered and 0 is not disordered
+
+    Parameters 
+    -----------
+    confidence_value : float
+        The disorder confidence score as a float
+
+    cutoff_value : float
+        The value to use to decide whether to assign a confidence score
+        with a 1 (disordered) or a 0 (not disordered). Assigns a 1 when
+        the confidence_value > cutoff_value
+
+    Returns
+    -------
+    binary_prediction : Int
+        Returns a binary prediction
+
+    '''
+    if confidence_value > cutoff_value:
+        return 1
+    else:
+        return 0
+
+
+def write_caid_format(input_dict, output_file):
+    '''
+    Function that takes in a dictionary and outputs a file in the format as 
+    specified by IDPcentrail Critical Assessment of Intrinsic protein Disorder
+    (CAID). Format is as follows - 
+        ouptut is a plain text output where the
+        prediction has an entry header >entry_id header, similar to the beginning
+        of a .fasta file
+        Every line following the entry_id contains tab separated columns with columns
+        ordered as follows - 1) residue number, 2) residue name, 3) confidence score,
+        4) binary classification where 1 = disordered and 0 = not disordered.
+
+    Example (from idpcentral.org/caid):
+        >P04637
+        1    M    0.892    1
+        2    E    0.813    1
+
+    Parameters
+    ----------
+    input_dict : dict
+        input dictionary of disorder scores. The Key should be the
+        entry_id as as string and the associated value should be a list where the
+        first element of the list is the corresponding sequence as a string and the
+        second item of the list is the corresponding predictions as float values.
+
+    Returns
+    -------
+    None
+        Does not return anything to the user. Writes a file saved to either
+        the current directory or to a specified file path.
+
+    '''
+
+    # first make a list of all of the keys in the dict
+    entry_ids = []
+
+    for entry_id in input_dict.keys():
+        entry_ids.append(entry_id)
+
+    # attempt to write to output file, raise MetapredictError if unable to
+    try:
+        current_output = open(output_file, 'w') 
+    except Exception:
+        raise MetapredictError(f'Unable to write to {output_file}')
+
+    # now iterate through the dict and append the necessary values per line
+    for ids in entry_ids:
+        cur_id = ids
+        cur_sequence = input_dict[cur_id][0][0]
+        cur_scores = input_dict[cur_id][1]
+        # write entry id
+        current_output.write(f'{cur_id}\n')
+
+        # for each residue write the position, residue, score, and classification
+        for res_and_score_index in range(0, len(cur_sequence)):
+            cur_residue = cur_sequence[res_and_score_index]
+            cur_score = cur_scores[res_and_score_index]
+            cur_binary = get_binary_prediction(cur_score, cutoff_value=0.5)
+            # write as tsv the caid formatted info
+            current_output.write(f'{res_and_score_index+1}\t{cur_residue}\t{cur_score}\t{cur_binary}\n')
+
+

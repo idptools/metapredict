@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT']
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid']
  
 import os
 import sys
@@ -1543,5 +1543,47 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
     # return DisorderObject
     return _DisorderObject(sequence, disorder, IDRs, FDs, return_numpy=return_numpy)
+
+
+def predict_disorder_caid(input_fasta, output_file):
+    '''
+    executing script for generating a caid-compliant output file for disorder
+    predictions using a .fasta file as the input
+
+    Parameters
+    -----------
+    input_fasta : str
+        the input file as a string that includes the file path preceeding
+        the file name if the file is not in the curdir
+
+    output_file : str
+        the output file name as a string. This can include a file path to a specific
+        save location or by default saves to the curdir
+
+    Returns
+    --------
+    None
+        Does not return anything, saves a file to the 
+
+    '''
+
+    # read in the ids and seqs as a list of lists where each list has a first element that corresponds
+    # to the ID and the second corresponds to the sequence. Convert invalid amino acids if needed.
+    entry_id_and_seqs = _protfasta.read_fasta(input_fasta, return_list=True, invalid_sequence_action = 'convert')
+
+    # iterated through id and seqs to make a dict to use to write output file.
+    output_dict = {}
+
+    for id_and_seq in entry_id_and_seqs:
+        cur_id = f'>{id_and_seq[0]}'
+        cur_sequence = id_and_seq[1]
+        # predict disorder of cur_sequence
+        cur_disorder = predict_disorder(cur_sequence)
+        # now add all to output_dict
+        output_dict[cur_id] = [[cur_sequence], cur_disorder]
+
+    # write the output file
+    _meta_tools.write_caid_format(output_dict, output_file)
+
 
 
