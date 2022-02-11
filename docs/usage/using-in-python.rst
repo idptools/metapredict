@@ -12,6 +12,13 @@ First import metapredict -
 
 Once metapredict is imported, you can work with individual sequences or .fasta files. 
 
+
+Using the original metapredict network
+---------------------------------------
+
+We have recently updated the network that makes predictions for metapredict to massively improve accuracy. However, if you need to use the original metapredict predictor as opposed to our new, updated predictor, set ``legacy=True`` 
+
+
 Predicting Disorder
 --------------------
 
@@ -35,6 +42,16 @@ By default, output prediction values are normalized between 0 and 1. However, so
 .. code-block:: python
 	
 	meta.predict_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", normalized=False)
+
+
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    meta.predict_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", legacy=True)
 
 
 Predicting AlphaFold2 Confidence Scores
@@ -143,6 +160,16 @@ In addition, you can specify the color of the shaded regions by specifying *shad
     meta.graph_disorder("DAPPTSQEHTQAEDKER", output_file=/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png)
 
 
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    meta.graph_disorder("DAPPTSQEHTQAEDKER", legacy=True)
+
+
 Graphing AlphaFold2 Confidence Scores
 --------------------------------------
 
@@ -193,6 +220,15 @@ would output
 
 The higher the cutoff value, the higher the value any given predicted residue must be greater than or equal to in order to be considered disordered when calculating the final percent disorder for the input sequence.
 
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    meta.percent_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", cutoff = 0.8, legacy=True)
+
 
 Predicting Disorder From a .fasta File:
 ---------------------------------------
@@ -240,6 +276,15 @@ By default, this function will output prediction values that are normalized betw
 	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", normalized=False)
 
 
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", legacy=True)
+
 
 Predicting AlphaFold2 confidence scores From a .fasta File
 -------------------------------------------------------------
@@ -263,6 +308,16 @@ By using the ``predict_disorder_uniprot()`` function, you can return predicted c
 .. code-block:: python
 
     meta.predict_disorder_uniprot("Q8N6T3")
+
+
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+     meta.predict_disorder_uniprot("Q8N6T3", legacy=True)
 
 
 Predicting AlphaFold2 Confidence Scores Using Uniprot ID
@@ -340,6 +395,15 @@ If you would like to index the file names with a leading unique integer starting
     meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", indexed_filenames=True)
 
 
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", legacy=True)
+
 
 Generating AlphaFold2 Confidence Score Graphs from fasta files
 ----------------------------------------------------------------
@@ -381,6 +445,14 @@ To add predicted AlphaFold2 pLDDT confidence scores, simply specify *pLDDT_score
 
     meta.graph_disorder_uniprot("Q8N6T3", pLDDT_scores=True)
 
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    meta.graph_disorder_uniprot("Q8N6T3", legacy=True)
 
 Generating AlphaFold2 Confidnce Score Graphs Using Uniprot ID
 --------------------------------------------------------------
@@ -397,32 +469,123 @@ Just like with disorder predictions, you can also get AlphaFold2 pLDDT confidenc
 Predicting Disorder Domains:
 -----------------------------
 
-The ``predict_disorder_domains()`` function takes in an amino acid function and returns a 4-position tuple with: 0. the raw disorder scores from 0 to 1 where 1 is the highest probability that a residue is disordered, 1. the smoothed disorder score used for boundary identification, 2. a list of elements where each element is a list where 0 and 1 define the IDR location and 2 gives the actual sequence, and 3. a list of elements where each element is a list where 0 and 1 define the folded domain location and 2 gives the actual sequence
+The ``predict_disorder_domains()`` function takes in an amino acid sequence and returns a DisorderObject. The DisorderObject has 6 dot variables that can be called to get information about your input sequence. They are as follows:
+
+
+.sequence : str    
+    Amino acid sequence 
+
+.disorder : list or np.ndaarray
+    Hybrid disorder score
+
+.disordered_domain_boundaries : list
+    List of domain boundaries for IDRs using Python indexing
+
+.folded_domain_boundaries : list
+    List of domain boundaries for folded domains using Python indexing
+
+.disordered_domains : list
+    List of the actual sequences for IDRs
+
+.folded_domains : list
+    List of the actual sequences for folded domains
+
+**Examples**
 
 .. code-block:: python
 
-	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHS")
+	seq = meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHS")
 
-would output - 
+Now we can call the various dot values for **seq**. 
+
+**Getting the sequence**
 
 .. code-block:: python
 
-	[[0.828, 0.891, 0.885, 0.859, 0.815, 0.795, 0.773, 0.677, 0.66, 0.736, 0.733, 0.708, 0.66, 0.631, 0.601, 0.564, 0.532, 0.508, 0.495, 0.458, 0.383, 0.373, 0.398, 0.36, 0.205, 0.158, 0.135, 0.091, 0.09, 0.102, 0.126, 0.129, 0.114, 0.106, 0.097, 0.085, 0.099, 0.114, 0.093, 0.119, 0.117, 0.043, 0.015, 0.05, 0.139, 0.172, 0.144, 0.121, 0.124, 0.128, 0.147, 0.173, 0.129, 0.152, 0.169, 0.2, 0.172, 0.22, 0.216, 0.25, 0.272, 0.308, 0.248, 0.255, 0.301, 0.274, 0.264, 0.28, 0.25, 0.235, 0.221, 0.211, 0.235, 0.185, 0.14, 0.168, 0.307, 0.509, 0.544, 0.402], array([0.87596856, 0.86139124, 0.84596224, 0.82968293, 0.81255466,
-       0.79457882, 0.77575677, 0.75608988, 0.73557951, 0.71422703,
-       0.69203382, 0.66900124, 0.63956894, 0.62124099, 0.60188696,
-       0.57893168, 0.55241615, 0.52131925, 0.4859528 , 0.44109689,
-       0.39353789, 0.35264348, 0.31495776, 0.28      , 0.24661615,
-       0.21469814, 0.18500621, 0.15963478, 0.13604845, 0.1172087 ,
-       0.10798882, 0.1026882 , 0.09419503, 0.08462484, 0.08256398,
-       0.08832671, 0.0908559 , 0.09263851, 0.09438758, 0.09309938,
-       0.09102733, 0.09338137, 0.09665342, 0.10073913, 0.10392671,
-       0.11010311, 0.11402981, 0.11898634, 0.12430683, 0.13169441,
-       0.1381764 , 0.15245093, 0.16746957, 0.17518385, 0.18167578,
-       0.18893043, 0.20013416, 0.21581491, 0.23015652, 0.2420559 ,
-       0.25209814, 0.25817391, 0.26588944, 0.27456894, 0.27429068,
-       0.26411925, 0.24452671, 0.23076894, 0.22834783, 0.21689842,
-       0.20887549, 0.20564427, 0.20856996, 0.21901779, 0.23835296,
-       0.26794071, 0.30914625, 0.36333478, 0.43187154, 0.51612174]), [[0, 20, 'MKAPSNGFLPSSNEGEKKPI']], [[20, 80, 'NSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHS']]]
+	print(seq.sequence)
+
+returns
+
+.. code-block:: python
+
+	MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHS
+
+
+**Getting the disorder scores**
+
+.. code-block:: python
+
+	print(seq.disorder)
+
+returns
+
+.. code-block:: python
+
+	[0.922  0.9223 0.9246 0.9047 0.8916 0.8956 0.8931 0.883  0.8613 0.8573
+ 	0.852  0.8582 0.8614 0.8455 0.826  0.7974 0.7616 0.7248 0.6782 0.6375
+ 	0.5886 0.5476 0.5094 0.4774 0.4472 0.4318 0.4266 0.4222 0.3953 0.3993
+ 	0.3904 0.4004 0.3962 0.3721 0.3855 0.3582 0.3456 0.3682 0.3488 0.3274
+ 	0.3258 0.2937 0.2864 0.3004 0.3358 0.3815 0.4397 0.4594 0.4673 0.4535
+ 	0.4446 0.4481 0.4546 0.4454 0.4549 0.4564 0.4677 0.4539 0.4713 0.49
+ 	0.4934 0.4835 0.4815 0.4692 0.4548 0.4856 0.495  0.4809 0.502  0.4944
+ 	0.4612 0.4561 0.436  0.4203 0.3784 0.3624 0.3739 0.3983 0.4348 0.4369]
+
+
+**Getting the disorder domain boundaries**
+
+.. code-block:: python
+
+	print(seq.disordered_domain_boundaries)
+
+returns
+
+.. code-block:: python
+
+	[[0, 23]]
+
+Where each nested list is the boundaries for a specific disordered region and the first element in each list is the start of that region and the second element is the end of that region.
+
+**Getting the folded domain boundaries**
+
+.. code-block:: python
+
+	print(seq.folded_domain_boundaries)
+
+returns
+
+.. code-block:: python
+
+	[[23, 80]]
+
+Where each nested list is the boundaries for a specific folded region and the first element in each list is the start of that region and the second element is the end of that region.
+
+**Getting the disordered domain sequences**
+
+.. code-block:: python
+
+	print(seq.disordered_domains)
+
+returns
+
+.. code-block:: python
+
+	['MKAPSNGFLPSSNEGEKKPINSQ']
+
+Where each element in the list is a specific disordered region identified in the sequence.
+
+**Getting the folded domain sequences**
+
+.. code-block:: python
+
+	print(seq.folded_domains)
+
+returns
+
+.. code-block:: python
+
+	['LWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHS']
+
+Where each element in the list is a specific folded region identified in the sequence.
 
 
 **Additional Usage**
@@ -464,15 +627,180 @@ The gap closure defines the largest gap that would be closed. Gaps here refer to
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", gap_closure = 5)
 
 
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", legacy=True)
+
+
 Predicting Disorder Domains using a Uniprot ID:
 -------------------------------------------------
 
-In addition to inputting a sequence, you can predict disorder domains by inputting a Uniprot ID by using the ``predict_disorder_domains_uniprot`` function. This function has the exact same functionality as ``predict_disorder_domains`` except you can now input a Uniprot ID. 
+In addition to inputting a sequence, you can predict disorder domains by inputting a Uniprot ID by using the ``predict_disorder_domains_uniprot`` function. This function has the exact same functionality as ``predict_disorder_domains`` except you can now input a Uniprot ID. This also returns a DisorderedObject. The DisorderObject has 6 dot variables that can be called to get information about your input sequence. They are as follows:
+
+
+.sequence : str    
+    Amino acid sequence 
+
+.disorder : list or np.ndaarray
+    Hybrid disorder score
+
+.disordered_domain_boundaries : list
+    List of domain boundaries for IDRs using Python indexing
+
+.folded_domain_boundaries : list
+    List of domain boundaries for folded domains using Python indexing
+
+.disordered_domains : list
+    List of the actual sequences for IDRs
+
+.folded_domains : list
+    List of the actual sequences for folded domains
+
+
 
 **Example**
 
 .. code-block:: python
 
-    meta.predict_disorder_domains_uniprot('Q8N6T3')
+    seq = meta.predict_disorder_domains_uniprot('Q8N6T3')
 
+.. code-block:: python
+
+    print(seq.disorder)
+
+
+**Using the original metapredict network-**
+To use the original metapredict network, simply set ``legacy=True``.
+
+**Example:** 
+
+.. code-block:: python
+    
+    meta.predict_disorder_domains_uniprot('Q8N6T3' legacy=True)
+
+
+Predicting Disorder Domains from external scores:
+--------------------------------------------------
+
+The ``predict_disorder_domains_from_external_scores()`` function takes in an disorder scores, an amino acid sequence (optinally), and returns a DisorderObject. This function lets you use other disorder predictor scores and still use the predict_disorder_domains() functionality. The DisorderObject has 6 dot variables that can be called to get information about your input sequence. They are as follows: 
+
+.sequence : str    
+    Amino acid sequence 
+
+.disorder : list or np.ndaarray
+    Hybrid disorder score
+
+.disordered_domain_boundaries : list
+    List of domain boundaries for IDRs using Python indexing
+
+.folded_domain_boundaries : list
+    List of domain boundaries for folded domains using Python indexing
+
+.disordered_domains : list
+    List of the actual sequences for IDRs
+
+.folded_domains : list
+    List of the actual sequences for folded domains
+
+**Examples**
+
+.. code-block:: python
+
+	seq = meta.predict_disorder_domains_from_external_scores(disorder=[0.8577, 0.9313, 0.9313, 0.9158, 0.8985, 0.8903, 0.8895, 0.869, 0.8444, 0.8594, 0.8643, 0.8605, 0.8697, 0.8627, 0.8641, 0.8633, 0.8487, 0.8512, 0.8236, 0.8079, 0.8047, 0.8021, 0.7954, 0.7867, 0.7797, 0.7982, 0.7842, 0.7614, 0.7931, 0.8166, 0.8298, 0.8222, 0.8227, 0.8183, 0.8279, 0.838, 0.8535, 0.8512, 0.8464, 0.8469, 0.8322, 0.8265, 0.794, 0.7827, 0.7699, 0.7575, 0.7178, 0.5988], sequence = 'MKAPSNGFLPSSNEGEKKPINSQLMKAPSNGFLPSSNEGEKKPINSQL')
+
+Now we can call the various dot values for **seq**. 
+
+**Getting the sequence**
+
+.. code-block:: python
+
+	print(seq.sequence)
+
+returns
+
+.. code-block:: python
+
+	MKAPSNGFLPSSNEGEKKPINSQLMKAPSNGFLPSSNEGEKKPINSQL
+
+
+**Getting the disorder scores**
+
+.. code-block:: python
+
+	print(seq.disorder)
+
+
+
+**Getting the disorder domain boundaries**
+
+.. code-block:: python
+
+	print(seq.disordered_domain_boundaries)
+
+
+
+**Getting the folded domain boundaries**
+
+.. code-block:: python
+
+	print(seq.folded_domain_boundaries)
+
+
+**Getting the disordered domain sequences**
+
+.. code-block:: python
+
+	print(seq.disordered_domains)
+
+
+**Getting the folded domain sequences**
+
+.. code-block:: python
+
+	print(seq.folded_domains)
+
+
+
+**Additional Usage**
+
+**Altering the disorder theshhold -**
+To alter the disorder theshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the treshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
+
+**Example**
+
+.. code-block:: python
+
+	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", disorder_threshold=0.3)
+
+**Altering minimum IDR size -**
+The minimum IDR size will define the smallest possible region that could be considered an IDR. In other words, you will not be able to get back an IDR smaller than the defined size. Default is 12.
+
+**Example**
+
+.. code-block:: python
+
+	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
+
+**Altering the minimum folded domain size -**
+The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
+
+**Example**
+
+.. code-block:: python
+
+	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_folded_domain = 60)
+
+**Altering gap_closure -**
+The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues seprated by a 'gap' of not disordered residues. In general large gap sizes will favour larger contiguous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
+
+**Example**
+
+.. code-block:: python
+
+	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", gap_closure = 5)
 

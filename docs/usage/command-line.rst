@@ -1,6 +1,13 @@
 metapredict from the command-line
 ==================================
 
+
+Using the original metapredict network
+---------------------------------------
+
+We have recently updated the network that makes predictions for metapredict to massively improve accuracy. However, if you need to use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
+
+
 Predicting Disorder from Fasta Files
 ---------------------------------------
 
@@ -31,6 +38,15 @@ If you would like to specify where to save the ouptut, simply use the ``-o`` or 
     $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
 
 
+**Using the original metapredict network-**
+To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+
+**Example:** 
+
+.. code-block:: bash
+    
+    $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv -l
+
 Predicting Disorder from a Sequence
 ------------------------------------
 
@@ -41,6 +57,16 @@ Predicting Disorder from a Sequence
 .. code-block:: bash
 	
 	$ metapredict-quick-predict ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN
+
+
+**Using the original metapredict network-**
+To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+
+**Example:** 
+
+.. code-block:: bash
+    
+    $ metapredict-quick-predict ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVA -l
 
 
 Predicting AlphaFold2 Confidence Scores from a Fasta File
@@ -148,6 +174,18 @@ If you would like to change the disorder threshold line plotted on the graph, us
 
     $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --disorder-threshold 0.5
 
+
+**Using the original metapredict network-**
+To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+
+**Example:** 
+
+.. code-block:: bash
+    
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --disorder-threshold 0.5 -l
+
+
+
 Quick Graphing
 ---------------
 
@@ -170,6 +208,15 @@ Quick Graphing
 .. code-block:: bash
 	
 	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -D 200
+
+**Using the original metapredict network-**
+To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+
+**Example:** 
+
+.. code-block:: bash
+    
+    $ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -l
 
 
 Graphing using Uniprot ID
@@ -213,6 +260,15 @@ Graphing using Uniprot ID
 	
 	$ metapredict-uniprot Q8RYC8 -t ARF19
 
+
+**Using the original metapredict network-**
+To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+
+**Example:** 
+
+.. code-block:: bash
+    
+    $ metapredict-uniprot Q8RYC8 -l
 
 
 Graphing Predicted AlphaFold2 pLDDT Scores from a fasta file
@@ -273,5 +329,45 @@ If you would like to index the file names with a leading unique integer starting
 	$ metapredict-graph-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/pLDDTGraphsFolder/ --indexed-filenames
 
 
+Predicting IDRs from a fasta file
+-------------------------------------------------------------------
 
+The ``metapredict-predict-idrs`` command from the command line takes a .fasta file as input and returns a .fasta file containing the IDRs for every sequence from the input .fasta file. 
+
+	$ metapredict-predict-idrs <Path to .fasta file> 
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta 
+
+**Additional Usage**
+
+**specifying where to save the output -** 
+If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name.
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta
+
+**Using the original metapredict predictor**
+To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta -l
+
+**Changing output threshold for disorder-**
+To change the cutoff value for something to be considered disordered, simply use the ``--threshold`` flag and then specify your value. For legacy, the default is 0.42. For the new version of metapredict, the value is 0.5. 
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta --threshold 0.3
 

@@ -53,7 +53,6 @@ def predict_disorder_domains_from_external_scores(disorder,
                                                   return_numpy=True):
     
     """
-
     This function takes in disorder scores generated from another predictor 
     and applies the same domain-decomposition algorithm as 
     predict_disorder_domains() does to extract out congigous IDRs. For example, 
@@ -66,23 +65,9 @@ def predict_disorder_domains_from_external_scores(disorder,
     disorder_threshold, minimum_IDR_size, minimum_folded_domain and 
     gap_closure.
 
-    The return data is a tuple with the following elements:
-
-        [0] -  Smoothed disorder score used to aid in domain boundary 
-               identification. This can be useful for understanding how 
-               IDRs/folded domains were identified, and will vary depending 
-               on the settings provided.
-         
-        [1] - a list of elements, where each element defines the start and 
-              end position of each IDR 
-
-        [2] - a list of elements, where each element defines the start and 
-              end position of each folded region  
-
 
     Parameters
     -------------
-
     disorder : list
         A list of per-residue disorder scores.
 
