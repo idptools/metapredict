@@ -59,7 +59,7 @@ def metameta_predict(sequence, normalized=True):
                 elif cur_value > 1:
                     normalized_IDR_values.append(1)
                 else:
-                    normalized_IDR_values.append(round(cur_value, 4))
+                    normalized_IDR_values.append(round(float(cur_value), 4))
 
             # overwrite output_values with normalized_IDR_values (which are now all non-negative).
             output_values = normalized_IDR_values
@@ -69,7 +69,7 @@ def metameta_predict(sequence, normalized=True):
             # list to append values rounded to 3 decimals
             rounded_values = []            
             for cur_value in output_values:
-                rounded_values.append(round(cur_value, 4))
+                rounded_values.append(round(float(cur_value), 4))
             # overwrite output values
             output_values = rounded_values                
 
@@ -82,7 +82,7 @@ def metameta_predict(sequence, normalized=True):
         rounded_values = []
         # go through vals and round them
         for cur_value in output_values:
-            rounded_values.append(round(cur_value, 4))
+            rounded_values.append(round(float(cur_value), 4))
         # overwrite output values
         output_values = rounded_values
 

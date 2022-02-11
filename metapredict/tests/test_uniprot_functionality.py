@@ -37,12 +37,14 @@ def test_predict_disorder_uniprot():
     assert len(meta.predict_disorder_uniprot(P53_UID)) == 393
 
     # check summed disorder is right
-    assert np.sum(meta.predict_disorder_uniprot(P53_UID)) == 172.965
+    assert np.sum(meta.predict_disorder_uniprot(P53_UID)) == 181.7708
 
+    # check legacy disorder is right
+    assert np.sum(meta.predict_disorder_uniprot(P53_UID, legacy=True)) == 172.9651
 
     # check summed disorder is right when we don't normalize (these are not magic values,
     # just the expected 'truth' for the 1.0 release
-    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID,normalized=False)),173.524)
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, normalized=False, legacy=True)),173.5245)
 
 
 # ....................................................................................
@@ -70,27 +72,35 @@ def test_predict_disorder_domains_uniprot_():
     # sweet disorder prediction
 
     dis_domains = meta.predict_disorder_domains_uniprot(P53_UID) 
-    assert len(dis_domains[0]) == 393
-    assert len(dis_domains[1]) == 393
-    assert np.sum(dis_domains[0]) == 172.965
-    v = np.sum(dis_domains[1])
-    assert np.isclose(v, 172.91894834295928)
+    assert len(dis_domains.sequence) == 393
+    assert np.sum(dis_domains.disorder) == 181.7708
 
     # did we find 2 IDRs
-    assert len(dis_domains[2]) == 2
+    assert len(dis_domains.disordered_domains) == 2
+
+    # get IDRs
+    IDRs = dis_domains.disordered_domains
+    #get idr boundaries
+    disorder_boundaries = dis_domains.disordered_domain_boundaries
 
     # IDR1
-    assert dis_domains[2][0][2] == 'MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKT'
-    assert dis_domains[2][0][0] == 0
-    assert dis_domains[2][0][1] == 102
+    assert IDRs[0] == 'MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQK'
+    assert disorder_boundaries[0][0] == 0
+    assert disorder_boundaries[0][1] == 101
 
     # IDR2
-    assert dis_domains[2][1][2] == 'PGRDRRTEEENLRKKGEPHHELPPGSTKRALPNNTSSSPQPKKKPLDGEYFTLQIRGRERFEMFRELNEALELKDAQAGKEPGGSRAHSSHLKSKKGQSTSRHKKLMFKTEGPDSD'
-    assert dis_domains[2][1][0] == 277
-    assert dis_domains[2][1][1] == 393
+    assert IDRs[1] == 'DRRTEEENLRKKGEPHHELPPGSTKRALPNNTSSSPQPKKKPLDGEYFTLQIRGRERFEMFRELNEALELKDAQAGKEPGGSRAHSSHLKSKKGQSTSRHKKLMFKTEGPDSD'
+    assert disorder_boundaries[1][0] == 280
+    assert disorder_boundaries[1][1] == 393
+
+    # get folded domains and sequence
+    folded_seq = dis_domains.folded_domains
+    # get folded boundaries
+    folded_boundaries = dis_domains.folded_domain_boundaries
+
 
     # FD1
-    assert dis_domains[3][0][2] == 'YQGSYGFRLGFLHSGTAKSVTCTYSPALNKMFCQLAKTCPVQLWVDSTPPPGTRVRAMAIYKQSQHMTEVVRRCPHHERCSDSDGLAPPQHLIRVEGNLRVEYLDDRNTFRHSVVVPYEPPEVGSDCTTIHYNYMCNSSCMGGMNRRPILTIITLEDSSGNLLGRNSFEVRVCAC'
-    assert dis_domains[3][0][0] == 102
-    assert dis_domains[3][0][1] == 277
+    assert folded_seq[0] == 'TYQGSYGFRLGFLHSGTAKSVTCTYSPALNKMFCQLAKTCPVQLWVDSTPPPGTRVRAMAIYKQSQHMTEVVRRCPHHERCSDSDGLAPPQHLIRVEGNLRVEYLDDRNTFRHSVVVPYEPPEVGSDCTTIHYNYMCNSSCMGGMNRRPILTIITLEDSSGNLLGRNSFEVRVCACPGR'
+    assert folded_boundaries[0][0] == 101
+    assert folded_boundaries[0][1] == 280
 
