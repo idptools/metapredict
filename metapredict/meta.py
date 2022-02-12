@@ -203,26 +203,14 @@ def predict_disorder_domains(sequence,
                              return_list=False):
     """
 
-    This function takes an amino acid sequence, a disorder score, and 
-    returns a 4-position tuple with the following information:
-    
+    This function takes an amino acid sequence and one or more 
+    variable options and returns a data structure called a 
+    `DisorderObject`. The object parameters associated with this
+    object are defined below.
 
-    [0] - 'Raw' disorder score; i.e. disorder propensity as predicted 
-    by metapredict
-
-    [1] - Smoothed disorder score used to aid in domain boundary 
-          identification. This can be useful for understanding
-          how IDRs/folded domains were identified, and will vary 
-          depending on minimum_region_size.
-
-    [2] - a list of elements, where each element is itself a list 
-          where position 0 and 1 define the IDR location 
-          and position 2 gives the actual IDR sequence
-
-    [3] - a list of elements, where each element is itself a 
-          list where position 0 and 1 define the folded domain 
-          location and position 2 gives the actual folded domain 
-          sequence.
+    The previous version of metapredict returned a list of values,
+    which can be obtained instead of the DisorderedObject if 
+    return_list is set to True.
 
     Parameters
     -------------
@@ -284,12 +272,14 @@ def predict_disorder_domains(sequence,
         Whether to use the original metapredict network
 
     return_list : bool
-        whether to return the old format where a tuple is returned
+        Flag that determines i to return the old format where a 
+        tuple is returned. This is retained for backwards compatibility
 
     Returns
     ---------
     DisorderObject
         Returns a DisorderObject. DisorderObject has 7 dot variables:
+
         .sequence : str    
             Amino acid sequence 
 
@@ -309,7 +299,7 @@ def predict_disorder_domains(sequence,
             List of the actual sequences for folded domains
 
     
-    unles return_list == True. Then - 
+    unless return_list == True. Then - 
 
     Returns
     ---------
@@ -338,8 +328,10 @@ def predict_disorder_domains(sequence,
     # check that a valid range was passed for disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
 
+    # predict the disorder
     disorder = predict_disorder(sequence, normalized, legacy=legacy)
 
+    # extract out disordered 
     return_tuple = _domain_definition.get_domains(sequence, 
                                                  disorder, 
                                                  disorder_threshold=disorder_threshold,                                            
@@ -351,6 +343,7 @@ def predict_disorder_domains(sequence,
     if return_list == True:
         return [disorder, return_tuple[0], return_tuple[1], return_tuple[2]]
 
+    # other
     else:
 
         # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
@@ -421,7 +414,7 @@ def predict_disorder(sequence, normalized=True, return_numpy=False, legacy=False
 
 # ..........................................................................................
 #
-def predict_all(sequence, cooperative=True):
+def predict_all(sequence):
     """
     Function to return all three types of predictions (legacy_metapredict,
     metapredict, and ppLDDT). Returns as a tuple of numpy 
@@ -433,13 +426,6 @@ def predict_all(sequence, cooperative=True):
 
     sequence : str 
         Input amino acid sequence (as string) to be predicted.
-
-    cooperative : bool
-        Flag which defines if cooperative or non-cooperative mode
-        should be used. Both are provided for now but we may remove
-        non-cooperative given the cooperative mode seems to always
-        offer better performance.
-        Default = True
 
     Returns
     --------
@@ -457,8 +443,8 @@ def predict_all(sequence, cooperative=True):
 
     # compute pLDDT and metapredict disorder
     meta_disorder = predict_disorder(sequence, return_numpy = True)
-    ppLDDT = predict_pLDDT(sequence, return_numpy=True, return_normalized=True)
     legacy_disorder = predict_disorder(sequence, return_numpy=True, legacy=True)
+    ppLDDT = predict_pLDDT(sequence, return_numpy=True, return_normalized=True)
     
 
     return (meta_disorder, legacy_disorder, ppLDDT)
@@ -510,10 +496,12 @@ def graph_disorder(sequence,
         shade between 1 and 10 and then between 40 and 50. This can be useful
         to either highlight specific IDRs or specific folded domains
 
-    shaded_region_color : str
+    shaded_region_color : str or list of sts
         String that defines the color of the shaded region. The shaded region 
         is always set with an alpha of 0.3 but the color can be any valid 
         matplotlib color name or a hex color string (i.e. "#ff0000" is red).
+        Alternatively a list where number of elements matches number in 
+        shaded_regions, assigning a color-per-shaded regions.
     
     DPI : int
         Dots-per-inch. Defines the resolution of the generated figure. 
@@ -790,34 +778,37 @@ def predict_disorder_fasta(filepath,
     -------------
 
     filepath : str 
-        The path to where the .fasta file is located. The filepath should end in the file name. 
-        For example (on MacOS):filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
+        The path to where the .fasta file is located. The filepath should
+        end in the file name, and can be an absolute or relative path
 
     output_file : str
-        By default, a dictionary of predicted values is returned immediately. However, you can specify 
-        an output filename and path and a .csv file will be saved. This should include any file extensions.
+        By default, a dictionary of predicted values is returned 
+        immediately. However, you can specify an output filename and path 
+        and a .csv file will be saved. This should include any file extensions.
         Default = None.
 
     normalized : bool
-        Flag which defines in the predictor should control and normalize such that all values fall 
-        between 0 and 1. The underlying learning model can, in fact output some negative values 
-        and some values greater than 1. Normalization controls for this. Default = True
+        Flag which defines in the predictor should control and normalize such 
+        that all values fall between 0 and 1. The underlying learning model can, 
+        in fact output some negative values and some values greater than 1. 
+        Normalization controls for this. Default = True
 
     invalid_sequence_action : str
-        Tells the function how to deal with sequences that lack standard amino acids. Default is 
-        convert, which as the name implies converts via standard rules. See 
-        https://protfasta.readthedocs.io/en/latest/read_fasta.html for more information.
+        Tells the function how to deal with sequences that lack standard amino 
+        acids. Default is convert, which as the name implies converts via standard 
+        rules. See https://protfasta.readthedocs.io/en/latest/read_fasta.html 
+        for more information.
 
     legacy : bool
-        Whether to use the legacy metapredict predictor.
-
+        Whether to use the legacy metapredict predictor. Default = False.
 
     Returns
     --------
 
     dict or None
-        If output_file is set to None (as default) then this fiction returns a dictionary of sequence ID to
-        disorder vector. If output_file is set to a filename then a .csv file will instead be written and 
+        If output_file is set to None (as default) then this fiction returns 
+        a dictionary of sequence ID to disorder vector. If output_file is set 
+        to a filename then a .csv file will instead be written and         
         no return data will be provided.
 
     """
@@ -880,28 +871,30 @@ def predict_pLDDT_fasta(filepath,
     -------------
 
     filepath : str 
-        The path to where the .fasta file is located. The filepath should end in the file name. 
-        For example (on MacOS):filepath="/Users/thisUser/Desktop/folder_of_seqs/interesting_proteins.fasta"
+        The path to where the .fasta file is located. The filepath should
+        end in the file name, and can be an absolute or relative path
+
 
     output_file : str
-        By default, a dictionary of predicted values is returned immediately. However, you can specify 
-        an output filename and path and a .csv file will be saved. This should include any file extensions.
+        By default, a dictionary of predicted values is returned 
+        immediately. However, you can specify an output filename and path 
+        and a .csv file will be saved. This should include any file extensions.
         Default = None.
 
     invalid_sequence_action : str
-        Tells the function how to deal with sequences that lack standard amino acids. Default is 
-        convert, which as the name implies converts via standard rules. See 
-        https://protfasta.readthedocs.io/en/latest/read_fasta.html for more information.
-
+        Tells the function how to deal with sequences that lack standard amino 
+        acids. Default is convert, which as the name implies converts via standard 
+        rules. See https://protfasta.readthedocs.io/en/latest/read_fasta.html 
+        for more information.
 
     Returns
     --------
 
     dict or None
-        If output_file is set to None (as default) then this fiction returns a dictionary of sequence ID to
-        pLDDT vector. If output_file is set to a filename then a .csv file will instead be written and 
-        no return data will be provided.
-
+        If output_file is set to None (as default) then this fiction returns a 
+        dictionary of sequence ID to pLDDT vector. If output_file is set to a 
+        filename then a .csv file will instead be written and no return data 
+        will be provided.
     """
 
     # Importantly, by default this function corrects invalid residue
@@ -1403,26 +1396,8 @@ def predict_disorder_domains_uniprot(uniprot_id,
     """
 
     This function takes an amino acid sequence, a disorder score, and 
-    returns a 4-position tuple with the following information:
-    
-
-    [0] - 'Raw' disorder score; i.e. disorder propensity as predicted by 
-           metapredict
-
-    [1] - Smoothed disorder score used to aid in domain boundary 
-          identification. This can be useful for understanding
-          how IDRs/folded domains were identified, and will vary 
-          depending on minimum_region_size.
-
-    [2] - a list of elements, where each element is itself a list 
-          where position 0 and 1 define the IDR location 
-          and position 2 gives the actual IDR sequence
-
-    [3] - a list of elements, where each element is itself a list 
-          where position 0 and 1 define the folded domain 
-          location and position 2 gives the actual folded domain 
-          sequence.
-
+    returns either a DisorderObjec 4-position tuple with the information
+    listed below.
 
     Parameters
     -------------

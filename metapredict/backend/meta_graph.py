@@ -38,59 +38,79 @@ def graph(sequence,
     -----------
     sequence : str 
         Input amino acid sequence (as string) to be predicted.
+
     title : str
-        Sets the title of the generated figure. Default = "Predicted protein disorder"
+        Sets the title of the generated figure. 
+        Default = "Predicted protein disorder"
+        
     pLDDT_scores : Bool
         Sets whether to include the predicted confidence scores from
-        AlphaFold2
+        AlphaFold2. Default = False
+
     disorder_scores : Bool
         Whether to include disorder scores. Can set to False if you
-        just want the AF2 confidence scores.
+        just want the AF2 confidence scores. Default = True
+
     disorder_threshold : float
-        Sets a threshold which draws a horizontal black line as a visual guide along
-        the length of the figure. Must be a value between 0 and 1. Default = 0.3
+        Sets a threshold which draws a horizontal black line as a visual
+        guide along the length of the figure. Must be a value between 0 
+        and 1. Default = 0.3
+        
     shaded_regions : list of lists
-        A list of lists, where sub-elements are of length 2 and contain start and end
-        values for regions to be shaded. Assumes that sanity checking on positions has
-        already been done. Default is None.
-    shaded_region_color : str
-        String that defines the color of the shaded region. The shaded region is always
-        set with an alpha of 0.3 but the color can be any valid matplotlib color name
-        or a hex color string (i.e. "#ff0000" is red). Default = 'red'.
+        A list of lists, where sub-elements are of length 2 and contain 
+        start and end values for regions to be shaded. Assumes that sanity 
+        checking on positions has already been done. Default = None.
+
+    shaded_region_color : str or list of strs
+        String that defines the color of the shaded region. The shaded 
+        region is always set with an alpha of 0.3 but the color can be 
+        any valid matplotlib color name or a hex color string (i.e. "#ff0000" 
+        is red). Alternatively a list where number of elements matches 
+        number in shaded_regions, assigning a color-per-shaded regions.
+        Default = 'red'.
+        
     disorder_line_color : str
         String that defines the color of the traced disorder score.  Can
         be any standard matplotlib color name or a hex-value (see above). 
         Default = 'blue'.
+
     threshold_line_color : str
         String that defines the color of the traced disorder score. Can
         be any standard matplotlib color name or a hex-value (see above). 
         Default = 'black'.
+
     DPI : int
-        Dots-per-inch. Defines the resolution of the generated .png figure. Note that
-        if an alternative filetype is pathed the matplotlib backened will automatically
-        generate a file of the relevant type (e.g. .pdf, .jpg, or .eps).
+        Dots-per-inch. Defines the resolution of the generated .png figure.
+        Note that if an alternative filetype is pathed the matplotlib 
+        backened will automatically generate a file of the relevant type (e.g. 
+       .pdf, .jpg, or .eps).
+        
+        
     output_file : str
-        If provided, the output_file variable defines the location and type of the file
-        to be saved. This should be a file location and filename with a valid matplotlib
-        extension (such as .png, .jpg, .pdf) and, if provided, this value is passed directly
-        to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
+        If provided, the output_file variable defines the location and type 
+        of the file to be saved. This should be a file location and filename 
+        with a valid matplotlib extension (such as .png, .jpg, .pdf) and, if 
+        provided, this value is passed directly to the 
+        ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
+
     legacy_metapredict : bool
-        Whether or not to use the original version of metapredict for predicting 
-        disorder values
+        Whether or not to use the original version of metapredict for
+        predicting disorder values.
+        
 
     Returns
     -----------
     None 
-        No return type, but will either generate an on-screen plot OR will save a file to disk,
-        depending on if output_file is provided (or not).
+        No return type, but will either generate an on-screen plot OR will 
+        save a file to disk, depending on if output_file is provided (or not).
+        
     """
 
     # make sure confidence scores and disorder scores not both false
     if pLDDT_scores == False and disorder_scores == False:
         raise MetapredictError('Cannot set both pLDDT_scores and disorder_scores to False. If disorder_scores=False, set confidence_score=True.')
-
-
+    
     # if confidence scores also added, match the threshold_line_color to the
     # disorder_line_color
     if pLDDT_scores == True and disorder_scores==True:
@@ -115,7 +135,6 @@ def graph(sequence,
             if disorder_threshold == None:
                 disorder_threshold = 0.5
         
-
     # if a name is set, the figure will hold that name as the identifier
     if pLDDT_scores == True and disorder_scores==True:
         fig = plt.figure(num=title, figsize=[11, 3], dpi=DPI, edgecolor='black')
@@ -161,22 +180,28 @@ def graph(sequence,
 
     # set y limit as 0-1 since the predictor data is normalized from 0 to 1.
     if disorder_scores == True:
+
         # set ylim
         axes.set_ylim(-0.003, 1.003)
+
         # plot the disorder cutoff threshold h
         if pLDDT_scores == True:
             ds2, = axes.plot([0, n_res+2], [disorder_threshold, disorder_threshold], color=threshold_line_color, linewidth="1.25", linestyle=(0, (5,5)), label='Disorder Threshold')
         else:
             ds2, = axes.plot([0, n_res+2], [disorder_threshold, disorder_threshold], color=threshold_line_color, linewidth="1.25", linestyle="dashed", label='Disorder Threshold')
+
         # add dashed lines at 0.2 intervals if cutoff lines not specified
         for i in [0.2, 0.4, 0.6, 0.8]:
             axes.plot([0, n_res+2], [i, i], color="black", linestyle="dashed", linewidth="0.5")
     
     else:
+
         # if it will just be confidence scores, set to 0 to 100
         axes.set_ylim(0, 100)
+
         # plot threshold
         ds2, = axes.plot([0, n_res+2], [50, 50], color=confidence_threshold_color, linewidth="1.25", linestyle="dashed", label='Confidence Threshold')
+
         # add dashed lines at 0.2 intervals if cutoff lines not specified
         for i in [20, 40, 60, 80]:
             axes.plot([0, n_res+2], [i, i], color="black", linestyle="dashed", linewidth="0.5")
@@ -188,9 +213,12 @@ def graph(sequence,
     # if we want shaded regions
     if shaded_regions is not None:
         for boundary in range(0, len(shaded_regions)):
+
             cur_boundary = shaded_regions[boundary]
             start = cur_boundary[0]
             end = cur_boundary[1]
+
+            # if we had multiple shaded regions
             if len(shaded_region_color) == len(shaded_regions):
                 cur_color = shaded_region_color[boundary]
             else:
@@ -199,10 +227,13 @@ def graph(sequence,
 
     # if graphing both confidence and disorder
     if pLDDT_scores == True and disorder_scores==True:
+
         # import alpha predict
         from alphaPredict import alpha
+
         # get confidence scores
         pLDDT_scores = alpha.predict(sequence)
+
         twin1 = axes.twinx()
         af1, = twin1.plot(xValues, pLDDT_scores, color = confidence_line_color, label="Predicted AF2pLDDT")
         twin1.set_ylim(0, 100)
@@ -211,10 +242,13 @@ def graph(sequence,
         axes.legend(handles=[ds1, ds2, af1, af2], bbox_to_anchor=(1.14, 1), loc='best', prop={'size': 12})
 
     elif pLDDT_scores == True and disorder_scores == False:
+
         # import alpha predict
         from alphaPredict import alpha
+
         # get confidence scores
         pLDDT_scores = alpha.predict(sequence)
+
         # plot the confidence scores
         axes.plot(xValues, pLDDT_scores, color=confidence_line_color, linewidth='1.6', label = 'Disorder Scores')    
 
