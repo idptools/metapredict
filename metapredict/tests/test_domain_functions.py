@@ -22,22 +22,29 @@ def test_predict_disordered_domains_external_scores_basic():
     disorder = [float(x.strip().split()[3]) for x in content[1:]]
     local_sequence = "".join([x.strip().split()[0] for x in content[1:]])
 
+    # make sure first disorder score is as expected
     assert disorder[0] == 0.989
 
-    assert len(meta.predict_disorder_domains_from_external_scores(disorder)) == 3
+    # get the IDRs from DisorderObject
+    DisObj = meta.predict_disorder_domains_from_external_scores(disorder, sequence = local_sequence)
 
+    # get idrs from DisorderedObject
+    idrs = DisObj.disordered_domains
 
-    idrs = meta.predict_disorder_domains_from_external_scores(disorder)
-    assert len(idrs[1]) == 3
+    # make sure there are 3 IDRs
+    assert len(idrs) == 3
 
-    assert idrs[1][0][0] == 0
-    assert idrs[1][0][1] == 103
+    # make sure IDR boundaries are as expected.
+    idr_boundaries = DisObj.disordered_domain_boundaries
 
-    assert idrs[1][1][0] == 290
-    assert idrs[1][1][1] == 327
+    assert idr_boundaries[0][0] == 0
+    assert idr_boundaries[0][1] == 103
 
-    assert idrs[1][2][0] == 349
-    assert idrs[1][2][1] == 393
+    assert idr_boundaries[1][0] == 290
+    assert idr_boundaries[1][1] == 327
+
+    assert idr_boundaries[2][0] == 349
+    assert idr_boundaries[2][1] == 393
 
     
     with pytest.raises(MetapredictError):
@@ -45,16 +52,28 @@ def test_predict_disordered_domains_external_scores_basic():
 
     with pytest.raises(MetapredictError):
         meta.predict_disorder_domains_from_external_scores(disorder, sequence=20)
-        
-    idrs = meta.predict_disorder_domains_from_external_scores(disorder, sequence=local_sequence)
-    assert idrs[1][0][2] == 'MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKTY'
+    
+    # check the IDR sequence is as expected at first IDR
+    assert idrs[0] == 'MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKTY'
 
 
-    idrs = meta.predict_disorder_domains_from_external_scores(disorder, disorder_threshold=1, sequence=local_sequence)
-    assert len(idrs[1]) == 1
-    assert idrs[1][0][2] == 'ELPPGSTKRALPNNTSSSPQPKK'
+    # check that passing a disorder threshold of 1 we get no IDRs 
+    DisObj_cutoff_1 = meta.predict_disorder_domains_from_external_scores(disorder, disorder_threshold=1, sequence=local_sequence)
+    assert len(DisObj_cutoff_1.disordered_domains) == 0
 
 
-    idrs = meta.predict_disorder_domains_from_external_scores(disorder, disorder_threshold=0, sequence=local_sequence)
-    assert len(idrs[1]) == 1
-    assert idrs[1][0][2] == local_sequence
+    # check that making threshold = 0 makes all seqs IDRs
+    DisObj_cutoff_0 = meta.predict_disorder_domains_from_external_scores(disorder, disorder_threshold=0, sequence=local_sequence)
+
+
+    assert len(DisObj_cutoff_0.disordered_domains) == 1
+    assert DisObj_cutoff_0.disordered_domains[0]==local_sequence
+
+
+
+
+
+
+
+
+

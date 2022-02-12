@@ -19,7 +19,7 @@ def test_predict_disorder_fasta():
     assert len(x) == 3
 
     
-    expected = {'Q8N6T3':170.995, 'p53':172.965, 'sp|P0DMV8|HS71A_HUMAN Heat shock 70 kDa protein 1A OS=Homo sapiens OX=9606 GN=HSPA1A PE=1 SV=1':100.18199999999999}
+    expected = {'Q8N6T3':283.84610000000004, 'p53':181.7707999999999, 'sp|P0DMV8|HS71A_HUMAN Heat shock 70 kDa protein 1A OS=Homo sapiens OX=9606 GN=HSPA1A PE=1 SV=1':78.36629999999997}
     
     for n in expected:
         assert np.isclose(np.sum(x[n]),expected[n])

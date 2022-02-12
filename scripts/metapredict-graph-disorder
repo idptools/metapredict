@@ -27,6 +27,8 @@ if __name__ == "__main__":
 
     parser.add_argument('-p', '--pLDDT', action='store_true', help='Optional. Use this flag to include AlphaFold2 pLDDT scores in the graph.')                        
 
+    parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')                            
+
     parser.add_argument('--filetype', default='png', help='Define the possible output filetype. Valid options are png, pdf, jpg. Default is png')
                         
     parser.add_argument('-o', '--output-directory', help='Directory for where to save the returned graphs. If not provided the program generates a default output directory called disorder_out and files are writte there.')
@@ -45,6 +47,11 @@ if __name__ == "__main__":
     else:
         pLDDT_scores = False
     
+
+    if args.legacy:
+        use_legacy=True
+    else:
+        use_legacy=False
 
     if args.output_directory is None:
         try:
@@ -65,7 +72,8 @@ if __name__ == "__main__":
                               DPI=args.dpi,
                               output_dir=outdir,
                               output_filetype=args.filetype,
-                              indexed_filenames=args.indexed_filenames)
+                              indexed_filenames=args.indexed_filenames,
+                              legacy = use_legacy)
                               
                               
                               

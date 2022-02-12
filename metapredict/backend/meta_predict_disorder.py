@@ -1,7 +1,13 @@
 """
-Backend of the IDR machine learning predictor. Based partly
+Backend of the ORIGINAL IDR machine learning predictor. Based partly
 on code from Dan Griffith's IDP-Parrot from the Holehouse lab
 (specifically the test_unlabeled_data function in train_network.py).
+
+This also contains the code for metapredict-hybrid (function is
+meta_predict_hybrid()), which was used to generate scores that were used 
+to train the newest metapredict network, metameta_2_7_22_nl2_hs20_b32_v3.pt.
+
+Yes, metapredict somehow got a little bit more meta.
 """
 
 # import packages for predictor
@@ -9,6 +15,9 @@ import sys
 import os
 
 import numpy as np
+
+from scipy.signal import savgol_filter
+
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -17,6 +26,7 @@ from torch.utils.data import Dataset, DataLoader
 # import modules that predictor depends on
 from metapredict.backend import encode_sequence
 from metapredict.backend import brnn_architecture
+from metapredict.metapredict_exceptions import MetapredictError
 
 
 # set path for location of predictor. Using this in case I want to update the predictor or
@@ -95,6 +105,7 @@ problem_type = 'regression'
 
 '''
 
+# hyperparameters for original network
 
 device = 'cpu'
 hidden_size = 5
@@ -140,23 +151,46 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
     The actual executing function for predicting the disorder of a sequence using metapredict.
     Returns a list containing predicted disorder values for the input sequence. 
 
-    Arguments
-    ---------
-    sequence - the amino acid sequence to be predicted
+    Parameters:
+    ------------
+    sequence : str
+        The amino acid sequence to be predicted
 
-    normalized (optional) - by default, negative values are set to be equal to 0 and values greater
-    than 1 are set to be equal to 1. User can set normalized=False to get raw prediction values.
+    normalized : bool
+        Flag which defines if normalization should occur or not. By default,
+        negative values are set to be equal to 0 and values greater than 1 
+        are set to be equal to 1. User can set normalized=False to get raw 
+        prediction values.
+        Default = True
 
-    network - the network used by the predictor. See brnn_architecture BRNN_MtM for more info.
+    network : Pytorch network 
+        Defines the Pytorch network to be used. Alternative networks can
+        provided in principle, but in practice metapredict has been trained
+        on a specific network. Default = network loaded by metapredict.
+      
+    device : str
+        String describing where the network is physically stored on the computer. 
+        Should be either 'cpu' or 'cuda' (GPU). Default = 'cpu'
 
-    device - String describing where the network is physically stored on the computer. 
-    Should be either 'cpu' or 'cuda' (GPU).
+    encoding_scheme : str
+        String that defines the encoding scheme used when metapredict was 
+        trained. The encoding scheme used in the default implementation 
+        was 'onehot'. Default='onehot'.
 
-    encoding_scheme - encoding scheme used when metapredict was trained. The encoding scheme was onehot.
+    Returns:
+    ----------
+    list
+        Returns a list with a per-residue disorder score. The list length
+        will match the length of the input sequence.
+    
     """
 
     # set seq_vector equal to converted amino acid sequence that is a PyTorch tensor of one-hot vectors
-    seq_vector = encode_sequence.one_hot(sequence)
+    if encoding_scheme == 'onehot':
+        seq_vector = encode_sequence.one_hot(sequence)
+    else:
+        raise MetapredictError('fCannot understand encoding scheme [{encoding_scheme}]')
+
     seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
     # get output values from the seq_vector based on the network (brnn_network)
@@ -168,7 +202,7 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
     for i in outputs:
         # append each value (which is the predicted disorder value) to output values as a float.
         # round each value to six digits.
-        output_values.append(round(float(i), 3))
+        output_values.append(round(float(i), 4))
 
     # if normalized=True (defualt)
     if normalized == True:
@@ -183,7 +217,7 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
                 if cur_value < 0:
                     normalized_IDR_values.append(0)
                 else:
-                    normalized_IDR_values.append(round(cur_value, 3))
+                    normalized_IDR_values.append(round(cur_value, 4))
             # overwrite output_values with normalized_IDR_values (which are now all non-negative).
             output_values = normalized_IDR_values
         # overwrite normalized_IDR_values with an empty list
@@ -197,7 +231,7 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
                 if cur_value > 1:
                     normalized_IDR_values.append(1)
                 else:
-                    normalized_IDR_values.append(round(cur_value, 3))
+                    normalized_IDR_values.append(round(cur_value, 4))
             # overwrite output_values with normalized_IDR_values (which are now all less than or equal to 1).
             output_values = normalized_IDR_values
         # return output_values
@@ -205,3 +239,81 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
     # if normalized=False, just return the output_values.
     else:
         return output_values
+
+
+def meta_predict_hybrid(metapredict_disorder, ppLDDT, cooperative=True):
+    """
+    This function will ultimately be replaced with a network-based predictor, but for 
+    now we predict by using the ppLDDT and metapredict profiles to construct
+    a novel hybrid profile.
+    
+
+    Parameters
+    ------------
+    metapredict_disorder : np.ndarrays
+        List of per-residue disorder scores generated by metapredict
+
+    ppLDDT : np.ndarrays
+        List of per-residue predicted pLDDT scores
+
+    cooperative : bool
+        Flag which defines if cooperative or non-cooperative mode
+        should be used. Both are provided for now but we may remove
+        non-cooperative given the cooperative mode seems to always
+        offer better performance.
+        Default = True
+
+    Returns
+    ----------
+    np.ndarray
+        Returns an array that matches the length of the two input
+        lists and provides the metapredict-hybrid disorder scores
+
+    """
+
+    # defines functionally the limits that the predicted pLDDT score
+    # can be between
+    base = 0.35
+    top  = 0.95
+
+    # this normalizes so the pLDDT score ends up being renormalized
+    # to be between 0 and 1, converted into an effective disorder score
+    d = (ppLDDT - base)*(1/(top-base))
+
+    # if not cooperative then flatten here
+    if cooperative is False:
+        d = np.where(d<0, 0, d)
+        d = np.where(d>1, 1, d)
+
+        
+    # means value of 1 = disordered and 0 is disordered
+    d = 1 - d
+
+    # if we're using cooperative mode...
+    if cooperative:
+
+        hybrid_vals = []
+        for idx in range(len(d)):
+        
+            vmax = max([metapredict_disorder[idx], d[idx]]) 
+            
+            # if the largest disorder score for either is above 0.5 go
+            # with that score as the consensus
+            if vmax > 0.5:
+                hybrid_vals.append(vmax)
+
+            # else go with the smallest disorder score as the consensus
+            else:
+                hybrid_vals.append(min([metapredict_disorder[idx], d[idx]]) )
+            
+        # smooth with a window size of 7 to kill discontinuities
+        smoothed = savgol_filter(hybrid_vals,7,3)
+        
+        # flatten so all values in the bounds of 0 to 1
+        smoothed = np.where(smoothed<0, 0, smoothed)
+        hybrid = np.where(smoothed>1, 1, smoothed)
+    else:
+        hybrid = np.amax(np.array([metapredict_disorder, d]),0)
+
+    return hybrid
+

@@ -365,6 +365,11 @@ def get_domains(sequence,
     # smoothe!!!!
     smoothed_disorder = savgol_filter(disorder, window_size, polynomial_order)
 
+
+    # bound 0 and 1
+    smoothed_disorder = np.where(smoothed_disorder<0, 0, smoothed_disorder)
+    smoothed_disorder = np.where(smoothed_disorder>1, 1, smoothed_disorder)    
+
     # Using smoothed disorder extract out domains
     disordered_domain_info = __build_domains_from_values(smoothed_disorder,
                                                          disorder_threshold,
