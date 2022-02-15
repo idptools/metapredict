@@ -130,7 +130,7 @@ brnn_network = brnn_architecture.BRNN_MtM(input_size, hidden_size, num_layers, n
 brnn_network.load_state_dict(torch.load(saved_weights, map_location=torch.device(device)))
 ###############################################################################
 
-def get_metapredict_network_version():
+def get_metapredict_legacy_network_version():
     """
     Function that returns a string with the current predictor version. Note that this requires trained weight
     files to have a format that ends in "<anything>_v<version info>.pt". 

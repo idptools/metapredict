@@ -9,9 +9,8 @@ import os
 from metapredict.backend import py_predictor_v2
 
 
-# if predictor changes, update here and in metameta_predict() function!
-# this is listed here so get_metapredict_network_version() works.
-predictor = 'metameta_2_7_22_nl2_hs20_b32_V3.pt'
+# if predictor changes, update here 
+predictor_string = 'metameta_2_7_22_nl2_hs20_b32_V3.pt'
 
 def get_metapredict_network_version():
     """
@@ -26,7 +25,7 @@ def get_metapredict_network_version():
         Returns a string with the current metapredict trained network being used
 
     """
-    return ".".join(predictor.split('_')[-1].split('.')[:-1])
+    return ".".join(predictor_string.split('_')[-1].split('.')[:-1])
 
 
 def metameta_predict(sequence, normalized=True):
@@ -35,7 +34,7 @@ def metameta_predict(sequence, normalized=True):
     PATH = os.path.dirname(os.path.realpath(__file__))
     
     # select the chosen network, kept as separate line of code in 
-    used_predictor = 'metameta_2_7_22_nl2_hs20_b32_V3.pt'
+    used_predictor = predictor_string
     
     # set location of chosen network
     predictor_path = f'{PATH}/networks/{used_predictor}'

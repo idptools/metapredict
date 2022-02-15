@@ -6,7 +6,9 @@
 
 # import user-facing functions
 from .meta import *
-from metapredict.backend.meta_predict_disorder import get_metapredict_network_version
+from metapredict.backend.meta_predict_disorder import get_metapredict_legacy_network_version
+from metapredict.backend.metameta_hybrid_predict import get_metapredict_network_version
+
 
 
 import os
@@ -34,7 +36,7 @@ if IGNORE_LIBOMP_ERROR:
 
 
 # Standardized function to check performance
-def print_performance(seq_len=500, num_seqs=100, verbose=True):
+def print_performance(seq_len=500, num_seqs=100, verbose=True, legacy=False):
     """
     Function that lets you test metapredicts performance on your local hardware.
 
@@ -49,6 +51,10 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True):
     verbose : bool
         Flag which, if true, means the function prints a summary when finished. If 
         false simply returns an integer
+
+    legacy : bool
+        Flag which determines if legacy (v1) or updated (v2) metapredict networks
+        are used.
 
     Returns
     ---------------
@@ -76,7 +82,7 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True):
 
     start = time.time()
     for i in seqs:
-        predict_disorder(i)
+        predict_disorder(i, legacy=legacy)
 
     end = time.time()
     r_per_second = (seq_len*num_seqs)/(end - start)
@@ -86,6 +92,23 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True):
 
     return r_per_second
     
+def print_metapredict_legacy_network_version():
+    """
+    Function that returns a string with the current trained network version
+    used in disorder prediction. This is useful to know if updated versions
+    of the network are provided, which will always accompany a version bump
+    so prior versions of the code will always be available.
+
+    Returns
+    ---------
+    str 
+        Returns a string in the format v<version information>
+    
+    """
+
+    return get_metapredict_legacy_network_version()
+
+
 def print_metapredict_network_version():
     """
     Function that returns a string with the current trained network version
