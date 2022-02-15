@@ -12,16 +12,18 @@ wants to go back and use the hybrid predictor.
 '''
 
 
+## commented out because I don't think we use this any more?
+"""
 class DisorderObjectHybrid:
-    """
+    "
     Simple datastructure that is returned from predict_disorder_domains_hybrid()
     and provides dot-notation access to key variables.
-    """
+    "
 
     def __init__(self, seq, meta, ppLDDT, hybrid, hybrid_smoothed, disordered_domains, folded_domains, return_numpy=False):
-        """
+        "
         Constructor
-        """
+        "
         self.sequence = seq
         self.disorder = hybrid
         self.disorder_smoothed = hybrid_smoothed
@@ -75,6 +77,7 @@ class DisorderObjectHybrid:
             doms.append(self.sequence[local[0]:local[1]])
         return doms
 
+"""
 
 
 class DisorderObject:
@@ -113,7 +116,7 @@ class DisorderObject:
             
 
     @property
-    def disordered_domains(self):
+    def disordered_domains(self):me
         return self.__get_domains(self.disordered_domain_boundaries)
 
 
@@ -127,4 +130,13 @@ class DisorderObject:
             doms.append(self.sequence[local[0]:local[1]])
         return doms
 
+    def __str__(self):
+        rs =  f"DisorderObject for sequence with {len(self.sequence)} residues, {len(self.disordered_domains)} IDRs, and {len(self.folded_domains)} folded domains\n"
+        rs = rs + "Available dot variables are:\n  .sequence\n  .disorder\n  .disordered_domain_boundaries\n  .folded_domain_boundaries\n  .disordered_domains\n  .folded_domains\n"
+
+        return rs
+        
+
+    def __repr__(self):
+        return str(self)
 

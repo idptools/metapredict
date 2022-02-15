@@ -62,14 +62,17 @@ def graph(sequence,
         checking on positions has already been done. Default = None.
 
     shaded_region_color : str or list of strs
-        String that defines the color of the shaded region. The shaded 
+        String or list of strings that defines the color of the shaded region. 
         region is always set with an alpha of 0.3 but the color can be 
         any valid matplotlib color name or a hex color string (i.e. "#ff0000" 
-        is red). Alternatively a list where number of elements matches 
-        number in shaded_regions, assigning a color-per-shaded regions.
-        Default = 'red'.
-        
-    disorder_line_color : str
+        is red). If a single string or a list of length 1 is passed then the
+        color defined by that string (or the single element) is used. If a list
+        if length = len(shaded_regions) is passed, then EACH shaded region is 
+        colored according to the correspondingly-indexed list element. If a 
+        mismatch between number of elements in shaded_region and 
+        shaded_region_color is found an exception is rasied.
+
+    Disorder_line_color : str
         String that defines the color of the traced disorder score.  Can
         be any standard matplotlib color name or a hex-value (see above). 
         Default = 'blue'.
@@ -206,10 +209,20 @@ def graph(sequence,
         for i in [20, 40, 60, 80]:
             axes.plot([0, n_res+2], [i, i], color="black", linestyle="dashed", linewidth="0.5")
 
-    # make the shaded_region_color into a list
+    # make sure the shaded_region_color variable makes snese
     if type(shaded_region_color) != list:
-        shaded_region_color=list(shaded_region_color)
-
+        if type(shaded_region_color) == str:
+            shaded_region_color = [shaded_region_color]
+        else:
+            raise MetapredictError('Invalid type passed as shaded_region_color. Expect a list of colors or a string')
+    else:
+        if len(shaded_region_color) == 1:
+            pass
+        elif len(shaded_region_color) == len(shaded_regions):
+            pass
+        else:
+            raise MetapredictError('Invalid number of colors passed. If a list is used for shaded_region_color, then the number of elements must be either 1 OR equal the number of shaded regions')
+    
     # if we want shaded regions
     if shaded_regions is not None:
         for boundary in range(0, len(shaded_regions)):
@@ -223,7 +236,7 @@ def graph(sequence,
                 cur_color = shaded_region_color[boundary]
             else:
                 cur_color = shaded_region_color[0]
-            axes.axvspan(start, end, alpha=0.2, color=cur_color)
+            axes.axvspan(start, end, alpha=0.2, color=cur_color, linewidth=0)
 
     # if graphing both confidence and disorder
     if pLDDT_scores == True and disorder_scores==True:
