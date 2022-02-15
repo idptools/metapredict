@@ -242,10 +242,8 @@ def predict_disorder_domains(sequence,
         lengthscales were decided based on the fact that 
         coiled-coiled regions (which are IDRs in isolation) 
         often show up with reduced apparent disorder within IDRs, 
-        and but can be as short as 20-30 
-        
-        
-        residues. The folded_domain_threshold is used based on the 
+        and but can be as short as 20-30 residues. 
+        The folded_domain_threshold is used based on the 
         idea that it allows a 'shortest reasonable' folded domain 
         to be identified. Default=50.
 
@@ -316,8 +314,7 @@ def predict_disorder_domains(sequence,
               sub-element is simply len=2.    
 
 
-    """    
-
+    """
 
     if disorder_threshold == None:
         if legacy == True:

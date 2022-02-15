@@ -116,7 +116,7 @@ class DisorderObject:
             
 
     @property
-    def disordered_domains(self):me
+    def disordered_domains(self):
         return self.__get_domains(self.disordered_domain_boundaries)
 
 

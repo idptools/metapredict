@@ -12,6 +12,13 @@ First import metapredict -
 
 Once metapredict is imported, you can work with individual sequences or .fasta files. 
 
+Important update to predict_disorder_domains() function for V2.0 and above
+------------------------------------------------------------------------------
+
+As of February 15, 2022 we have updated metapredict to V2.0. This comes with important changes that improve the accuracy of metapredict. Please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the *predict_disorder_domains()* function, so please read the documenation on that function if you were using it previously. 
+
+
+
 
 Using the original metapredict network
 ---------------------------------------
