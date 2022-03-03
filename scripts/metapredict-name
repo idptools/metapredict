@@ -36,12 +36,14 @@ if __name__ == "__main__":
     # get protein name 
     if len(args.name) == 1:
         final_name = args.name[0]
+        just_protein_name = True
     else:
         final_name = ''
         for i in args.name:
             final_name += i
             final_name += ' '
         final_name = final_name[:len(final_name)-1]
+        just_protein_name = False
 
     # sequence and name
     seq_and_name = seq_from_name(final_name)
@@ -87,8 +89,8 @@ if __name__ == "__main__":
 
     # set the title to contain the input name, the organism that was found (if possible)
     # and the short form of the uniprot ID
-    if organism != '':
-        final_title = final_name + ' ' + organism + ' ' + f'- {short_uniprot_id}'
+    if organism != '' and just_protein_name == True:
+        final_title = organism + ' ' + final_name + ' ' + f'- {short_uniprot_id}'
     else:
         final_title = final_name + ' ' + f'- {short_uniprot_id}'
 
