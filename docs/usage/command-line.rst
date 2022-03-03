@@ -271,6 +271,94 @@ To use the original metapredict network, simply use the ``-l`` or ``--legacy`` f
     $ metapredict-uniprot Q8RYC8 -l
 
 
+Graphing disorder using the common name of a protein
+-----------------------------------------------------
+
+Sometimes you just don't know the Uniprot ID for your favorite protein, and looking it up can be a pain. With the ``metapredict-name`` command, you can input the common name of your favorite protein and get a graph in return. Metapredict will also print the name of the organisms and the uniprot ID it found so you know you're looking at the correct protein. This is because this functionality queries your input protein name on Uniprot and takes the top hit. Sometimes this is the protein you're looking for, but not always. To increase the likelihood of success, use your protein name and the organism name for this command.
+
+*Example*
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 
+
+will graph the metapredict disorder scores for the Homo sapiens p53 protein. This is because Homo sapiens p53 is the top hit on Uniprot when you search p53. However...
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 chicken
+
+will graph the p53 from Gallus gallus!
+
+**Additional Usage**
+
+**Changing the DPI**
+
+Changing the DPI will adjust the resolution of the graph. To change the DPI, use the ``-D`` or ``--dpi`` flag.
+
+**Example**
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 -D 300
+
+
+**Graphing predicted pLDDT scores**
+
+To add predicted pLDDT scores to the graph, use the ``-p`` or ``--pLDDT`` flag.
+
+**Example**
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 -p
+
+
+**Changing the title**
+
+To change the title, use the ``-t`` or ``--title`` flag.
+
+**Example**
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 -t my_cool_graph_of_p53
+
+
+**Using the legacy version of metapredict**
+
+To use the legacy version of metapredict for your disorder scores, use the ``-l`` or ``--legacy`` flag.
+
+**Example**
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 -l
+
+
+**Printing the full Uniprot ID to your terminal**
+
+To have your terminal print the entire Uniprot ID as well as the full protein sequence from your specified protein upon graphing, use the ``-v`` or ``--verbose`` flag.
+
+**Example**
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 -v
+
+
+**Turning off all printing to the terminal**
+
+By default, the *metapredict-name* command prints the uniprot ID as well as other information related to your protein to the terminal. The purpose of this is to make it explicitely clear which protein was graphed because grabbing the top hit from Uniprot *does not gaurentee* that it is the protein you want or expected. However, this behavior can be turned off by using the ``-s`` or ``--silent`` flag.
+
+**Example**
+
+.. code-block:: bash
+    
+    $ metapredict-name p53 -s
+
+
+
 Graphing Predicted AlphaFold2 pLDDT Scores from a fasta file
 -------------------------------------------------------------------
 

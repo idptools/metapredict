@@ -3,7 +3,7 @@ import urllib3
 from metapredict.metapredict_exceptions import MetapredictError
 
 
-def fetch_sequence(uniprot_id):
+def fetch_sequence(uniprot_id, return_full_id=False):
     """
     Function that returns the amino acid sequence by polling UniProt.com
 
@@ -16,6 +16,12 @@ def fetch_sequence(uniprot_id):
     uniprot_id : str
         Uniprot accession number
 
+    return_full_id : bool
+        Whether to return the full uniprot ID. If set to True,
+        returns a list where the first element is the full uniprot ID, the
+        second element is the sequence, and the third element is
+        the short uniprot ID.
+
     Returns
     -----------
     str or None:
@@ -26,9 +32,11 @@ def fetch_sequence(uniprot_id):
 
     http = urllib3.PoolManager()
     r = http.request('GET', 'https://www.uniprot.org/uniprot/%s.fasta' % (uniprot_id))
+    
+    y = "".join(str(r.data).split('\\n')[:1]).replace("'", "")[1:]
 
     s = "".join(str(r.data).split('\\n')[1:]).replace("'", "")
-
+    
     # make sure that the last character is not a " due to a ' in protein name
     # Thank you to Github user keithchev for pointing out this bug!
     if s[len(s)-1] == '"':
@@ -37,11 +45,15 @@ def fetch_sequence(uniprot_id):
     if s.find('Sorry') > -1:
         raise MetapredictError('Error: unable to fetch UniProt sequence with accession %s'%(uniprot_id))
 
+    if return_full_id == False:
+        return s
 
-    return s
+    else:
+        return [y, s, uniprot_id]
 
 
-def seq_from_name(name, print_name=True):
+
+def seq_from_name(name):
     '''
     Function to get the sequence of a protein from the name. 
 
@@ -56,11 +68,6 @@ def seq_from_name(name, print_name=True):
                 p53
                 Human p53
                 Homo sapiens p53
-
-    print_name : bool
-        Whether to print the name of the recieved protein to the 
-        user. By default is seet to True such that the user can see 
-        which protein was actually used.
 
 
     Returns
@@ -138,12 +145,11 @@ def seq_from_name(name, print_name=True):
         final_name += '_'
     final_name = final_name[:len(final_name)-1]
 
-    # by default, print the actual protein name to the terminal / console
-    # so the user knows which one they ended up getting. Then can verify
-    # that the search was correct
-    if print_name == True:
-        print(f'>{top_hit}_{final_name}')
-    return fetch_sequence(top_hit)
+    # return the top hit as a list where the first element is the 
+    # uniprot ID and the second element is the sequence
+    return fetch_sequence(top_hit, return_full_id=True)
+
+
 
 
 
