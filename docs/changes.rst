@@ -6,6 +6,13 @@ About
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
 
+V2.2
+-----
+
+Changes: 
+Fixed bug in metapredict-name command that could result in the organism name being named twice in the title of the graph.
+
+
 V2.1
 ------
 Changes:
