@@ -680,7 +680,7 @@ def graph_pLDDT(sequence,
 
 # ..........................................................................................
 #
-def percent_disorder(sequence, cutoff=None, legacy=False):
+def percent_disorder(sequence, disorder_threshold=None, legacy=False):
     """
     function to return the percent disorder for any given protein.
     By default, uses 0.5 as a cutoff for the new version of metapredict
@@ -725,12 +725,12 @@ def percent_disorder(sequence, cutoff=None, legacy=False):
     # set dis equal to the predicted disorder for the input sequence
     if legacy == True:
         dis = predict_disorder(sequence, legacy=True)
-        if cutoff == None:
-            cutoff = 0.3
+        if disorder_threshold == None:
+            disorder_threshold = 0.3
     else:
         dis = predict_disorder(sequence)
-        if cutoff == None:
-            cutoff = 0.5
+        if disorder_threshold == None:
+            disorder_threshold = 0.5
 
     # set arbitrarily chosen variable n to equal 0
     n = 0
@@ -738,7 +738,7 @@ def percent_disorder(sequence, cutoff=None, legacy=False):
     # for predicted disorder values in dis:
     for i in dis:
         #if predicted value is greater than cutoff, add one to n
-        if i >= cutoff:
+        if i >= disorder_threshold:
             n += 1
 
     """
