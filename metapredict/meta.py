@@ -680,18 +680,21 @@ def graph_pLDDT(sequence,
 
 # ..........................................................................................
 #
-def percent_disorder(sequence, disorder_threshold=None, legacy=False):
+def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy=False):
     """
-    function to return the percent disorder for any given protein.
+    Function that returns the percent disorder for any given protein.
     By default, uses 0.5 as a cutoff for the new version of metapredict
     and 0.3 for the legacy version of metapredict (values greater than or equal
     to 0.5 will be considered disordered). If a value for cutoff is specified,
     that value will be used.
 
-    Note this function uses the stanard metapredict disorder
-    score and 
+    Mode lets you toggle between 'threshold' and 'disorder_domains'. If 
+    threshold is used a simple per-residue logic operation is applied
+    and the fraction of residues above the disorder_threshold is used.
+    If 'disorder_domains' is used then the sequence is divided into
+    IDRs and folded domains using the predict_disordered_domains() 
+    function. 
 
-    This function rounds to a single decimal place.
     
     Parameters
     -------------
@@ -719,35 +722,59 @@ def percent_disorder(sequence, disorder_threshold=None, legacy=False):
 
     """
 
+    # check mode is valid first
+    mode = mode.lower()
+    if mode not in ['threshold', 'disorder_domains']:
+        raise MetapredictError(f"Mode must be one of 'threshold' or 'disorder_domains', but '{mode}' was passed instead")
+
     # make all residues upper case 
     sequence = sequence.upper()
 
-    # set dis equal to the predicted disorder for the input sequence
-    if legacy == True:
-        dis = predict_disorder(sequence, legacy=True)
-        if disorder_threshold == None:
-            disorder_threshold = 0.3
+
+    if mode == 'threshold':
+
+        # set dis equal to the predicted disorder for the input sequence
+        if legacy == True:
+            dis = predict_disorder(sequence, legacy=True)
+            if disorder_threshold == None:
+                disorder_threshold = 0.3
+
+        else:
+            dis = predict_disorder(sequence)
+            if disorder_threshold == None:
+                disorder_threshold = 0.5
+            
+
+        # set arbitrarily chosen variable n to equal 0
+        n = 0
+
+        # for predicted disorder values in dis:
+        for i in dis:
+            #if predicted value is greater than cutoff, add one to n
+            if i >= disorder_threshold:
+                n += 1
+
+        """
+        percent disorder is equal to n (number of residues with predicted
+        value >= cutoff) divided by the total number of residues in the
+        input sequence.
+        """
+
+        percent_disordered = round(100*((n / len(dis))), 3)
+
+    # else using disordered domains
     else:
-        dis = predict_disorder(sequence)
-        if disorder_threshold == None:
-            disorder_threshold = 0.5
 
-    # set arbitrarily chosen variable n to equal 0
-    n = 0
+        # if no specified threshold use the defaults
+        if disorder_threshold is None:
+            idrs = predict_disorder_domains(sequence,legacy=legacy).disordered_domains
 
-    # for predicted disorder values in dis:
-    for i in dis:
-        #if predicted value is greater than cutoff, add one to n
-        if i >= disorder_threshold:
-            n += 1
+        # else us the passed threshold
+        else:
+            idrs = predict_disorder_domains(sequence,legacy=legacy, disorder_threshold=disorder_threshold).disordered_domains
 
-    """
-    percent disorder is equal to n (number of residues with predicted
-    value >= cutoff) divided by the total number of residues in the
-    input sequence.
-    """
-
-    percent_disordered = round(100*((n / len(dis))), 3)
+        fraction_disordered = sum([len(i) for i in idrs])/len(sequence)
+        percent_disordered = round(100*(fraction_disordered), 3)
 
 
     return percent_disordered
