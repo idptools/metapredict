@@ -9,6 +9,7 @@ import argparse
 from metapredict.metapredict_exceptions import MetapredictError
 import metapredict as meta
 from metapredict.backend.uniprot_predictions import seq_from_name
+from getSequence import getseq
 
 if __name__ == "__main__":
 
@@ -46,7 +47,7 @@ if __name__ == "__main__":
         just_protein_name = False
 
     # sequence and name
-    seq_and_name = seq_from_name(final_name)
+    seq_and_name = getseq(final_name)
 
     # get the uniprot ID
     full_uniprot_id = seq_and_name[0]
@@ -54,26 +55,11 @@ if __name__ == "__main__":
     # get sequence
     sequence = seq_and_name[1]
 
-    # Try to get the name of the organism, if you can't no worries.
-    try:
-        full_organism_name = full_uniprot_id.split('OS=')[1].split()[:2]
-        organism = ''
-        for i in full_organism_name:
-            organism += i
-            organism += ' '
-        organism = organism[:len(organism)-1]
-
-    except:
-        organism = ''
-
-    # maybe add in functionality to put the uniprot ID in the graph title.
-    short_uniprot_id = seq_and_name[2]
-
     # see if you should print the entire uniprot ID to the terminal
-    if args.verbose:
-        print_uniprot=True
-    else:
+    if args.silent:
         print_uniprot=False
+    else:
+        print_uniprot=True
 
     # see if to include confidence scores
     if args.pLDDT == True:
@@ -88,17 +74,7 @@ if __name__ == "__main__":
         use_legacy=False
 
     # set the title to contain the input name, the organism that was found (if possible)
-    # and the short form of the uniprot ID
-    if organism != '' and just_protein_name == True:
-        final_title = organism + ' ' + final_name + ' ' + f'- {short_uniprot_id}'
-    else:
-        final_title = final_name + ' ' + f'- {short_uniprot_id}'
-
-    # see if user set printing to False (no printing to terminal)
-    if args.silent:
-        no_printing = True
-    else:
-        no_printing=False
+    final_title = final_name
 
 
     # set title
@@ -108,11 +84,7 @@ if __name__ == "__main__":
 
     # figure out what to print if anything
     if print_uniprot==True:
-        print(full_uniprot_id)
-        print(sequence)
-    else:
-        if no_printing == False:
-            print(f'Graphing disorder for {organism} - {short_uniprot_id}')
+        print(f'Graphing disorder for {full_uniprot_id}')
 
     # graph it
     meta.graph_disorder(sequence, title=final_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, legacy=use_legacy)
