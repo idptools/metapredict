@@ -65,7 +65,7 @@ setup(
             'scipy',
             'urllib3',
             'alphaPredict==1.0',
-            'getSequence'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+            'getSequence >= 1.3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',
