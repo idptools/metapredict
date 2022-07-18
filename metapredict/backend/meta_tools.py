@@ -76,7 +76,7 @@ def valid_shaded_region(shaded_regions, n_res):
 
     """
 
-    if not shaded_regions:
+    if shaded_regions is None:
         return
 
     # check shaded regions make sense:
