@@ -50,7 +50,7 @@ if __name__ == "__main__":
             threshold_val = args.threshold
     
     if not os.path.isfile(args.data_file):
-        print('Error: Could not find passed fasta file [%s]'%(args.data_file))
+        print(f'Error: Could not find passed fasta file [{args.data_file:s}]')
 
     # read in sequences
     sequences = protfasta.read_fasta(args.data_file, invalid_sequence_action=args.invalid_sequence_action)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         if n_seqs > 500:
             if args.verbose:
                 if c % 500 == 0:
-                    print('On %i of %i'%(c,n_seqs))
+                    print(f'On {c:i} of {n_seqs:i}')
                 
         
     return_dictionary = {}
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         for s in idrs:
             # d is IDR start and end positions
             for d in idrs[s][2]:
-                return_dictionary['%s IDR_START=%i IDR_END=%i' % (s, d[0], d[1])] =  d[2]
+                return_dictionary[f'{s:s} IDR_START={d[0]:i} IDR_END={d[1]:i}'] =  d[2]
                 
         
         protfasta.write_fasta(return_dictionary, args.output_file)

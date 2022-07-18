@@ -47,7 +47,7 @@ if __name__ == "__main__":
     if args.title:
         graph_title = args.title
     else:
-        graph_title = 'Disorder for %s'%(args.uniprot)
+        graph_title = f'Disorder for {args.uniprot:s}'
 
 
     # if we don't want to save...
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     else:
         
         if args.output_file == 'USE_DEFAULT':
-            outname = '%s.png'%(args.uniprot)
+            outname = f'{args.uniprot:s}.png'
         else:
             outname = args.output_file
 

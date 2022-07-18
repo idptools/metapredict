@@ -100,18 +100,18 @@ class DisorderObject:
 
         # convert numerical vector types as per input argument
         if return_numpy:
-            if type(meta) is not np.ndarray:
+            if not isinstance(meta, np.ndarray):
                 self.disorder = np.array(meta)
 
-            if type(meta) is not np.ndarray:
+            if not isinstance(meta, np.ndarray):
                 self.meta = np.array(meta)
         
         else:
 
-            if type(meta) is np.ndarray:
+            if isinstance(meta, np.ndarray):
                 self.disorder = meta.tolist()
 
-            if type(meta) is np.ndarray:
+            if isinstance(meta, np.ndarray):
                 self.meta = meta.tolist()
             
 
@@ -132,7 +132,7 @@ class DisorderObject:
 
     def __str__(self):
         rs =  f"DisorderObject for sequence with {len(self.sequence)} residues, {len(self.disordered_domains)} IDRs, and {len(self.folded_domains)} folded domains\n"
-        rs = rs + "Available dot variables are:\n  .sequence\n  .disorder\n  .disordered_domain_boundaries\n  .folded_domain_boundaries\n  .disordered_domains\n  .folded_domains\n"
+        rs = rs + f"Available dot variables are:\n  .sequence\n  .disorder\n  .disordered_domain_boundaries\n  .folded_domain_boundaries\n  .disordered_domains\n  .folded_domains\n"
 
         return rs
         

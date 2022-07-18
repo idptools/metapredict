@@ -84,7 +84,7 @@ def __build_domains_from_values(values,
     # upper bounds for what we might consider to be single folded structures which are then
     # used as a final step in the procedure (see step 5). Defined here just by convention
     # of defining params early on
-    if override_folded_domain_minsize is False:
+    if not override_folded_domain_minsize:
         folded_domain_min_size_1 = 35
         folded_domain_min_size_2 = 20
     else:

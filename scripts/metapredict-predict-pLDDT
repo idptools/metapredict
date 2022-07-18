@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     
     if not os.path.isfile(args.data_file):
-        print('Error: Could not find passed fasta file [%s]'%(args.data_file))
+        print(f'Error: Could not find passed fasta file [{args.data_file:s}]')
 
 
     # run predict disorder fasta

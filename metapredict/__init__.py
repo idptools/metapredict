@@ -88,7 +88,7 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True, legacy=False):
     r_per_second = (seq_len*num_seqs)/(end - start)
 
     if verbose:
-        print('Predicting %i residues per second!'%(r_per_second))
+        print(f'Predicting {r_per_second:i} residues per second!')
 
     return r_per_second
     

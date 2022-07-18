@@ -31,7 +31,7 @@ def fetch_sequence(uniprot_id, return_full_id=False):
     """
 
     http = urllib3.PoolManager()
-    r = http.request('GET', 'https://www.uniprot.org/uniprot/%s.fasta' % (uniprot_id))
+    r = http.request('GET', f'https://www.uniprot.org/uniprot/{uniprot_id:s}.fasta')
     
     y = "".join(str(r.data).split('\\n')[:1]).replace("'", "")[1:]
 
@@ -43,7 +43,7 @@ def fetch_sequence(uniprot_id, return_full_id=False):
         s = s[:len(s)-1]
 
     if s.find('Sorry') > -1:
-        raise MetapredictError('Error: unable to fetch UniProt sequence with accession %s'%(uniprot_id))
+        raise MetapredictError(f'Error: unable to fetch UniProt sequence with accession {uniprot_id:s}')
 
     if return_full_id == False:
         return s

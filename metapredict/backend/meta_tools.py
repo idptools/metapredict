@@ -5,7 +5,7 @@ from metapredict.metapredict_exceptions import MetapredictError
 
 def valid_range(inval, minval, maxval):
     if inval < minval or inval > maxval:
-        raise MetapredictError('Value %1.3f is outside of range [%1.3f, %1.3f]' % (inval, minval, maxval))
+        raise MetapredictError(f'Value {inval:1.3f} is outside of range [{minval:1.3f}, {maxval:1.3f}]')
 
 
 def write_csv(input_dict, output_file):
@@ -33,19 +33,21 @@ def write_csv(input_dict, output_file):
     try:
         fh = open(output_file, 'w')
     except Exception:
-        raise MetapredictError('Unable to write to file destination %s' % (output_file))
+        raise MetapredictError(f'Unable to write to file destination {output_file:s}')
 
     # for each entry
     for idx in input_dict:
 
         # important otherwise commmas in FASTA headers render the CSV file unreadable!
         no_comma = idx.replace(',', ' ')
-        fh.write('%s' % (no_comma))
+        fh.write(f'{no_comma:s}')
 
         # for each score write
         for score in input_dict[idx]:
-            fh.write(', %1.3f' % (score))
-        fh.write('\n')
+            fh.write(f', {score:1.3f}')
+        fh.write(f'\n')
+
+    fh.close()
 
 
 def valid_shaded_region(shaded_regions, n_res):
@@ -74,7 +76,7 @@ def valid_shaded_region(shaded_regions, n_res):
 
     """
 
-    if shaded_regions is None:
+    if not shaded_regions:
         return
 
     # check shaded regions make sense:
@@ -88,7 +90,7 @@ def valid_shaded_region(shaded_regions, n_res):
                 raise MetapredictError(f'Invalid end position in shaded_regions: {b[0]}')
 
     except Exception as e:
-        raise MetapredictError('Error in parsing shaded_regions - full error below\n\n%s' % (str(e)))
+        raise MetapredictError(f'Error in parsing shaded_regions - full error below\n\n{str(e):s}')
 
 
 def validate_options(option, valid_list):
@@ -111,7 +113,7 @@ def validate_options(option, valid_list):
 
     """
     if option not in valid_list:
-        raise MetapredictError('Expected one of %s but only option passed was %s' % (str(valid_list), option))
+        raise MetapredictError(f"Expected one of {str(valid_list):s} but only option passed was {option:s}")
 
 
 def sanitize_filename(input_filename):
@@ -224,5 +226,7 @@ def write_caid_format(input_dict, output_file):
             cur_binary = get_binary_prediction(cur_score, cutoff_value=0.5)
             # write as tsv the caid formatted info
             current_output.write(f'{res_and_score_index+1}\t{cur_residue}\t{cur_score}\t{cur_binary}\n')
+    
+    current_output.close()
 
 
