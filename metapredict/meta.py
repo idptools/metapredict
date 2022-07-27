@@ -1077,7 +1077,8 @@ def graph_disorder_fasta(filepath,
             # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
             # file writing
             if indexed_filenames:
-                filename = output_dir + os.sep + f"{idx_counter:i}_" + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
+                print(type(idx_counter))
+                filename = output_dir + os.sep + f"{idx_counter:d}_" + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
             else:
                 filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
 
@@ -1187,7 +1188,7 @@ def graph_pLDDT_fasta(filepath,
             # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
             # file writing
             if indexed_filenames:
-                filename = output_dir + os.sep + f"{idx_counter:i}_" + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
+                filename = output_dir + os.sep + f"{idx_counter:d}_" + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
             else:
                 filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
 

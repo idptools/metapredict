@@ -68,7 +68,7 @@ if __name__ == "__main__":
         if n_seqs > 500:
             if args.verbose:
                 if c % 500 == 0:
-                    print(f'On {c:i} of {n_seqs:i}')
+                    print(f'On {c:d} of {n_seqs:d}')
                 
         
     return_dictionary = {}
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         for s in idrs:
             # d is IDR start and end positions
             for d in idrs[s][2]:
-                return_dictionary[f'{s:s} IDR_START={d[0]:i} IDR_END={d[1]:i}'] =  d[2]
+                return_dictionary[f'{s:s} IDR_START={d[0]:d} IDR_END={d[1]:d}'] =  d[2]
                 
         
         protfasta.write_fasta(return_dictionary, args.output_file)

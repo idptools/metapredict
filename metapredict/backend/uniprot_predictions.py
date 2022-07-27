@@ -39,11 +39,14 @@ def fetch_sequence(uniprot_id, return_full_id=False):
     
     # make sure that the last character is not a " due to a ' in protein name
     # Thank you to Github user keithchev for pointing out this bug!
+
+    # if this fails the entire return string will be "b''" (len==3). We probably
+    # need a more robust way to test for failure but this'll do for now...
+    if len(str(r.data)) == 3:
+        raise MetapredictError(f'Error: unable to fetch UniProt sequence with accession {uniprot_id:s}')
+
     if s[len(s)-1] == '"':
         s = s[:len(s)-1]
-
-    if s.find('Sorry') > -1:
-        raise MetapredictError(f'Error: unable to fetch UniProt sequence with accession {uniprot_id:s}')
 
     if return_full_id == False:
         return s
