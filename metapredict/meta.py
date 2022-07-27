@@ -153,7 +153,7 @@ def predict_disorder_domains_from_external_scores(disorder,
             if len(sequence) != len(disorder):
                 raise MetapredictError(f'Disorder and sequence info are not length matched [disorder length = {len(disorder)}, sequence length = {len(sequence)}')
         except Exception:
-            raise MetapredictError('Could not compare length of disorder and sequence parameters. Make sure sequence is a str and disorder a list')
+            raise MetapredictError(f'Could not compare length of disorder and sequence parameters. Make sure sequence is a str and disorder a list')
 
         return_sequence = True
 
@@ -845,7 +845,7 @@ def predict_disorder_fasta(filepath,
     test_data_file = os.path.abspath(filepath)
 
     if not os.path.isfile(test_data_file):
-        raise FileNotFoundError('Datafile does not exist.')
+        raise FileNotFoundError(f'Datafile does not exist.')
 
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
 
@@ -929,7 +929,7 @@ def predict_pLDDT_fasta(filepath,
     test_data_file = os.path.abspath(filepath)
 
     if not os.path.isfile(test_data_file):
-        raise FileNotFoundError('Datafile does not exist.')
+        raise FileNotFoundError(f'Datafile does not exist.')
 
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
 
@@ -1046,12 +1046,12 @@ def graph_disorder_fasta(filepath,
 
     # Test to see if the data_file exists
     if not os.path.isfile(filepath):
-        raise FileNotFoundError('Datafile [%s] does not exist'%(filepath))
+        raise FileNotFoundError(f'Datafile [{filepath:s}] does not exist')
 
     # Test to see if output directory exists
     if output_dir is not None:
         if not os.path.isdir(output_dir):
-            raise FileNotFoundError('Proposed output directory could not be found')
+            raise FileNotFoundError(f'Proposed output directory could not be found')
 
     # validate disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0,1)
@@ -1077,9 +1077,9 @@ def graph_disorder_fasta(filepath,
             # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
             # file writing
             if indexed_filenames:
-                filename = output_dir + os.sep + "%i_"%(idx_counter) + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
+                filename = output_dir + os.sep + f"{idx_counter:i}_" + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
             else:
-                filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
+                filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
 
             # define title (including bad chars)
             title = idx[0:14]
@@ -1158,12 +1158,12 @@ def graph_pLDDT_fasta(filepath,
 
     # Test to see if the data_file exists
     if not os.path.isfile(filepath):
-        raise FileNotFoundError('Datafile [%s] does not exist'%(filepath))
+        raise FileNotFoundError(f'Datafile [{filepath:s}] does not exist')
 
     # Test to see if output directory exists
     if output_dir is not None:
         if not os.path.isdir(output_dir):
-            raise FileNotFoundError('Proposed output directory could not be found')
+            raise FileNotFoundError(f'Proposed output directory could not be found')
 
 
     # use protfasta to read in fasta file
@@ -1187,9 +1187,9 @@ def graph_pLDDT_fasta(filepath,
             # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
             # file writing
             if indexed_filenames:
-                filename = output_dir + os.sep + "%i_"%(idx_counter) + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
+                filename = output_dir + os.sep + f"{idx_counter:i}_" + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
             else:
-                filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + ".%s"%(output_filetype)
+                filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
 
             # define title (including bad chars)
             title = idx[0:14]
