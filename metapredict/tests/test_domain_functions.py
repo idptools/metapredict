@@ -46,13 +46,6 @@ def test_predict_disordered_domains_external_scores_basic():
     assert idr_boundaries[2][0] == 349
     assert idr_boundaries[2][1] == 393
 
-    
-    with pytest.raises(MetapredictError):
-        meta.predict_disorder_domains_from_external_scores(disorder, sequence='')
-
-    with pytest.raises(MetapredictError):
-        meta.predict_disorder_domains_from_external_scores(disorder, sequence=20)
-    
     # check the IDR sequence is as expected at first IDR
     assert idrs[0] == 'MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKTY'
 
@@ -73,7 +66,27 @@ def test_predict_disordered_domains_external_scores_basic():
 
 
 
+def test_predict_disordered_domains_external_scores_failsafe():
+    """
+    Tests that things fail gracefully
+
+    """
+
+    # read the file into Python
+    with open(odinpred_file, 'r') as fh:
+        content = fh.readlines()
+
+    disorder = [float(x.strip().split()[3]) for x in content[1:]]
+    local_sequence = "".join([x.strip().split()[0] for x in content[1:]])
 
 
+    with pytest.raises(MetapredictError):
+        meta.predict_disorder_domains_from_external_scores(disorder, sequence='')
 
+    with pytest.raises(MetapredictError):
+        meta.predict_disorder_domains_from_external_scores(disorder, sequence=20)
 
+    # check it handles an empty disorder list/vector
+    with pytest.raises(MetapredictError):
+        meta.predict_disorder_domains_from_external_scores([], sequence=20)
+    

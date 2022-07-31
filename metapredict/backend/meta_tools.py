@@ -230,3 +230,37 @@ def write_caid_format(input_dict, output_file):
     current_output.close()
 
 
+
+
+
+# ..........................................................................................
+#
+def raise_exception_on_zero_length(s):
+    """
+    Function that raises an exception if the passed argument is of 
+    length 0. Works for anything where len() can be applied.
+        
+    Parameters
+    ------------
+    s : iterable
+        Variable for which len(x) can be applied.
+
+    Returns
+    ----------
+    None
+
+    Raises
+    ---------
+    If this first argument in the decorated function is len() == 0
+    then MetapredictError is raised.
+
+    """
+    if len(s) == 0:        
+        if isinstance(s, str):
+            raise MetapredictError('Error: Passed string is length 0')
+
+        elif isinstance(s, list):
+            raise MetapredictError('Error: Passed list is length 0')
+        else:
+            raise MetapredictError('Error: Passed iterable type is length 0')
+

@@ -13,7 +13,7 @@ Welcome to metapredict's documentation!
    getting_started
    usage/command-line
    usage/using-in-python
-   api
+   usage/api
    usage/acknowledgements
    usage/troubleshooting
    changes

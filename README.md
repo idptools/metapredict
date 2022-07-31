@@ -13,16 +13,16 @@
 
 ## Major update to metapredict predictions to increase overall accuracy
 
-We are always working to make metapredict better, and we have recently managed just that. More details will be below, but the short story is that we have made significant improvements in the accuracy of disorder predictions using metapredict. By analyzing our new network using the Disprot-PDB dataset predictions, we found that the MCC (which is a measurement accounting for false positives, false negatives, true positives, and true negatives) for metapredict increased from 0.588 for the old (original) network to 0.7 for our new network. To put this in perspective, our original network was ranked 12th most accurate when analyzing the Disprot-PDB dataset, and it is now ranked as the 2nd most accurate available predictor. We should also note that we are still trying a few 'tweaks' to this new network and plan to updated it if we can improve accuracy any further We will be publishing the updated benchmarks for the 'new metapredict' in the near future (unless we already have but forgot to take this sentance out of the documentation...).
+We are always working to make metapredict better, and we have recently managed just that. More details will be below, but the short story is that we have made significant improvements in the accuracy of disorder predictions using metapredict. By analyzing our new network using the Disprot-PDB dataset predictions, we found that the MCC (which is a measurement accounting for false positives, false negatives, true positives, and true negatives) for metapredict increased from 0.588 for the old (original) network to 0.7 for our new network. To put this in perspective, our original network was ranked 12th most accurate when analyzing the Disprot-PDB dataset, and it is now ranked as the 2nd most accurate available predictor. We should also note that we are still trying a few 'tweaks' to this new network and plan to updated it if we can improve accuracy any further We will be publishing the updated benchmarks for the 'new metapredict' in the near future (unless we already have but forgot to take this sentence out of the documentation...).
 
 ### But wait! I need the old metapredict predictions!!!
 
-No worries! We left users access to the old network. The *default network is now our new, more accurate network*. However, by calling **-l** or **--legacy** from the command line or by specififing **legacy=True** from Python, you will be able to use the original metapredict network. We wanted to keep making metapredict better, but we also wanted to minimize disruptions to anyone currently relying on the original metapredict predictions for whatever reason.
+No worries! We left users access to the old network. The *default network is now our new, more accurate network*. However, by calling **-l** or **--legacy** from the command line or by specifying **legacy=True** from Python, you will be able to use the original metapredict network. We wanted to keep making metapredict better, but we also wanted to minimize disruptions to anyone currently relying on the original metapredict predictions for whatever reason.
 
 
 ## So... how exactly was this more more accurate metapredict network made?
 
-We didn't think it was possible, but metapredict has somehow become *even more meta*. Get ready, because things are about to get a little weird. When we implemented the AlphaFold2 pLDDT prediction feature (see section below), we noticed that there were occassional discrepencies between metapredict and the predicted pLDDT (ppLDDT) scores. When the ppLDDT scores get high enough, it is unlikely that a given region is actually disordered. So, we developed a version of metapredict that we originally called 'metapredict-hybrid' that essentially combined aspects of the ppLDDT scores and the original metapredict scores. We found that this 'hybrid predictor' was **much better** than the original metapredict disorder predictor at predicting disordered regions. **But we didn't stop there.** We think one of metapredicts best features is *it is really really fast*. This 'hybrid-predictor' was a little on the slow side, coming in at about 1/3 the speed of the original metapredict predictor. This is still VERY fast, but we thought we could do better. So, we took a little over 300,000 protein sequences and generated metapredict-hybrid scores for those sequences. We then fed those sequences and the corresponding metapredict-hybrid scores and generated a new bidirectional recurrent neural network (BRNN) using PARROT. We then tested this new network against the original metapredict-hybrid predictions and the original metapredict network. The new network that was trained on metapredict-hybrid scores *actually outperformed the metapredict-hybrid predictions when benchmarking against Disprot-PDB*. Importantly, this new (super accurate) network was only 30% slower than the original metapredict network, which is substantially better than the 70% hit that metapredict-hybrid took. 
+We didn't think it was possible, but metapredict has somehow become *even more meta*. Get ready, because things are about to get a little weird. When we implemented the AlphaFold2 pLDDT prediction feature (see section below), we noticed that there were occasional discrepancies between metapredict and the predicted pLDDT (ppLDDT) scores. When the ppLDDT scores get high enough, it is unlikely that a given region is actually disordered. So, we developed a version of metapredict that we originally called 'metapredict-hybrid' that essentially combined aspects of the ppLDDT scores and the original metapredict scores. We found that this 'hybrid predictor' was **much better** than the original metapredict disorder predictor at predicting disordered regions. **But we didn't stop there.** We think one of metapredicts best features is *it is really really fast*. This 'hybrid-predictor' was a little on the slow side, coming in at about 1/3 the speed of the original metapredict predictor. This is still VERY fast, but we thought we could do better. So, we took a little over 300,000 protein sequences and generated metapredict-hybrid scores for those sequences. We then fed those sequences and the corresponding metapredict-hybrid scores and generated a new bidirectional recurrent neural network (BRNN) using PARROT. We then tested this new network against the original metapredict-hybrid predictions and the original metapredict network. The new network that was trained on metapredict-hybrid scores *actually outperformed the metapredict-hybrid predictions when benchmarking against Disprot-PDB*. Importantly, this new (super accurate) network was only 30% slower than the original metapredict network, which is substantially better than the 70% hit that metapredict-hybrid took. 
  
 **TL;DR** We made the original metapredict predictor using a network trained on consensus scores from MobiDB. We then trained a network on AlphaFold2 pLDDT scores. Next, we made a predictor that combined prediction values from the original metapredict predictor and the AlphaFold2 pLDDT predictor to make very accurate disorder predictions. Finally, we took hundreds of thousands of proteins, generated disorder prediction scores using the aforementioned combination of the original metapredict predictions and the AlphaFold2 predictions, and then trained our final network on those scores. **That's pretty dang meta.**
 
@@ -97,7 +97,7 @@ The ``metapredict-predict-disorder`` command from the command line takes a .fast
 **Additional Usage**
 
 **specifying where to save the output -** 
-If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name. By default this command will save the output file as disorder_scores.csv to your current working directory. However, you can specify the file name in the output path.
+If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name. By default this command will save the output file as disorder_scores.csv to your current working directory. However, you can specify the file name in the output path.
 
 **Example**
 
@@ -131,7 +131,7 @@ The ``metapredict-predict-pLDDT`` command from the command line takes a .fasta f
 **Additional Usage**
 
 **Specify where to save the output -** 
-If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this command will save the output file as pLDDT_scores.csv to your current working directory. However, you can specify the file name in the output path.
+If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path. By default this command will save the output file as pLDDT_scores.csv to your current working directory. However, you can specify the file name in the output path.
 
 **Example**
 
@@ -203,7 +203,7 @@ To use the original metapredict predictor as opposed to our new, updated predict
 
 ### Graphing Disorder from a sequence
 
-``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes three arguments, 1. the sequence 2. *optional* DPI ``-D``  or ``--dpi`` of the ouput graph which defaults to 150 DPI, and 3. *optional* to include predicted AlphaFold2 condience scores, use the ``-p`` or ``--pLDDT`` flag.
+``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes three arguments, 1. the sequence 2. *optional* DPI ``-D``  or ``--dpi`` of the output graph which defaults to 150 DPI, and 3. *optional* to include predicted AlphaFold2 condience scores, use the ``-p`` or ``--pLDDT`` flag.
 
 
 **Example:**
@@ -220,7 +220,7 @@ To use the original metapredict predictor as opposed to our new, updated predict
 
 ### Graphing Disorder from a Uniprot ID
 
-``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optional* arguments, 1. To include predicted AlphaFold2 2 pLDDT confidence scores, use the ``-p``  or ``--pLDDT`` flag. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 3. Using ``-o``  or ``--ourput-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 4. ``-t``  or ``--title`` will let you specify the title of the plot. By defualt the title will be *Disorder for* followed by the Uniprot ID.
+``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optional* arguments, 1. To include predicted AlphaFold2 2 pLDDT confidence scores, use the ``-p``  or ``--pLDDT`` flag. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 3. Using ``-o``  or ``--output-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 4. ``-t``  or ``--title`` will let you specify the title of the plot. By default the title will be *Disorder for* followed by the Uniprot ID.
 
 **Example:**
 
@@ -313,7 +313,7 @@ To have your terminal print the entire Uniprot ID as well as the full protein se
 
 **Turning off all printing to the terminal**
 
-By default, the *metapredict-name* command prints the uniprot ID as well as other information related to your protein to the terminal. The purpose of this is to make it explicitely clear which protein was graphed because grabbing the top hit from Uniprot *does not gaurentee* that it is the protein you want or expected. However, this behavior can be turned off by using the ``-s`` or ``--silent`` flag.
+By default, the *metapredict-name* command prints the uniprot ID as well as other information related to your protein to the terminal. The purpose of this is to make it explicitly clear which protein was graphed because grabbing the top hit from Uniprot *does not gaurentee* that it is the protein you want or expected. However, this behavior can be turned off by using the ``-s`` or ``--silent`` flag.
 
 **Example**
 
@@ -381,7 +381,7 @@ The ``metapredict-predict-idrs`` command from the command line takes a .fasta fi
 **Additional Usage**
 
 **specifying where to save the output -** 
-If you would like to specify where to save the ouptut, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name.
+If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name.
 
 **Example**
 
@@ -449,13 +449,13 @@ would output -
 
 ### Predicting Disorder Domains
 
-The ``predict_disorder_domains()`` function takes in an amino acid sequence and returns a DisorderObject. The DisorderObject has 6 dot variables that can be called to get informaton about your input sequence. They are as follows:
+The ``predict_disorder_domains()`` function takes in an amino acid sequence and returns a DisorderObject. The DisorderObject has 6 dot variables that can be called to get information about your input sequence. They are as follows:
 
 
 .sequence : str    
     Amino acid sequence 
 
-.disorder : list or np.ndaarray
+.disorder : list or np.ndarray
     Hybrid disorder score
 
 .disordered_domain_boundaries : list
@@ -545,7 +545,7 @@ Where each element in the list is a specific folded region identified in the seq
 **Additional Usage**
 
 **Altering the disorder theshhold -**
-To alter the disorder theshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the treshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
+To alter the disorder threshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
 
 **Example**
 
@@ -559,14 +559,14 @@ The minimum IDR size will define the smallest possible region that could be cons
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
 
 **Altering the minimum folded domain size -**
-The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
+The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengths were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
 
 **Example**
 
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_folded_domain = 60)
 
 **Altering gap_closure -**
-The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues seprated by a 'gap' of not disordered residues. In general large gap sizes will favour larger contiguous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
+The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues separated by a 'gap' of not disordered residues. In general large gap sizes will favor larger contiguous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
 
 **Example**
 
@@ -612,7 +612,7 @@ would output -
 **Additional Usage**
 
 **Altering the disorder theshhold -**
-To alter the disorder theshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the treshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
+To alter the disorder threshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
 
 **Example**
 
@@ -626,14 +626,14 @@ The minimum IDR size will define the smallest possible region that could be cons
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
 
 **Altering the minimum folded domain size -**
-The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
+The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengths were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
 
 **Example**
 
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_folded_domain = 60)
 
 **Altering gap_closure -**
-The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues seprated by a 'gap' of not disordered residues. In general large gap sizes will favour larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
+The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues separated by a 'gap' of not disordered residues. In general large gap sizes will favor larger contiguous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
 
 **Example**
 
@@ -677,7 +677,7 @@ To add predicted AlphaFold2 pLDDT confidence scores, simply specify *pLDDT_score
 
 
 **Changing the title of the generated graph -**
-There are two parameters that the user can change for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted protein disorder*. However, the title can be specified by specifing *title* = "my cool title" would result in a title of *my cool title*.
+There are two parameters that the user can change for graph_disorder. The first is the name of the title for the generated graph. The name by default is blank and the title of the graph is simply *Predicted protein disorder*. However, the title can be specified by specifying *title* = "my cool title" would result in a title of *my cool title*.
 
 **Example**
 
@@ -841,7 +841,7 @@ This command will generate a graph for ***every*** sequence in the .fasta file. 
 
 	meta.graph_disorder_fasta("file path to .fasta file/fileName.fasta", output_dir="file path of where to save output graphs")
 
-An actual filepath would look something like:
+An actual file path would look something like:
 
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
@@ -864,7 +864,7 @@ By default, the output files have a DPI of 150. However, the user can change the
 	meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", DPI=300, output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 **Changing the output File Type -** 
-By default ths output file is a .png. However, you can specify the output file type by using *output_filetype="file_type"* where file_type is some matplotlib compatible file type (such as .pdf).
+By default the output file is a .png. However, you can specify the output file type by using *output_filetype="file_type"* where file_type is some matplotlib compatible file type (such as .pdf).
 
 **Example**
 
@@ -936,7 +936,7 @@ Just like with disorder predictions, you can also get AlphaFold2 pLDDT confidenc
 
 ###  Predicting Disorder Domains from external scores:
 
-The ``predict_disorder_domains_from_external_scores()`` function takes in an disorder scores, an amino acid sequence (optinally), and returns a DisorderObject. This function lets you use other disorder predictor scores and still use the predict_disorder_domains() functionality. The DisorderObject has 6 dot variables that can be called to get information about your input sequence. They are as follows: 
+The ``predict_disorder_domains_from_external_scores()`` function takes in an array or list of disorder scores, an amino acid sequence (optionally), and returns a DisorderObject. This function lets you use other disorder predictor scores and still use the predict_disorder_domains() functionality. The DisorderObject has 6 dot variables that can be called to get information about your input sequence. They are as follows: 
 
 .sequence : str    
     Amino acid sequence 
@@ -1002,7 +1002,7 @@ returns
 **Additional Usage**
 
 **Altering the disorder theshhold -**
-To alter the disorder theshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the treshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
+To alter the disorder threshold, simply set *disorder_threshold=my_value* where *my_value* is a float. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
 
 **Example**
 
@@ -1016,7 +1016,7 @@ The minimum IDR size will define the smallest possible region that could be cons
 	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
 
 **Altering the minimum folded domain size -**
-The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
+The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x disorder_threshold and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengths were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
 
 **Example**
 
@@ -1032,7 +1032,11 @@ The gap closure defines the largest gap that would be closed. Gaps here refer to
 
 ### metapredict isn't working!
 
-I have recieved occassional feedback that metapredict is not working for a user. A common problem is that the user is using a different version of Python than metapredict was made on. metapredict was made using Python version 3.7, and I recommend using this version while using metapredict to avoid problems (I haven't done extensive testing using other versions of Python, so if you're not using 3.7, do so at your own risk). A convenient workaround is to use a conda environment that has Python 3.7 set as the default version of Python. For more info on conda, please see https://docs.conda.io/projects/conda/en/latest/index.html
+I have received occasional feedback that metapredict is not working for a user. A common problem is that the user is using a different version of Python than metapredict was made on. 
+
+metapredict should work without issue on Python versions 3.x and 3.8.x. It was developed on Python 3.7 and has been tested extensively on Python 3.8. It should also work on Python 3.9 although this has been less well-tested 
+
+In general, we recommend using a conda environment for any Python computing you're doing. This lets you control the packages being used and the Python version. For more info on conda, please see https://docs.conda.io/projects/conda/en/latest/index.html
 
 Once you have conda installed, simply use the command 
 
@@ -1061,7 +1065,7 @@ PyTorch current ships with its own version of the OpenMP library (``libiomp.dyli
    but that may cause crashes or silently produce incorrect results. For more information, 
    please see http://www.intel.com/software/products/support/.
 
-To avoid this error we make the executive decision to ignore this clash. This has largely not appeared to have any deleterious issues on performance or accuracy accross the tests run. If you are uncomfortable with this then the code in ``metapredict/__init__.py`` can be edited with ``IGNORE_LIBOMP_ERROR`` set to ``False`` and **metapredict** re-installed from the source directory.
+To avoid this error we make the executive decision to ignore this clash. This has largely not appeared to have any deleterious issues on performance or accuracy across the tests run. If you are uncomfortable with this then the code in ``metapredict/__init__.py`` can be edited with ``IGNORE_LIBOMP_ERROR`` set to ``False`` and **metapredict** re-installed from the source directory.
 
 ### Testing
 
@@ -1081,6 +1085,19 @@ Example data that can be used with metapredict can be found in the metapredict/d
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
+#### V2.4.2 
+Changes:
+
+* Merged pull request from @FriedLabJHU to make f-strings more Pythonic. Thanks!!
+* Changed `return_normalized` keyword to `normalized` in `meta.predict_pLDDT()` for consistency with other functions
+* Added sanity check in case a passed sequence is an empty string (h/t Broder Schmidt)
+* Added docs for the mode keyword in `meta.percent_disorder()`, so this is actually obvious to understand (h/t Broder Schmidt)
+* Added several additional tests and updated the docs
+
+#### V2.4.1
+Changes:
+
+* Some minor bug fixes and updates to code 
 
 #### V2.3 
 Changes:
@@ -1103,7 +1120,7 @@ Added functionality to graph the disorder of a protein by specifying its common 
 #### V2.0
 
 Changes:
-Massive update to the network behind metapredict to improve accuracy. Implementation of code to keep the original network accessible to users. Changes to predict_disorder_domain functions where a DisorderObject is no returned and access to values are used by calling properties from the generated object. Graphing functionality updated to accomadate new cutoff value for the new network at 0.5. If the original metapredict network is used, then the cutoff value automatically resets to the original value of 0.3. Tests updated. Added metapredict-predict-idrs command to the command line. Added ability to predict disorder domains from python using external scores.
+Massive update to the network behind metapredict to improve accuracy. Implementation of code to keep the original network accessible to users. Changes to predict_disorder_domain functions where a DisorderObject is no returned and access to values are used by calling properties from the generated object. Graphing functionality updated to accommodate new cutoff value for the new network at 0.5. If the original metapredict network is used, then the cutoff value automatically resets to the original value of 0.3. Tests updated. Added metapredict-predict-idrs command to the command line. Added ability to predict disorder domains from python using external scores.
 
 
 #### V1.51
@@ -1205,7 +1222,7 @@ Reason:
 This will help users be able to use auto complete functionality from the command line using tab to pull up the graph or predict disorder commands while only having to remember metapredict.
 
 Change:
-The output for .csv files will now have a comma space between each value instead of just a comma.
+The output for `.csv` files will now have a comma space between each value instead of just a comma.
 
 Reason:
 Improve readability.
@@ -1213,17 +1230,15 @@ Improve readability.
 
 ### Copyright
 
-Copyright (c) 2020-2021, Holehouse Lab - WUSM
+Copyright (c) 2020-2022, Holehouse Lab - Washington University School of Medicine
 
 #### Acknowledgements
 
-IDP-Parrot, created by Dan Griffith, was used to generate the network used for metapredict. See [https://pypi.org/project/idptools-parrot/](https://pypi.org/project/idptools-parrot/) for some very cool machine learning stuff.
+PARROT, created by Dan Griffith, was used to generate the network used for metapredict. See [https://pypi.org/project/idptools-parrot/](https://pypi.org/project/idptools-parrot/) for some very cool machine learning stuff.
 
-In addition to using Dan Griffith's tool for creating metapredict, the code for brnn_architecture.py and encode_sequence.py was written by Dan (originally for idp-parrot). 
+In addition to using Dan Griffith's tool for creating metapredict, the original code for `brnn_architecture.py` and `encode_sequence.py` was written by Dan.
 
-We would like to thank the **DeepMind** team for developing AlphaFold.
+We would like to thank the **DeepMind** team for developing AlphaFold and EBI/UniProt for making these data so readily available.
 
 We would also like to thank the team at MobiDB for creating the database that was used to train this predictor. Check out their awesome stuff at [https://mobidb.bio.unipd.it](https://mobidb.bio.unipd.it)
 
-Project based on the 
-[Computational Molecular Science Python Cookiecutter](https://github.com/molssi/cookiecutter-cms) version 1.3.

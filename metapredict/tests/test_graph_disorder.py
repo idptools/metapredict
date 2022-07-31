@@ -76,3 +76,19 @@ def test_graph_disorder_other_output_formats():
     full_fn = 'output/%s'%(fn)
     meta.graph_disorder(test_sequence, output_file=full_fn)
     assert os.path.isfile(full_fn) is True
+
+
+def test_graph_disorder_fail():
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.graph_disorder('')
+
+
+
+def test_graph_disorder_fail():
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.graph_pLDDT('')
+

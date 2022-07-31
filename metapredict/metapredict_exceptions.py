@@ -6,3 +6,4 @@ class DomainError(Exception):
 
 class MetapredictError(Exception):
     pass
+

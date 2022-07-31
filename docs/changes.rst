@@ -6,6 +6,34 @@ About
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there.
 
+
+V2.4.2 
+---------
+
+Changes:
+
+* Integrated in changes from @FriedLabJHU to make f-strings more Pythonic
+* Changed ``return_normalized`` keyword to ``normalized`` in ``meta.predict_pLDDT()`` for consistency with other functions
+* Added sanity check in case a passed sequence is an empty string (h/t Broder Schmidt)
+* Added docs for the mode keyword in `meta.percent_disorder()`, so this is actually obvious to understand
+* Added several additional tests and updated the docs.
+
+V2.4.1
+---------
+
+Changes:
+
+* Some minor bug fixes and updates to code 
+
+V2.3 
+---------
+
+Changes:
+
+* Merged pull request from @FriedLabJHU to fix keyword name `cutoff` to `disorder_threshold` in `meta.percent_disorder()`. Thanks!!
+
+* Added the `mode` keyword into `meta.percent_disorder()` so disorder can be predicted in terms of what percentage of residues fall within IDRs, as well as what percent are above some fixed threshold.
+
 V2.2
 -----
 

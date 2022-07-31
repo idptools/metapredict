@@ -41,6 +41,9 @@ from metapredict.metapredict_exceptions import MetapredictError
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 
 
+    
+
+
 # ..........................................................................................
 #
 def predict_disorder_domains_from_external_scores(disorder, 
@@ -127,6 +130,7 @@ def predict_disorder_domains_from_external_scores(disorder,
     ---------
     DisorderObject
         Returns a DisorderObject. DisorderObject has 7 dot variables:
+
         .sequence : str    
             Amino acid sequence 
 
@@ -146,6 +150,9 @@ def predict_disorder_domains_from_external_scores(disorder,
             List of the actual sequences for folded domains
 
     """
+
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(disorder)
 
     # if a sequence was provided check it makes sense in terms of type and length...
     if sequence is not None:
@@ -202,7 +209,6 @@ def predict_disorder_domains(sequence,
                              legacy=False,
                              return_list=False):
     """
-
     This function takes an amino acid sequence and one or more 
     variable options and returns a data structure called a 
     `DisorderObject`. The object parameters associated with this
@@ -276,7 +282,7 @@ def predict_disorder_domains(sequence,
     Returns
     ---------
     DisorderObject
-        Returns a DisorderObject. DisorderObject has 7 dot variables:
+        By default, the function returns a DisorderObject. A DisorderObject has 7 dot variables:
 
         .sequence : str    
             Amino acid sequence 
@@ -296,25 +302,22 @@ def predict_disorder_domains(sequence,
         .folded_domains : list
             List of the actual sequences for folded domains
 
-    
-    unless return_list == True. Then - 
-
     Returns
     ---------
     list
-        Always returns a list with three elements, as outlined below.
-        [0] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding
-              how IDRs/folded domains were identified, and will vary depending on the settings provided
-        [1] - a list of elements, where each element defines the start and end position of each IDR. If a sequence was provided
-              the third element in each sub-element is the IDR sequence. If no sequence was provided, then each sub-element is
-              simply len=2.
- 
-        [2] - a list of elements, where each element defines the start and end position of each folded region. If a sequence was 
-              provided the third element in each sub-element is the folded domain sequence. If no sequence was provided, then each 
-              sub-element is simply len=2.    
+        However, if ``return_list`` == True. Then, the function returns a 
+        list with three elements, as outlined below.
 
+        * [0] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding how IDRs/folded domains were identified, and will vary depending on the settings provided
+
+        * [1] - a list of elements, where each element defines the start and end position of each IDR. If a sequence was provided the third element in each sub-element is the IDR sequence. If no sequence was provided, then each sub-element is simply len=2.
+        
+        * [2] - a list of elements, where each element defines the start and end position of each folded region. If a sequence was provided the third element in each sub-element is the folded domain sequence. If no sequence was provided, then each sub-element is simply len=2.    
 
     """
+
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(sequence)
 
     if disorder_threshold == None:
         if legacy == True:
@@ -361,7 +364,6 @@ def predict_disorder_domains(sequence,
 
 # ..........................................................................................
 #
-
 def predict_disorder(sequence, normalized=True, return_numpy=False, legacy=False):
     """
     Function to return disorder of a single input sequence. Returns the
@@ -394,6 +396,10 @@ def predict_disorder(sequence, normalized=True, return_numpy=False, legacy=False
         disorder score.
 
     """
+
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(sequence)
+
     # make all residues upper case 
     sequence = sequence.upper()
 
@@ -434,6 +440,9 @@ def predict_all(sequence):
         [2] - normalized ppLDDT scores
 
     """
+
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(sequence)
 
     # make all residues upper case 
     sequence = sequence.upper()
@@ -523,6 +532,9 @@ def graph_disorder(sequence,
         locally.
     """
 
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(sequence)
+
     if disorder_threshold == None:
         if legacy == True:
             disorder_threshold = 0.3
@@ -547,7 +559,7 @@ def graph_disorder(sequence,
 
 # ..........................................................................................
 #
-def predict_pLDDT(sequence, return_numpy=False, return_normalized=False):
+def predict_pLDDT(sequence, return_numpy=False, normalized=False):
     """
     Function to return predicted pLDDT scores. pLDDT scores are the scores
     reported by AlphaFold2 (AF2) that provide a measure of the confidence 
@@ -570,7 +582,7 @@ def predict_pLDDT(sequence, return_numpy=False, return_normalized=False):
         Flag which, if set to true, means the function returns a 
         numpy array instead of a list.
 
-    return_normalized : bool
+    normalized : bool
         Flag which, if set to true, means the function returns values
         scaled between 0 and 1 (rather than 0 and 100).
 
@@ -583,6 +595,10 @@ def predict_pLDDT(sequence, return_numpy=False, return_normalized=False):
         return_numpy
 
     """
+
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(sequence)
+
     # make all residues upper case 
     sequence = sequence.upper()
 
@@ -666,6 +682,9 @@ def graph_pLDDT(sequence,
 
     """
 
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(sequence)
+
     # ensure sequence is upper case
     sequence = sequence.upper()
 
@@ -677,6 +696,7 @@ def graph_pLDDT(sequence,
         disorder_scores=disorder_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
         DPI=DPI, output_file = output_file) 
+
 
 # ..........................................................................................
 #
@@ -710,6 +730,14 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy
         or not. Default for new metapredict = 0.5. Default for legacy metapredict
         is 0.3.
 
+    mode : str
+        Selector which lets you choose which mode to calculate percent disorder
+        with. Default is 'threshold', meaning the percentage of disorder is 
+        calculated as what fraction of residues are above the disorder_threshold.
+        Alternatively, 'disorder_domains' means we use the 
+        predict_disorder_domains() function and then calculate what fraction of
+        the protein's residues are in the predicted IDRs.
+        
     legacy : bool
         Whether or not to use the legacy metapredict. 
 
@@ -721,6 +749,9 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy
         percentage of the sequence is considered disordered.
 
     """
+
+    # sanity check
+    _meta_tools.raise_exception_on_zero_length(sequence)
 
     # check mode is valid first
     mode = mode.lower()
@@ -737,12 +768,15 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy
         if legacy == True:
             dis = predict_disorder(sequence, legacy=True)
             if disorder_threshold == None:
-                disorder_threshold = 0.3
+                disorder_threshold = 0.3            
 
         else:
             dis = predict_disorder(sequence)
             if disorder_threshold == None:
                 disorder_threshold = 0.5
+
+        # check threshold is valid
+        _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
             
 
         # set arbitrarily chosen variable n to equal 0
@@ -845,7 +879,7 @@ def predict_disorder_fasta(filepath,
     test_data_file = os.path.abspath(filepath)
 
     if not os.path.isfile(test_data_file):
-        raise FileNotFoundError(f'Datafile does not exist.')
+        raise FileNotFoundError(f'Datafile [{filepath}] does not exist.')
 
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
 
@@ -1043,6 +1077,9 @@ def graph_disorder_fasta(filepath,
             disorder_threshold = 0.3
         else:
             disorder_threshold = 0.5
+
+    # check that a valid range was passed for disorder_threshold
+    _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
 
     # Test to see if the data_file exists
     if not os.path.isfile(filepath):
@@ -1476,6 +1513,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
     ---------
     DisorderObject
         Returns a DisorderObject. DisorderObject has 7 dot variables:
+
         .sequence : str    
             Amino acid sequence 
 
@@ -1530,10 +1568,13 @@ def predict_disorder_domains_uniprot(uniprot_id,
     return _DisorderObject(sequence, disorder, IDRs, FDs, return_numpy=return_numpy)
 
 
+
+# ..........................................................................................
+#
 def predict_disorder_caid(input_fasta, output_file):
     '''
     executing script for generating a caid-compliant output file for disorder
-    predictions using a .fasta file as the input
+    predictions using a .fasta file as the input.
 
     Parameters
     -----------
@@ -1548,7 +1589,7 @@ def predict_disorder_caid(input_fasta, output_file):
     Returns
     --------
     None
-        Does not return anything, saves a file to the 
+        Does not return anything, saves a file to the destination output file
 
     '''
 
@@ -1569,6 +1610,5 @@ def predict_disorder_caid(input_fasta, output_file):
 
     # write the output file
     _meta_tools.write_caid_format(output_dict, output_file)
-
 
 

@@ -13,6 +13,11 @@ import pytest
 import sys
 import os
 from . import local_data
+import random
+import string
+import numpy as np
+
+from metapredict.metapredict_exceptions import MetapredictError
 
 
 current_filepath = os.getcwd()
@@ -29,6 +34,11 @@ def test_legacy_metapredict_predictor():
     assert meta.predict_disorder('AERDEDNRSKEKKRNKKTNGAGDEHRDKPWSNNSTHPTHRKNEGPMHGDP', legacy=True) == local_data.S0
     # testing without normalization
     assert meta.predict_disorder('AERDEDNRSKEKKRNKKTNGAGDEHRDKPWSNNSTHPTHRKNEGPMHGDP', normalized=False, legacy=True) == local_data.S1
+
+    with pytest.raises(MetapredictError):
+        meta.predict_disorder('')
+
+
 # test the new metapredict predictor
 def test_metapredict_predictor():
     # testing with normalization
@@ -100,4 +110,100 @@ def test_metapredict_functions():
 
 
 
+def test_predict_disorder_fail():
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.predict_disorder('')
+
+
+def test_predict_all_fail():
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.predict_all('')
+
+
+
+def test_predict_pLDDT_fail():
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.predict_pLDDT('')
+
+    
+def test_predict_disorder_return_numpy():
+    testseq = 'MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHSVTLHADTETDEVYAQMTLQPVNKY'
+
+    x = meta.predict_disorder(testseq, return_numpy=True)
+    assert isinstance(x,np.ndarray)
+
+    x = meta.predict_disorder(testseq, return_numpy=True, legacy=True)
+    assert isinstance(x,np.ndarray)
+
+    x = meta.predict_disorder(testseq, return_numpy=True, legacy=True, normalized=False)
+    assert isinstance(x,np.ndarray)
+
+    x = meta.predict_disorder(testseq, return_numpy=True, legacy=False, normalized=False)
+    assert isinstance(x,np.ndarray)
+
+
+def test_predict_pLDDT():
+    testseq = 'MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHSVTLHADTETDEVYAQMTLQPVNKY'
+
+    x = meta.predict_pLDDT(testseq, return_numpy=True)
+    assert isinstance(x,np.ndarray)
+
+    x = meta.predict_pLDDT(testseq, return_numpy=True)
+    assert isinstance(x,np.ndarray)
+
+    x = meta.predict_pLDDT(testseq, return_numpy=True,  normalized=False)
+    assert isinstance(x,np.ndarray)
+
+
+
+def test_predict_disorder_domains_fail():
+
+    testseq = 'MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPPVGSLVVYFPQGHSEQVAASMQKQTDFIPNYPNLPSKLICLLHSVTLHADTETDEVYAQMTLQPVNKY'
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.predict_disorder_domains('', return_numpy=False)
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.predict_disorder_domains(testseq, return_numpy=False, disorder_threshold=2)
+
+
+
+def test_predict_disorder_domains_random_seqs():
+
+    N = 200
+    n_seqs = 5
+
+    for i in range(n_seqs):
+        local_seq = ''.join(random.choices(['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y'], k=N))
+        DisObj = meta.predict_disorder_domains(local_seq, return_numpy=False, disorder_threshold=1)        
+
+        # check no residues are in any IDR
+        assert len(DisObj.disordered_domains) == 0
+
+        assert meta.percent_disorder(local_seq, mode='disorder_domains', disorder_threshold=1) == 0
+
+
+    for i in range(n_seqs):
+        local_seq = ''.join(random.choices(['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y'], k=N))
+        DisObj = meta.predict_disorder_domains(local_seq, return_numpy=False, disorder_threshold=0)        
+
+        # check all residues are in one IDR
+        assert len(DisObj.disordered_domains[0]) == N
+
+        assert meta.percent_disorder(local_seq, mode='disorder_domains', disorder_threshold=0) == 100
+
+
+def test_percent_disorder_fail():
+
+    # make sure we get gracefull fail on empty string
+    with pytest.raises(MetapredictError):
+        DisObj = meta.percent_disorder('')
 
