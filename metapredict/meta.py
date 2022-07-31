@@ -450,7 +450,7 @@ def predict_all(sequence):
     # compute pLDDT and metapredict disorder
     meta_disorder = predict_disorder(sequence, return_numpy = True)
     legacy_disorder = predict_disorder(sequence, return_numpy=True, legacy=True)
-    ppLDDT = predict_pLDDT(sequence, return_numpy=True, return_normalized=True)
+    ppLDDT = predict_pLDDT(sequence, return_numpy=True, normalized=True)
     
 
     return (meta_disorder, legacy_disorder, ppLDDT)
@@ -610,7 +610,7 @@ def predict_pLDDT(sequence, return_numpy=False, normalized=False):
         ppLDDT = np.array(ppLDDT)
 
     # parse normalized flags
-    if return_normalized:
+    if normalized:
         if return_numpy:
             return ppLDDT*0.01
         else:
