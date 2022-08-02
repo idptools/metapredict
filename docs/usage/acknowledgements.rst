@@ -15,5 +15,7 @@ Contributors
 
 We'd also like to thank the following folks who have contribute code, reported errors, and suggested changes.
 
-* Fried lab at Johns Hopkins University
+* The Fried lab (broadly defined)
 * Broder Schmidt 
+* Sean Cascarina
+* Keith Cheveralls
