@@ -18,13 +18,13 @@ if __name__ == "__main__":
 
     parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
 
-    parser.add_argument('-o', '--output-file', help='Filename for where to save the outputfile. Default = idrs_shephard.tsv', default='idrs_shephard.tsv')
+    parser.add_argument('-o', '--output-file', help='Filename for where to save the outputfile. Defaults = idrs.fasta (if mode=fasta) and shephard_idrs.tsv otherwise')
 
     parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')
 
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert' ", default='convert')
 
-    parser.add_argument('--mode', help='Defines the mode in which IDRs are reported. By default this generates a FASTA file with header format that matches  the input file with an additional set of fields that are "IDR_START=$START   IDR_END=$END" where $START and $END are the starting and ending IDRs. If mode is set to shephard-domains than a SHEPHAD-compliant domains file is generated. If shephard-domains-uniprot the uniprot ID is extracted from the header assuming standard uniprot formatting. Default = fasta', default='fasta')
+    parser.add_argument('--mode', help='Defines the mode in which IDRs are reported. By default this generates a FASTA file with header format that matches the input file with an additional set of fields that are "IDR_START=$START  IDR_END=$END" where $START and $END are the starting and ending IDRs. If mode is set to shephard-domains than a SHEPHAD-compliant domains file is generated. If shephard-domains-uniprot the uniprot ID is extracted from the header assuming standard uniprot formatting. Default = fasta', default='fasta')
 
     parser.add_argument('--threshold', help='Defines the threshold used to define a region as disordered or not. Default=0.42 which is recommended.', default=0.42, type=float)
     parser.add_argument('--verbose', help='If included then prints out status updates', action='store_true')
@@ -33,6 +33,15 @@ if __name__ == "__main__":
 
     if args.mode not in ['fasta', 'shephard-domains','shephard-domains-uniprot', ]:
         raise Exception("--mode must be set to one of 'fasta' or 'shephard-domains'")
+
+    if args.output_file is None:
+        if args.mode == 'fasta':
+            outfile_name = 'idrs.fasta'
+        else:
+            outfile_name = 'shephard_idrs.tsv'
+
+    else:
+        outfile_name = args.output_file
     
     if args.legacy:
         use_legacy = True
@@ -80,10 +89,10 @@ if __name__ == "__main__":
                 return_dictionary[f'{s:s} IDR_START={d[0]:d} IDR_END={d[1]:d}'] =  d[2]
                 
         
-        protfasta.write_fasta(return_dictionary, args.output_file)
+        protfasta.write_fasta(return_dictionary, outfile_name)
 
     elif args.mode == 'shephard-domains':
-        fh = open(args.output_file, 'w')
+        fh = open(outfile_name, 'w')
         for s in idrs:
             # d is IDR start and end positions
             for d in idrs[s][2]:
@@ -94,7 +103,7 @@ if __name__ == "__main__":
                 fh.write(f'{s}\t{start}\t{end}\tIDR\n')
 
     elif args.mode == 'shephard-domains-uniprot':
-        fh = open(args.output_file, 'w')
+        fh = open(outfile_name, 'w')
         for s in idrs:
             # d is IDR start and end positions
             for d in idrs[s][2]:
