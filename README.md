@@ -56,6 +56,12 @@ https://metapredict.readthedocs.io/en/latest/getting_started.html
 For disorder predictions using our server, please see:
 https://metapredict.net
 
+
+## What's new?
+
+The most recent update to metapredict on March 15, 2023 introduced multiprocessing support to the command-line interface (you're welcome, Jeff). This is only implemented for the CLI at this time. **We were able to predict disorder in the entire human proteome in about 4 minutes with metapredict V2 and in about 2 minutes using legacy metapredict!** *We didn't even have to close the 40 chrome tabs we definitely had to have open for testing.* If there is additional interest in speeding up other functionality by using multiple cores, let us know!
+
+
 ## How to cite metapredict
 
 If you use metapredict for your work, please cite the metapredict paper - 
@@ -1113,6 +1119,18 @@ Example data that can be used with metapredict can be found in the metapredict/d
 ### Recent changes
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+
+
+#### V2.5
+Changes:
+
+* Added the first multicore support to metapredict. Currently limited to metapredict-predict-disorder functionality.
+=======
+#### V2.4.3
+Changes:
+
+* Updated the default names for `metapredict-predict-idrs` so that the FASTA output file is now called `idrs.fasta` instead of the inappropriate `shephard_idrs.tsv`.
+* Added link to the new batch-mode Google Colab notebook!
 
 #### V2.4.2 
 Changes:
