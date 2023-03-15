@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     parser.add_argument('number_cores', help='Number of cores to run simultaneously. Do not specify more than you have..', type=int)
 
-    parser.add_argument('-o', '--output-file', help='Filename for where to save the outputfile. Default = idrs_shephard.tsv', default='idrs_shephard.tsv')
+    parser.add_argument('-o', '--output-file', help='Filename for where to save the outputfile. Default = idrs.fasta', default='idrs.fasta')
 
     parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')
 
