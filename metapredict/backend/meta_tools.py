@@ -1,4 +1,4 @@
-
+import protfasta
 import re
 from metapredict.metapredict_exceptions import MetapredictError
 
@@ -230,8 +230,78 @@ def write_caid_format(input_dict, output_file):
     current_output.close()
 
 
+def split_fasta(protfasta_fasta_list, number_splits):
+    '''
+    function to split the dict returned from
+    a fasta file read in by protfasta to make
+    a specific number of dictionaries with
+    approximately equal numbers of proteins. 
+    '''
+    all_nums=[num for num in range(0, len(protfasta_fasta_list))]
+    num_per_split=int(len(protfasta_fasta_list)/number_splits)
+    all_vals=[]
+    for val in range(0, number_splits):
+        temp_list=[]
+        for subval in range(0, num_per_split):
+            temp_list.append(all_nums.pop())
+        if val==number_splits-1:
+            for val in all_nums:
+                temp_list.append(val)
+        all_vals.append(temp_list)
+    # keep track of added prots
+    num_prots=0
+    split_lists=[]
+    for val in all_vals:
+        temp_list=[]
+        for prot in val:
+            num_prots+=1
+            temp_list.append([protfasta_fasta_list[prot][0], protfasta_fasta_list[prot][1]])
+        split_lists.append(temp_list)
+    # make sure all proteins added
+    if num_prots!= len(protfasta_fasta_list):
+        raise Exception('splitting of fasta file did not get all proteins')
+    return split_lists
 
 
+def append_to_file(outpath, idrs, mode):
+    # append to the file we are writing to.
+    fh = open(outpath, 'a')
+    # depending on mode...
+    # dict to hold vals...
+    return_dictionary = {}
+    if mode == 'fasta':
+        # for each sequence
+        for s in idrs:
+            # d is IDR start and end positions
+            for d in idrs[s][2]:
+                return_dictionary[f'{s:s} IDR_START={d[0]:d} IDR_END={d[1]:d}'] =  d[2]
+        # write out fasta.
+        protfasta.write_fasta(return_dictionary, outpath)
+
+    elif mode == 'shephard-domains':
+        fh = open(outpath, 'w')
+        for s in idrs:
+            # d is IDR start and end positions
+            for d in idrs[s][2]:
+                # note need +1 for shephard format
+                start = d[0]+1
+                end = d[1]
+                fh.write(f'{s}\t{start}\t{end}\tIDR\n')
+
+    elif mode == 'shephard-domains-uniprot':
+        fh = open(outpath, 'w')
+        for s in idrs:
+            # d is IDR start and end positions
+            for d in idrs[s][2]:
+
+                uid = s.split('|')[1]
+                start = d[0]+1
+                end = d[1]
+                fh.write(f'{uid}\t{start}\t{end}\tIDR\n')
+
+    else:
+        raise Exception('no mode specified!')
+                
 
 # ..........................................................................................
 #

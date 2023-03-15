@@ -52,7 +52,8 @@ setup(
              'scripts/metapredict-predict-idrs',
              'scripts/metapredict-graph-pLDDT',
              'scripts/metapredict-predict-pLDDT',
-             'scripts/metapredict-name'],             
+             'scripts/metapredict-name',
+             'scripts/metapredict-multipredict'],             
          
 
     # Additional entries you may want simply uncomment the lines you want and fill in the data

@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid']
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid', 'predict_for_multithread']
  
 import os
 import sys
@@ -1610,5 +1610,20 @@ def predict_disorder_caid(input_fasta, output_file):
 
     # write the output file
     _meta_tools.write_caid_format(output_dict, output_file)
+
+
+def predict_for_multithread(nested_list_of_seqs, 
+    outpath, mode, threshold_val, legacy):
+    '''
+    not multithreaded itself. Just a function
+    needed to predicted batches of sequences
+    for ultimately using in metapredict-multipredict
+    '''
+    all_vals={}
+    for name_seq in nested_list_of_seqs:
+        all_vals[name_seq[0]] = predict_disorder_domains(name_seq[1], disorder_threshold=threshold_val, legacy=legacy, return_list=True)
+    
+    # append vals to outpath
+    _meta_tools.append_to_file(outpath, all_vals, mode=mode)
 
 

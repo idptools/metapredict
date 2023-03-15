@@ -6,7 +6,6 @@
 **metapredict** uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from [MobiDB](https://mobidb.bio.unipd.it/). The creation of metapredict was made possible by [parrot](https://github.com/idptools/parrot).
 
 
-
 ## What is metapredict?
 
 **metapredict** is a bit different than your typical protein disorder predictor. Instead of predicting the percent chance that a residue within a sequence might be disordered, metapredict tries to predict the consensus disorder score for the residue. This is because metapredict was trained on **consensus** values from MobiDB. These values are the percent of other disorder predictors that predicted a residue in a sequence to be disordered. For example, if a residue in a sequence has a value of 1 from the MobiDB consensus values, then *all disorder predictors predicted that residue to be disordered*. If the value was 0.5, than half of the predictors predicted that residue to be disordered. In this way, metapredict can help you quickly determine the likelihood that any given sequence is disordered by giving you an approximation of what other predictors would predict (things got pretty 'meta' there, hence the name metapredict).
@@ -55,6 +54,9 @@ If you use metapredict for your work, please cite the metapredict paper -
  
 *Emenecker RJ, Griffith D, Holehouse AS, metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure, Biophysical Journal (2021), doi: https:// doi.org/10.1016/j.bpj.2021.08.039.*
 
+## What's new?
+
+The most recent update to metapredict on March 15, 2023 introduced multiprocessing support to the command-line interface (you're welcome, Jeff). This is only implemented for the CLI at this time. **We were able to predict disorder in the entire human proteome in about 4 minutes with metapredict V2 and in about 2 minutes using legacy metapredict!** *We didn't even have to close the 40 chrome tabs we definitely had to have open for testing.* If there is additional interest in speeding up other functionality by using multiple cores, let us know!
 
 ## Installation:
 
@@ -102,6 +104,28 @@ If you would like to specify where to save the output, simply use the ``-o`` or 
 **Example**
 
     $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
+
+**Using the original metapredict predictor**
+To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
+
+### Predicting Disorder from a fasta file using multiple cores
+
+The ``metapredict-multipredict`` command from the command line takes a .fasta file as input and returns disorder scores for the sequences in the FASTA file. It works the same as metapredict-predict-disroder but splits the sequences across the number of cores you specify. USE THIS AT YOUR OWN RISK! If you specify too many cores, you're going to have a bad time.
+
+	$ metapredict-multipredict <Path to .fasta file> <number of cores>
+
+**Example - using 5 cores**
+
+	$ metapredict-multipredict /Users/thisUser/Desktop/interestingProteins.fasta 5
+
+**Additional Usage**
+
+**specifying where to save the output -** 
+If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name. By default this command will save the output file as disorder_scores.csv to your current working directory. However, you can specify the file name in the output path.
+
+**Example**
+
+    $ metapredict-multipredict /Users/thisUser/Desktop/interestingProteins.fasta 5 -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
 
 **Using the original metapredict predictor**
 To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
@@ -1084,6 +1108,11 @@ Example data that can be used with metapredict can be found in the metapredict/d
 ### Recent changes
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+
+#### V2.5
+Changes:
+
+* Added the first multicore support to metapredict. Currently limited to metapredict-predict-disorder functionality.
 
 #### V2.4.2 
 Changes:
