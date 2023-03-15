@@ -1,9 +1,17 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
 
 **Important update** - as of February 15, 2022 we have updated metapredict to V2.0. This comes with important changes that improve the accuracy of metapredict. Please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the *predict_disorder_domains()* function, so please read the documentation on that function if you were using it previously. 
-*A write up with more info on this update will be available soon.*
 
-**metapredict** uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from [MobiDB](https://mobidb.bio.unipd.it/). The creation of metapredict was made possible by [parrot](https://github.com/idptools/parrot).
+**metapredict** uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from [MobiDB](https://mobidb.bio.unipd.it/). In addition, as of version 2, metapredict incorporates an additional layer of predictions by counter-selecting based on structure predictions from AlphaFold2. The creation of metapredict was made possible by [parrot](https://github.com/idptools/parrot).
+
+## How can I use metapredict?
+Metapredict can be used in four different ways:
+
+1. As a stand-alone command-line tool (installable via pip - the code in this repository).
+2. As a Python library for integrating into your favorite bioinformatics pipeline (installable via pip - the code in this repository).
+3. As a web-server for examining disorder predictions on individual sequences found at [https://metapredict.net/](https://metapredict.net/).
+4. *NEW as of August 2022:* as a Google Colab notebook for batch-predicting disorder scores for larger numbers of sequences: [**LINK HERE**](https://colab.research.google.com/drive/1UOrOxun9i23XDE8lFo_4I89Tw8P3Z1D-?usp=sharing). Performance-wise, batch mode can predict the entire yeast proteome in ~6 min.
+
 
 
 ## What is metapredict?
@@ -54,9 +62,6 @@ If you use metapredict for your work, please cite the metapredict paper -
  
 *Emenecker RJ, Griffith D, Holehouse AS, metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure, Biophysical Journal (2021), doi: https:// doi.org/10.1016/j.bpj.2021.08.039.*
 
-## What's new?
-
-The most recent update to metapredict on March 15, 2023 introduced multiprocessing support to the command-line interface (you're welcome, Jeff). This is only implemented for the CLI at this time. **We were able to predict disorder in the entire human proteome in about 4 minutes with metapredict V2 and in about 2 minutes using legacy metapredict!** *We didn't even have to close the 40 chrome tabs we definitely had to have open for testing.* If there is additional interest in speeding up other functionality by using multiple cores, let us know!
 
 ## Installation:
 
@@ -1108,11 +1113,6 @@ Example data that can be used with metapredict can be found in the metapredict/d
 ### Recent changes
 
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
-
-#### V2.5
-Changes:
-
-* Added the first multicore support to metapredict. Currently limited to metapredict-predict-disorder functionality.
 
 #### V2.4.2 
 Changes:
