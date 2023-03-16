@@ -264,7 +264,7 @@ def split_fasta(protfasta_fasta_list, number_splits):
 
 
 def append_to_file(outpath, idrs, mode):
-    # append to the file we are writing to.
+    # Open file to append to.
     fh = open(outpath, 'a')
     # depending on mode...
     # dict to hold vals...
@@ -275,11 +275,10 @@ def append_to_file(outpath, idrs, mode):
             # d is IDR start and end positions
             for d in idrs[s][2]:
                 return_dictionary[f'{s:s} IDR_START={d[0]:d} IDR_END={d[1]:d}'] =  d[2]
-        # write out fasta.
-        protfasta.write_fasta(return_dictionary, outpath)
+        # write out fasta. Use append functionality. Protfasta closes the file for us.
+        protfasta.write_fasta(return_dictionary, outpath, append_to_fasta=True)
 
     elif mode == 'shephard-domains':
-        fh = open(outpath, 'w')
         for s in idrs:
             # d is IDR start and end positions
             for d in idrs[s][2]:
@@ -287,20 +286,23 @@ def append_to_file(outpath, idrs, mode):
                 start = d[0]+1
                 end = d[1]
                 fh.write(f'{s}\t{start}\t{end}\tIDR\n')
+        # close file handle.
+        fh.close()
 
     elif mode == 'shephard-domains-uniprot':
-        fh = open(outpath, 'w')
         for s in idrs:
             # d is IDR start and end positions
             for d in idrs[s][2]:
-
                 uid = s.split('|')[1]
                 start = d[0]+1
                 end = d[1]
                 fh.write(f'{uid}\t{start}\t{end}\tIDR\n')
+        # close file handle.
+        fh.close()
 
     else:
         raise Exception('no mode specified!')
+
                 
 
 # ..........................................................................................
