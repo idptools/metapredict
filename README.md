@@ -766,7 +766,7 @@ This function has all of the same functionality as ``graph_disorder``.
 
 ### Calculating Percent Disorder
 
-The ``percent_disorder`` function will return the percent of residues in a sequence that  have predicted consensus disorder values of 30% or more (as a decimal value).
+The ``percent_disorder`` function will return the percent of residues in a sequence that have predicted consensus disorder values of 30% or more (as a decimal value).
 
 **Example**
 
@@ -794,7 +794,7 @@ To use the original metapredict predictor as opposed to our new, updated predict
 
 ### Predicting Disorder From a .fasta File
 
-By using the ``predict_disorder_fasta`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
+By using the ``predict_disorder_fasta`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers, and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
 
 **Example**
 
@@ -808,19 +808,18 @@ An actual filepath would look something like:
 **Additional Usage**
 
 **Save the output values -**
-By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *output_file = "location you want to save the file to*". When specifying the file path, you also want to specify the file name. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
+By default, the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a .csv file by specifying *output_file = "location you want to save the file to*". When specifying the file path, you also want to specify the file name. The first cell of each row will contain a fasta header, and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
 
 **Example**
 
 	meta.predict_disorder_fasta("file path to .fasta file/fileName.fasta", output_file="file path where the output .csv should be saved")
 
-An actual filepath would look something like:
+An actual file path would look something like:
 
 	meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_file="/Users/thisUser/Desktop/cool_predictions.csv")
 
-
 **Get raw prediction values -**
-By default, this function will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0 and the values greater than 1 are replaced with 1 by default. If you want the raw values simply specify *normalized=False*. There is not a very good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.
+By default, this function will output prediction values that are normalized between 0 and 1. However, some of the raw values from the predictor are slightly less than 0 or slightly greater than 1. The negative values are simply replaced with 0, and the values greater than 1 are replaced with 1 by default. If you want the raw values, simply specify *normalized=False*. There is no good reason to do this, and it is generally not recommended. However, we wanted to give users the maximum amount of flexibility when using metapredict, so we made it an option.
 
 **Example**
 
@@ -867,7 +866,7 @@ By using the ``predict_pLDDT_uniprot`` function, you can generate predicted Alph
 
 ### Generating Disorder Graphs From a .fasta File
 
-By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and by default will return the graphs immediately. However, you can specify *output_dir=path_to_save_files* which result in a a .png file saved to that directory for every sequence within the .fasta file. You cannot specify the output file name here! By default, the file name will be the first 14 characters of the FASTA header followed by the filetype as specified by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name where X starts at 1 and increments) then set *indexed_filenames = True*. This can be useful if you have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an output file. By default this will return a single graph for every sequence in the FASTA file. 
+By using the ``graph_disorder_fasta`` function, you can graph predicted consensus disorder values for the amino acid sequences in a .fasta file. The *graph_disorder_fasta* function takes a .fasta file as input and by default will return the graphs immediately. However, you can specify *output_dir=path_to_save_files*, which results in a .png file saved to that directory for every sequence within the .fasta file. You cannot specify the output file name here! By default, the file name will be the first 14 characters of the FASTA header, followed by the filetype as specified by filetype. If you wish for the files to include a unique leading number (i.e. X_rest_of_name where X starts at 1 and increments), then set *indexed_filenames = True*. This can be useful if you have sequences where the 1st 14 characters may be identical, which would otherwise overwrite an output file. By default, this will return a single graph for every sequence in the FASTA file. 
 
 **WARNING -**
 This command will generate a graph for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file and you do not specify the *output_dir*, it will generate **1,000** graphs that you will have to close sequentially. Therefore, I recommend specifying the *output_dir* such that the output is saved to a dedicated folder.
@@ -959,7 +958,7 @@ To use the original metapredict predictor as opposed to our new, updated predict
 	meta.graph_disorder_uniprot("Q8N6T3", legacy=True)
 
 
-### Generating AlphaFold2 Confidnce Score Graphs Using Uniprot ID
+### Generating AlphaFold2 Confidence Score Graphs Using Uniprot ID
 
 Just like with disorder predictions, you can also get AlphaFold2 pLDDT confidence score graphs using the Uniprot ID. This will **only display the pLDDT confidence scores** and not the predicted disorder scores. 
 
@@ -1058,7 +1057,7 @@ The minimum folded domain size defines where we expect the limit of small folded
 	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_folded_domain = 60)
 
 **Altering gap_closure -**
-The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario in which you have two groups of disordered residues seprated by a 'gap' of not disordered residues. In general large gap sizes will favour larger contiguous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps are increasingly rare. Default=10.
+The gap closure defines the largest gap that would be closed. Gaps here refer to a scenario where you have two groups of disordered residues separated by a 'gap' of not disordered residues. In general large gap sizes will favor larger contiguous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes very small (i.e., < 5) because gaps really emerge when the smoothed disorder fit is "noisy", but when smoothed, gaps are increasingly rare. Default=10.
 
 **Example**
 
@@ -1118,14 +1117,15 @@ Example data that can be used with metapredict can be found in the metapredict/d
 
 ### Recent changes
 
-This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current work flows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
 
-#### V2.5
+#### V2.5 (March 2023)
 Changes:
 
 * Added the first multicore support to metapredict. Currently limited to metapredict-predict-disorder functionality.
-=======
+
+
 #### V2.4.3
 Changes:
 
