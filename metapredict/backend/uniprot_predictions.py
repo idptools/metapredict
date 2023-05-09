@@ -42,8 +42,17 @@ def fetch_sequence(uniprot_id, return_full_id=False):
 
     # if this fails the entire return string will be "b''" (len==3). We probably
     # need a more robust way to test for failure but this'll do for now...
+    # Update May 2023; it stopped doing
     if len(str(r.data)) == 3:
         raise MetapredictError(f'Error: unable to fetch UniProt sequence with accession {uniprot_id:s}')
+
+    # added as as second sanity check to handle poorly formatted uniprot accessions. Uniprot appears to
+    # now pass an error message if it fails that includes the term 'Error message', so this catch
+    # checks for that.
+    if str(r.data).find('Error messages') > -1:
+        raise MetapredictError(f'Error: unable to fetch UniProt sequence with accession {uniprot_id:s}')
+
+    print(r.data)
 
     if s[len(s)-1] == '"':
         s = s[:len(s)-1]
