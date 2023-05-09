@@ -103,6 +103,8 @@ if __name__ == "__main__":
     for thr in cur_threads:
         thr.join()    
     
+    # make sure initial filehandle is closed.
+    fh.close()
                 
         
 
