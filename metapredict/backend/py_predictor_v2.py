@@ -38,7 +38,7 @@ class Predictor():
     NOTE:   Assumes all sequences are composed of canonical amino acids and 
             that all networks were implemented using one-hot encoding.
     ***
-    Attributes
+    Attributesb
     ----------
     dtype : str
             Data format that the network was trained for. Either "sequence" or 
@@ -57,7 +57,7 @@ class Predictor():
             Initialized PARROT network with loaded weights.
     """
 
-    def __init__(self, saved_weights, dtype):
+    def __init__(self, saved_weights, dtype, gpuid='cpu'):
         """
         Parameters
         ----------
@@ -68,11 +68,27 @@ class Predictor():
         dtype : str
                 Data format that the network was trained for. Either "sequence" or 
                 "residues".
+
+        gpuid : str
+            By default set to 'cpu', but if a value is passed will try and override 
+        
         """
 
         self.dtype = dtype
-  
-        loaded_model = torch.load(saved_weights, map_location=torch.device('cpu'))
+
+        # if gpuid is not set to cpu
+        if gpuid != 'cpu':
+            if torch.cuda.is_available():
+                device = torch.device(f"cuda:{gpuid}")
+            else:
+                device = torch.device("cpu")
+        else:
+            device = torch.device("cpu")
+
+        self.device = device
+
+        # load using the requested device
+        loaded_model = torch.load(saved_weights, map_location=device)
 
         # Dynamically read in correct network size:
         self.num_layers = 0

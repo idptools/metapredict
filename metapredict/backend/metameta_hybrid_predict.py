@@ -40,8 +40,8 @@ def metameta_predict(sequence, normalized=True):
     predictor_path = f'{PATH}/networks/{used_predictor}'
     
     # set predictor value using py_predictor_V2
-    my_predictor = py_predictor_v2.Predictor(predictor_path, 
-                                            dtype="residues")    
+    my_predictor = py_predictor_v2.Predictor(predictor_path, dtype="residues")    
+                                             
     # get values of prediction
     output_values = my_predictor.predict(sequence)
     
