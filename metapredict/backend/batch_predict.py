@@ -7,18 +7,23 @@ from torch.nn.utils.rnn import pad_sequence
 
 from tqdm import tqdm
 
-from parrot import brnn_architecture
-from parrot import encode_sequence
+# can add this back in, but currently import from metapredict to avoid 
+# changes in PARROT or having to have PARROT installed.
+#from parrot import brnn_architecture
+#from parrot import encode_sequence
+
+from metapredict.backend import encode_sequence
+from metapredict.backend import brnn_architecture
 
 import os
 import time
-from .metameta_hybrid_predict import predictor_string
+from metapredict.backend.metameta_hybrid_predict import predictor_string
 
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 from metapredict.backend import domain_definition as _domain_definition
 
 # import settings for network
-from .py_predictor_v2 import Predictor
+from metapredict.backend.py_predictor_v2 import Predictor
 
 
 # ....................................................................................
@@ -370,5 +375,197 @@ def batch_predict(input_sequences,
         else:
             raise Exception('How did we get here? What did we do wrong? Is this the darkest timeline? Definitely')
             
+
+
+# batch predict but Ryan trying to get it to work with variable seq lengths
+# leaving OG function to compare but plz if you see this in the main branch
+# let Ryan know so he can get rid of a function with his name in it because
+# that's..... not a great look.
+def batch_predict_ryan(input_sequences,
+                  gpuid=00,
+                  return_domains=False,
+                  disorder_threshold=0.5,
+                  minimum_IDR_size=12,
+                  minimum_folded_domain=50,
+                  gap_closure=10,
+                  override_folded_domain_minsize=False,
+                  use_slow = False,
+                  print_performance=False):
+                  
+    """
+    Batch prediction for metapredict. IN DEVELOPMENT. DO NOT USE.
+
+
+    Parameters
+    ----------
+    sequences : list
+        A list of one or more sequences
+
+    gpuid : int, optional
+        GPU ID to use for predictions, by default 0. Note if a GPU
+        is not available will just use a CPU.
+
+    Returns
+    -------
+    dict
+        sequence, value(s) mapping for the requested predictor.
+
+    Raises
+    ------
+    SparrowException
+        An exception is raised if the requested network is not one of the available options.
+    """
+
+    ##
+    ## Prepare data by generate a list (sequence_list)
+    ## which contains non-redundant sequences 
+    ##
     
+    if type(input_sequences) is dict:
+        mode = 'dictionary'
+        seq2id = {}
+        for k in input_sequences:
+            s = input_sequences[k]
+            if s not in seq2id:
+                seq2id[s] = [k]
+            else:
+                seq2id[s].append(k)
+        sequence_list = list(seq2id.keys())
+        
+    elif type(input_sequences) is list:
+        mode = 'list'
+        sequence_list = list(set(input_sequences))
+
+    else:
+        raise Exception('Invalid data type passed into batch_predict - expect a list or a dictionary of sequences')
+        
+
+    # code block below is where the per-residue disorder prediction is actually done
+    
+    ## ....................................................................................
+    ##
+    ## DO THE PREDICTION
+    ##
+                
+
+    # load and setup the network (same code as used by the non-batch version)
+    PATH = os.path.dirname(os.path.realpath(__file__))
+    predictor_path = f'{PATH}/networks/{predictor_string}'
+    brnn_predictor = Predictor(predictor_path, dtype="residues", gpuid=gpuid)
+
+    device = brnn_predictor.device
+    model  = brnn_predictor.network
+
+    # hardcoded because this is where metapredict was trained
+    batch_size = 32
+                
+    # initialize the return dictionary that maps sequence to
+    # disorder profile
+    pred_dict = {}
+
+    seq_loader = DataLoader(input_sequences, batch_size=batch_size, shuffle=False)
+
+    # iterate through batch
+    for batch in seq_loader:
+        # Pad the sequence vector to have the same length as the longest sequence in the batch
+        seqs_padded = pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)
+        # get lengths for input into pack_padded_sequence
+        lengths = torch.tensor([len(seq) for seq in batch])
+        # pack up for vacation
+        packed_and_padded = pack_padded_sequence(seqs_padded, lengths.cpu().numpy(), batch_first=True, enforce_sorted=False)
+        # input packed_and_padded into loaded lstm
+        packed_output, (ht, ct) = (model.lstm.forward(packed_and_padded))
+        # inverse of pack_padded_sequence
+        output, input_sizes = pad_packed_sequence(packed_output, batch_first=True)
+        # get the outputs by calling fc
+        outputs = model.fc(output).cpu()
+        # get the unpacked, finalized values into the dict.
+        for cur_ind, score in enumerate(outputs):
+            # first detach, flatten, etc
+            cur_score = score.detach().numpy().flatten()
+            # get the sequence from batch from seq_loader
+            cur_seq = batch[cur_ind]
+            # add to dict
+            pred_dict[cur_seq]=np.squeeze(np.round(np.clip(cur_score[0:len(cur_seq)], a_min=0, a_max=1),4))
+    
+    end_time = time.time()
+    if print_performance:
+        print(f"Time taken for predictions on {device}: {end_time - start_time} seconds")
+                
+    ##
+    ## PREDICTION DONE
+    ##
+    ## ....................................................................................
+
+
+    # if we've requested IDR domains
+    if return_domains:
+
+
+        # we're going to first build a dictionary to map sequence to DisorderObject - this ensures
+        # we only build one DO per sequence, even if we have multiple repetitve sequences
+        seq2DisorderObject = {}
+
+        # for each sequence in the prediction dictionary. Note this loop may take a second...
+        start_time = time.time()
+        for s in pred_dict:
+            seq2DisorderObject[s] = build_DisorderObject(s,
+                                                         pred_dict[s],
+                                                         disorder_threshold=disorder_threshold,
+                                                         minimum_IDR_size=minimum_IDR_size, 
+                                                         minimum_folded_domain=minimum_folded_domain,
+                                                         gap_closure=gap_closure,
+                                                         use_slow=use_slow)
+
+        end_time = time.time()
+        if print_performance:
+            print(f"Time taken for domain decomposition: {end_time - start_time} seconds")
+
+            
+        # finally, if we passed in a dictionary then return a dictionary with the same
+        # ID mapping (even if two IDs map to the same sequence)
+        if mode == 'dictionary':
+            return_dict = {}
+            
+            for s in seq2id:
+
+                # for each ID associated with that sequence, assign the disorder object
+                for seq_id in seq2id[s]:
+                    return_dict[seq_id] = seq2DisorderObject[s]
+
+            return return_dict
+
+        # and if we passed a list return a list in the same order it came in, even if
+        # there are duplicates
+        elif mode == 'list':
+            return_list = []
+            for s in input_sequences:
+                return_list.append(seq2DisorderObject[s])
+
+            return return_list
+
+        else:
+            raise Exception('How did we get here? What did we do wrong? Is this the darkest timeline? Probably')
+
+    # just return scores with no domains
+    else:
+    
+        if mode == 'dictionary':
+            return_dict = {}
+            for s in seq2id:
+                for seq_id in seq2id[s]:
+                    return_dict[seq_id] = [s, pred_dict[s]]                
+
+            return return_dict
+        elif mode == 'list':
+            return_list = []
+            for s in input_sequences:
+                return_list.append([s, pred_dict[s]])
+
+            return return_list
+
+        else:
+            raise Exception('How did we get here? What did we do wrong? Is this the darkest timeline? Definitely')
+
+
 
