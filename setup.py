@@ -6,6 +6,38 @@ import sys
 from setuptools import setup, find_packages
 import versioneer
 
+# ................................m
+# added for cython compilation
+from setuptools.extension import Extension
+
+try:
+    from Cython.Build import cythonize
+except ModuleNotFoundError:
+    print('########################################\n')
+    print('Error: Please install cython first:\n\npip install cython\n')
+    print('########################################\n')
+    exit(1)
+
+try:
+    import numpy
+except ModuleNotFoundError:
+
+    print('########################################\n')
+    print('Error: Please install numpy first:\n\npip install numpy\n')
+    print('########################################\n')
+    exit(1)
+
+
+
+extensions = [
+    Extension(
+        "metapredict.backend.cython.domain_definition",
+        ["metapredict/backend/cython/domain_definition.pyx"],
+        include_dirs=[numpy.get_include()], 
+    )]
+    
+    
+
 short_description = __doc__.split("\n")
 
 # from https://github.com/pytest-dev/pytest-runner#conditional-requirement
@@ -37,6 +69,9 @@ setup(
     # subpackage(s) from being added, if needed
     packages=find_packages(),
 
+    # for cython compilation
+    ext_modules = cythonize(extensions, compiler_directives={'language_level' : "3"}),
+
     # Optional include package data to ship with your package
     # Customize MANIFEST.in if the general case does not suit your needs
     # Comment out this line to prevent the files from being packaged with your software
@@ -59,14 +94,15 @@ setup(
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='http://www.my_package.com',  # Website
     install_requires=[
-            'torch',
-            'numpy',
-            'matplotlib',
-            'protfasta',
-            'scipy',
-            'urllib3',
-            'alphaPredict==1.0',
-            'getSequence >= 1.3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+        'cython',
+        'torch',
+        'numpy',
+        'matplotlib',
+        'protfasta',
+        'scipy',
+        'urllib3',
+        'alphaPredict==1.0',
+        'getSequence >= 1.3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',
