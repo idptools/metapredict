@@ -17,11 +17,17 @@ import random
 import string
 import numpy as np
 
+import protfasta
+
 from metapredict.metapredict_exceptions import MetapredictError
 
 
 current_filepath = os.getcwd()
 fasta_filepath = "{}/input_data/testing.fasta".format(current_filepath)
+
+onehundred_seqs = "{}/input_data/test_seqs_100.fasta".format(current_filepath)
+onehundred_scores = "{}/input_data/test_scores_100.npy".format(current_filepath)
+
 
 def test_metapredict_imported():
     """Sample test, will always pass so long as import statement worked"""
@@ -206,4 +212,25 @@ def test_percent_disorder_fail():
     # make sure we get gracefull fail on empty string
     with pytest.raises(MetapredictError):
         DisObj = meta.percent_disorder('')
+
+
+def test_big_test():
+    """
+    Big tests that compares previously computed disordered scores for 100 sequences
+    with the current testable version. This is the most robust test to ensure that
+    the current version reproduces scores of other versions of metapredict
+    
+
+    """
+
+    scores = np.load(onehundred_scores, allow_pickle=True).tolist()
+    seqs = protfasta.read_fasta(onehundred_seqs)
+
+    for idx, k in enumerate(seqs):
+        local_score = meta.predict_disorder(seqs[k])
+        assert np.allclose(scores[idx], meta.predict_disorder(seqs[k], return_numpy=True), atol=0.000001)
+
+
+
+        
 

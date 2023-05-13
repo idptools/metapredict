@@ -8,6 +8,10 @@ __pycache__/
 .DS_Store
 *~
 
+# cython-specific stuff
+metapredict/backend/cython/domain_definition.c
+metapredict/backend/cython/domain_definition.html
+
 # other .DS_Store
 metapredict/.DS_Store
 
