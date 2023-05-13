@@ -162,26 +162,172 @@ def batch_predict(input_sequences,
                   override_folded_domain_minsize=False,
                   use_slow = False,
                   print_performance=False,
-                  force_mode = None
-                  ):
+                  force_mode = None):
+                 
                   
     """
-    Batch prediction for metapredict. IN DEVELOPMENT. DO NOT USE.
+    Batch mode predictor which takes advantage of PyTorch
+    parallelization such that whether it's on a GPU or a 
+    CPU, predictions for a set of sequences are performed
+    rapidly.
 
+    Batch mode was implemented in metapredict V3, as is 
+    optimized for the hybrid network first released in V2.
+    As such a few options are not available for batch mode
+    which include:
+
+    legacy - you cannot predict legacy metapredict scores
+             with batch_mode
+
+    normalize - all predictions are automatically normalized
+            to fall between 0 and 1
+
+    return_numpy - all disorder scores are returned as 
+                   numpy arrays.
+
+    Note also that batch mode uses 32-bit float vectors
+    whereas non-batch uses 64-bit float vectors, so the
+    precise values in batch vs. non-batch may differ 
+    slighly, however this is a numerical precision difference,
+    such that values by both methods are always within
+    1e-3 of one another.
+
+    Note the reason to use this function instead of 
+    meta.predict_disorder_batch is here there are a few 
+    additional 
 
     Parameters
     ----------
-    sequences : list
-        A list of one or more sequences
+    input_sequences : list or dictionary
+        A collection of sequences that are presented either
+        as a list of sequences or a dictionary of key-value
+        pairs where values are sequences.
 
-    gpuid : int, optional
-        GPU ID to use for predictions, by default 0. Note if a GPU
-        is not available will just use a CPU.
+    return_domains : bool
+        Flag which, if set to true, means we return DisorderDomain
+        objects instead of simply the disorder scores. These
+        domain objects include the boundaries between IDRs and 
+        folded domains, the disorder scores, and the individual
+        sequences for IDRs and folded domains. This adds a small
+        amount of overhead to the prediction, but typically only
+        increase prediction time by 10-15%.
+    
+    disorder_threshold : float
+        Used only if return_domains = True.
+
+        Threshold used to deliniate between folded and disordered
+        regions. We use a value of 0.5 because predict_disorder_batch
+        does not support legacy. 
+
+    minimum_IDR_size : int
+        Used only if return_domains = True.
+
+        Defines the smallest possible IDR. This is a hard limit - 
+        i.e. we CANNOT get IDRs smaller than this. Default = 12.
+
+    minimum_folded_domain : int
+        Used only if return_domains = True.
+
+        Defines where we expect the limit of small folded domains 
+        to be. This is NOT a hard limit and functions to modulate
+        the removal of large gaps (i.e. gaps less than this size 
+        are treated less strictly). Note that, in addition, 
+        gaps < 35 are evaluated with a threshold of 
+        0.35*disorder_threshold and gaps < 20 are evaluated with 
+        a threshold of 0.25*disorder_threshold. These two 
+        lengthscales were decided based on the fact that 
+        coiled-coiled regions (which are IDRs in isolation) 
+        often show up with reduced apparent disorder within IDRs, 
+        and but can be as short as 20-30 residues. 
+        The folded_domain_threshold is used based on the 
+        idea that it allows a 'shortest reasonable' folded domain 
+        to be identified. Default=50.
+
+    gap_closure : int
+        Used only if return_domains = True.
+
+        Defines the largest gap that would be 'closed'. Gaps here 
+        refer to a scenario in which you have two groups of 
+        disordered residues seprated by a 'gap' of un-disordered 
+        residues. In general large gap sizes will favour larger 
+        contigous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_region_size becomes very small 
+        (i.e. < 5) because really gaps emerge when the smoothed 
+        disorder fit is "noisy", but when smoothed gaps
+        are increasingly rare. Default=10.
+
+    override_folded_domain_minsize : bool
+        By default this function includes a fail-safe check that
+        assumes folded domains really shouldn't be less than 
+        35 or 20 residues. However, for some approaches we may 
+        wish to over-ride these thresholds to match the passed 
+        minimum_folded_domain value. If this flag is set to 
+        True this override occurs. This is generally not 
+        recommended unless you expect there to be well-defined 
+        sharp boundaries which could define small (20-30) 
+        residue folded domains. This is not provided as an option 
+        in the normal predict_disorder_domains for metapredict. 
+        Default = False. 
+
+    use_slow : bool
+        Flag which, if passed, means we force a Python 
+        implementation of our domain decomposition algorithm 
+        instead of the MUCH faster Cython/C implementation. 
+        Useful for debugging. Default = False
+                
+    print_performance : bool
+        Flag which means the function prints the time taken 
+        for the two stages in the prediction algorithm. Again 
+        useful for profiling and debugging. Default = False
+    
+    force_mode : int
+        Flag which, if set to 1 or 2 will FORCE the batch 
+        algorithm to use mode 1 or mode 2 for batch 
+        decomposition.
+
+        Mode 1 means we pre-filter sequences into groups where 
+        they're all the same length, avoiding padding/packing. 
+        This works in all versions of torch, and may be faster 
+        for BIG sets of sequences (40,000+) but is        
+        generally slower than mode 2.
+
+        Mode 2 involves padding/packing the sequences so that 
+        all sequences can be passed in a batchsize of 32. This 
+        is only available if pytorch 1.11 or higher is available, 
+        but for small sets of sequences 1-10,000 will be much 
+        faster than mode 1. We default to mode 2 if available, 
+        but in special cases you may want to force mode 1.
+        Default = None, which means dynamic selection occurs.
 
     Returns
-    -------
-    dict
-        sequence, value(s) mapping for the requested predictor.
+    -------------
+    dict or list
+
+        IF RETURN DOMAINS == FALSE: this function returns either
+        a list or a dictionary.
+    
+        If a list was provided as input, the function returns a list
+        of the same length as the input list, where each element is 
+        itself a sublist where element 0 = sequence and element 1 is
+        a numpy array of disorder scores. The order of the return list
+        matches the order of the input list.
+
+        If a dictionary was provided as input, the function returns
+        a dictionary, where the same input keys map to values which are
+        lists of 2 elements, where element 0 = sequence and element 1 is
+        a numpy array of disorder scores.
+
+        IF RETURN DOMAINS == TRUE: this function returns either a list
+        or a dictionary.
+
+        If a list was provided as input, the function returns a list
+        of the same length as the input list, where each element is 
+        a DisorderDomain object. The order of the return list matches 
+        the order of the input list.
+
+        If a dictionary was provided as input, the function returns
+        a dictionary, where the same input keys map to a DisorderDomain
+        object that corresponds to the input dictionary sequence.
 
     Raises
     ------
@@ -189,7 +335,8 @@ def batch_predict(input_sequences,
         An exception is raised if the requested network is not one of the available options.
     """
 
-    # define the mode based on torch version or a manual over-ride (for performance testing)
+    # define the mode based on torch version or a manual
+    # over-ride (for performance testing)
     if force_mode is not None:
         if force_mode not in [1,2]:
             raise Exception("If mode is to be forced, must be 1 or 2, but we don't recommend this...")
@@ -204,8 +351,7 @@ def batch_predict(input_sequences,
     ##
     ## Prepare data by generate a list (sequence_list)
     ## which contains non-redundant sequences 
-    ##
-    
+    ##    
     if type(input_sequences) is dict:
         mode = 'dictionary'
         seq2id = {}
@@ -223,16 +369,14 @@ def batch_predict(input_sequences,
 
     else:
         raise Exception('Invalid data type passed into batch_predict - expect a list or a dictionary of sequences')
-        
 
-    # code block below is where the per-residue disorder prediction is actually done
     
+    # code block below is where the per-residue disorder prediction is actually done    
     ## ....................................................................................
     ##
     ## DO THE PREDICTION
     ##
-                
-
+    
     # load and setup the network (same code as used by the non-batch version)
     PATH = os.path.dirname(os.path.realpath(__file__))
     predictor_path = f'{PATH}/networks/{predictor_string}'
@@ -292,7 +436,6 @@ def batch_predict(input_sequences,
         # so offer both modes for backwards compatibility.
         #
         
-
         start_time = time.time()
         seq_loader = DataLoader(sequence_list, batch_size=batch_size, shuffle=False)
         
@@ -410,4 +553,4 @@ def batch_predict(input_sequences,
         else:
             raise Exception('How did we get here? What did we do wrong? Is this the darkest timeline? Definitely')
             
-
+        

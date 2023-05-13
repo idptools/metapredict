@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid', 'predict_for_multithread']
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid']
  
 import os
 import sys
@@ -28,6 +28,7 @@ from metapredict import parameters
 from metapredict.backend.meta_predict_disorder import meta_predict as _meta_predict
 from metapredict.backend.metameta_hybrid_predict import metameta_predict as _metameta_predict
 from metapredict.backend import meta_tools as _meta_tools
+from metapredict.backend.batch_predict import batch_predict as _batch_predict
 
 #import stuff for graphing from backend
 from metapredict.backend.meta_graph import graph as _graph
@@ -426,9 +427,10 @@ def predict_all(sequence):
 
     Parameters
     ------------
-
     sequence : str 
         Input amino acid sequence (as string) to be predicted.
+
+    
 
     Returns
     --------
@@ -454,6 +456,145 @@ def predict_all(sequence):
     
 
     return (meta_disorder, legacy_disorder, ppLDDT)
+
+
+
+# ..........................................................................................
+#
+def predict_disorder_batch(input_sequences,
+                           gpuid=00,
+                           return_domains=False,
+                           disorder_threshold=0.5,
+                           minimum_IDR_size=12,
+                           minimum_folded_domain=50,
+                           gap_closure=10):
+
+    """
+    Batch mode predictor which takes advantage of PyTorch
+    parallelization such that whether it's on a GPU or a 
+    CPU, predictions for a set of sequences are performed
+    rapidly.
+
+    Batch mode was implemented in metapredict V3, as is 
+    optimized for the hybrid network first released in V2.
+    As such a few options are not available for batch mode
+    which include:
+
+    legacy - you cannot predict legacy metapredict scores
+             with batch_mode
+
+    normalize - all predictions are automatically normalized
+            to fall between 0 and 1
+
+    return_numpy - all disorder scores are returned as 
+                   numpy arrays.
+
+    Note also that batch mode uses 32-bit float vectors
+    whereas non-batch uses 64-bit float vectors, so the
+    precise values in batch vs. non-batch may differ 
+    slighly, however this is a numerical precision difference,
+    such that values by both methods are always within
+    1e-3 of one another.
+
+    Parameters
+    --------------
+    input_sequences : list or dictionary
+        A collection of sequences that are presented either
+        as a list of sequences or a dictionary of key-value
+        pairs where values are sequences.
+
+    return_domains : bool
+        Flag which, if set to true, means we return DisorderDomain
+        objects instead of simply the disorder scores. These
+        domain objects include the boundaries between IDRs and 
+        folded domains, the disorder scores, and the individual
+        sequences for IDRs and folded domains. This adds a small
+        amount of overhead to the prediction, but typically only
+        increase prediction time by 10-15%.
+    
+    disorder_threshold : float
+        Used only if return_domains = True.
+
+        Threshold used to deliniate between folded and disordered
+        regions. We use a value of 0.5 because predict_disorder_batch
+        does not support legacy. 
+
+    minimum_IDR_size : int
+        Used only if return_domains = True.
+
+        Defines the smallest possible IDR. This is a hard limit - 
+        i.e. we CANNOT get IDRs smaller than this. Default = 12.
+
+    minimum_folded_domain : int
+        Used only if return_domains = True.
+
+        Defines where we expect the limit of small folded domains 
+        to be. This is NOT a hard limit and functions to modulate
+        the removal of large gaps (i.e. gaps less than this size 
+        are treated less strictly). Note that, in addition, 
+        gaps < 35 are evaluated with a threshold of 
+        0.35*disorder_threshold and gaps < 20 are evaluated with 
+        a threshold of 0.25*disorder_threshold. These two 
+        lengthscales were decided based on the fact that 
+        coiled-coiled regions (which are IDRs in isolation) 
+        often show up with reduced apparent disorder within IDRs, 
+        and but can be as short as 20-30 residues. 
+        The folded_domain_threshold is used based on the 
+        idea that it allows a 'shortest reasonable' folded domain 
+        to be identified. Default=50.
+
+    gap_closure : int
+        Used only if return_domains = True.
+
+        Defines the largest gap that would be 'closed'. Gaps here 
+        refer to a scenario in which you have two groups of 
+        disordered residues seprated by a 'gap' of un-disordered 
+        residues. In general large gap sizes will favour larger 
+        contigous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_region_size becomes very small 
+        (i.e. < 5) because really gaps emerge when the smoothed 
+        disorder fit is "noisy", but when smoothed gaps
+        are increasingly rare. Default=10.
+
+    Returns
+    -------------
+    dict or list
+
+        IF RETURN DOMAINS == FALSE: this function returns either
+        a list or a dictionary.
+    
+        If a list was provided as input, the function returns a list
+        of the same length as the input list, where each element is 
+        itself a sublist where element 0 = sequence and element 1 is
+        a numpy array of disorder scores. The order of the return list
+        matches the order of the input list.
+
+        If a dictionary was provided as input, the function returns
+        a dictionary, where the same input keys map to values which are
+        lists of 2 elements, where element 0 = sequence and element 1 is
+        a numpy array of disorder scores.
+
+        IF RETURN DOMAINS == TRUE: this function returns either a list
+        or a dictionary.
+
+        If a list was provided as input, the function returns a list
+        of the same length as the input list, where each element is 
+        a DisorderDomain object. The order of the return list matches 
+        the order of the input list.
+
+        If a dictionary was provided as input, the function returns
+        a dictionary, where the same input keys map to a DisorderDomain
+        object that corresponds to the input dictionary sequence.
+
+    """
+
+    return _batch_predict(input_sequences,
+                          gpuid = gpuid,
+                          return_domains = return_domains,                          
+                          disorder_threshold = disorder_threshold,
+                          minimum_IDR_size = minimum_IDR_size,
+                          minimum_folded_domain = minimum_folded_domain,
+                          gap_closure = gap_closure)
 
 
 
@@ -883,27 +1024,49 @@ def predict_disorder_fasta(filepath,
 
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
 
-    # initialize empty dictionary to be populated with the the fasta headers (key) 
-    # and the predicted disorder values (value)
+
+    # initialize return dictionary
     disorder_dict = {}
+    
+    # Batch mode only supports normalized=True and legacy=False, so if
+    # either of these are set use the slower non batch mode
+    # 
+    if normalized is False or legacy is True:
 
-    # for the sequences in the protffasta_seqs list:
-    for seqs in protfasta_seqs:
+        # initialize empty dictionary to be populated with the the fasta headers (key) 
+        # and the predicted disorder values (value)
+        
 
-        # set cur_header equal to the fasta header
-        cur_header = seqs[0]
+        # for the sequences in the protffasta_seqs list:
+        for seqs in protfasta_seqs:
 
-        # set cur_seq equal to the sequence associated with the fasta header
-        cur_seq = seqs[1]
+            # set cur_header equal to the fasta header
+            cur_header = seqs[0]
 
-        # make all values for curSeq uppercase so they work with predictor
-        cur_seq = cur_seq.upper()
+            # set cur_seq equal to the sequence associated with the fasta header
+            cur_seq = seqs[1]
 
-        # set cur_disorder equal to the predicted values for cur_seq
-        cur_disorder = predict_disorder(cur_seq, normalized=normalized, legacy=legacy)
+            # make all values for curSeq uppercase so they work with predictor
+            cur_seq = cur_seq.upper()
 
-        disorder_dict[cur_header] = cur_disorder
+            # set cur_disorder equal to the predicted values for cur_seq
+            cur_disorder = predict_disorder(cur_seq, normalized=normalized, legacy=legacy)
 
+            disorder_dict[cur_header] = cur_disorder
+            
+    else:
+
+        # clean dict will be a dictionary of mapping from header
+        # to sequence, but will overwrite entries where the same
+        # header is present
+        clean_dict = {}
+        for k in protfasta_seqs:
+            clean_dict[k[0]] = k[1]
+
+        tmp_dict = _batch_predict(clean_dict)
+        for k in tmp_dict:
+            disorder_dict[k] = tmp_dict[k][1]
+    
     # if we did not request an output file 
     if output_file is None:
         return disorder_dict
@@ -918,8 +1081,8 @@ def predict_disorder_fasta(filepath,
 # ..........................................................................................
 #
 def predict_pLDDT_fasta(filepath, 
-                           output_file = None,
-                           invalid_sequence_action='convert'):
+                        output_file = None,
+                        invalid_sequence_action='convert'):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of pLDDT values where the key is the 
@@ -1610,20 +1773,5 @@ def predict_disorder_caid(input_fasta, output_file):
 
     # write the output file
     _meta_tools.write_caid_format(output_dict, output_file)
-
-
-def predict_for_multithread(nested_list_of_seqs, 
-    outpath, mode, threshold_val, legacy):
-    '''
-    not multithreaded itself. Just a function
-    needed to predicted batches of sequences
-    for ultimately using in metapredict-multipredict
-    '''
-    all_vals={}
-    for name_seq in nested_list_of_seqs:
-        all_vals[name_seq[0]] = predict_disorder_domains(name_seq[1], disorder_threshold=threshold_val, legacy=legacy, return_list=True)
-    
-    # append vals to outpath
-    _meta_tools.append_to_file(outpath, all_vals, mode=mode)
 
 
