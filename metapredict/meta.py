@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid']
+__all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid', 'predict_disorder_batch']
  
 import os
 import sys
@@ -502,6 +502,14 @@ def predict_disorder_batch(input_sequences,
         A collection of sequences that are presented either
         as a list of sequences or a dictionary of key-value
         pairs where values are sequences.
+
+    gpuid : int 
+        Identifier for the GPU being requested. Note that if
+        this is left unset the code will use the first GPU available
+        and if none is available will default back to CPU; in 
+        general it is recommended to not try and set this unless
+        there's a specific reason why a specific GPU should be
+        used
 
     return_domains : bool
         Flag which, if set to true, means we return DisorderDomain
@@ -1006,9 +1014,10 @@ def predict_disorder_fasta(filepath,
 
     dict or None
         If output_file is set to None (as default) then this fiction returns 
-        a dictionary of sequence ID to disorder vector. If output_file is set 
-        to a filename then a .csv file will instead be written and         
-        no return data will be provided.
+        a dictionary of sequence ID to disorder np.ndarrays(dtype=np.float32). 
+
+        If output_file is set to a filename then a .csv file will instead 
+        be written and no return data will be provided.         
 
     """
 
@@ -1050,7 +1059,7 @@ def predict_disorder_fasta(filepath,
             cur_seq = cur_seq.upper()
 
             # set cur_disorder equal to the predicted values for cur_seq
-            cur_disorder = predict_disorder(cur_seq, normalized=normalized, legacy=legacy)
+            cur_disorder = predict_disorder(cur_seq, normalized=normalized, legacy=legacy, return_numpy=True)
 
             disorder_dict[cur_header] = cur_disorder
             

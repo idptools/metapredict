@@ -108,12 +108,12 @@ def test_metapredict_functions():
 
     
     # make sure fasta stuff works for legacy
-    assert meta.predict_disorder_fasta(fasta_filepath, legacy=True) == {'Q8N6T3': local_data.disorder_Q8N6T3_legacy}
+    # updated May 2023 to deal with the fact that predict_disorder_fasta now returns a dictionary where values are np.ndarrays
+    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, legacy=True)['Q8N6T3'], np.array(local_data.disorder_Q8N6T3_legacy, dtype=np.float32))
 
-    # make sure fasta stuff works for new predictor
-    assert meta.predict_disorder_fasta(fasta_filepath, legacy=False) == {'Q8N6T3': local_data.disorder_Q8N6T3}
-
-
+    # make sure FASTA stuff works for non-legacy predictions
+    # updated May 2023 to deal with the fact that predict_disorder_fasta now returns a dictionary where values are np.ndarrays
+    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, legacy=False)['Q8N6T3'], np.array(local_data.disorder_Q8N6T3, dtype=np.float32))
 
 
 def test_predict_disorder_fail():

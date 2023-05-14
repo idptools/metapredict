@@ -203,6 +203,14 @@ def batch_predict(input_sequences,
         as a list of sequences or a dictionary of key-value
         pairs where values are sequences.
 
+    gpuid : int 
+        Identifier for the GPU being requested. Note that if
+        this is left unset the code will use the first GPU available
+        and if none is available will default back to CPU; in 
+        general it is recommended to not try and set this unless
+        there's a specific reason why a specific GPU should be
+        used
+
     return_domains : bool
         Flag which, if set to true, means we return DisorderDomain
         objects instead of simply the disorder scores. These
