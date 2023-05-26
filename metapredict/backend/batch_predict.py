@@ -2,6 +2,8 @@ import torch
 import numpy as np
 
 from packaging import version
+from tqdm import tqdm
+
 
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
@@ -162,7 +164,8 @@ def batch_predict(input_sequences,
                   override_folded_domain_minsize=False,
                   use_slow = False,
                   print_performance=False,
-                  force_mode = None):
+                  force_mode = None,
+                  show_progress_bar = True):
                  
                   
     """
@@ -307,6 +310,12 @@ def batch_predict(input_sequences,
         but in special cases you may want to force mode 1.
         Default = None, which means dynamic selection occurs.
 
+    show_progress_bar : bool
+        Flag which, if set to True, means a progress bar is printed as 
+        predictions are made, while if False no progress bar is printed.
+        Default  =  True
+
+
     Returns
     -------------
     dict or list
@@ -395,6 +404,7 @@ def batch_predict(input_sequences,
 
     # hardcoded because this is where metapredict was trained
     batch_size = 32
+
                 
     # initialize the return dictionary that maps sequence to
     # disorder profile
@@ -414,9 +424,12 @@ def batch_predict(input_sequences,
         # and values is a list of sequences of that exact length
         size_filtered =  size_filter(sequence_list)
 
+        # set progress bar info
+        loop_range = tqdm(size_filtered) if show_progress_bar else size_filtered
+
         # for each size of sequence
         start_time = time.time()
-        for local_size in size_filtered:
+        for local_size in loop_range:
 
             local_seqs = size_filtered[local_size]
     
@@ -446,9 +459,12 @@ def batch_predict(input_sequences,
         
         start_time = time.time()
         seq_loader = DataLoader(sequence_list, batch_size=batch_size, shuffle=False)
+
+        # set progress bar info
+        loop_range = tqdm(seq_loader) if show_progress_bar else seq_loader
         
         # iterate through batch
-        for batch in seq_loader:
+        for batch in loop_range:
             
             # Pad the sequence vector to have the same length as the longest sequence in the batch
             seqs_padded = pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)

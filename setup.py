@@ -100,6 +100,7 @@ setup(
         'protfasta',
         'scipy',
         'urllib3',
+        'tqdm',
         'alphaPredict==1.0',
         'getSequence >= 1.3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
