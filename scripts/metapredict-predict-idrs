@@ -35,7 +35,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode not in ['fasta', 'shephard-domains','shephard-domains-uniprot', ]:
-        raise Exception("--mode must be set to one of 'fasta' or 'shephard-domains'")
+        raise Exception("--mode must be set to one of 'fasta', 'shephard-domains', or 'shephard-domains-uniprot'")
 
     if args.output_file is None:
         if args.mode == 'fasta':
