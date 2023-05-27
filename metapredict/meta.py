@@ -467,7 +467,8 @@ def predict_disorder_batch(input_sequences,
                            disorder_threshold=0.5,
                            minimum_IDR_size=12,
                            minimum_folded_domain=50,
-                           gap_closure=10):
+                           gap_closure=10,
+                           show_progress_bar = True):
 
     """
     Batch mode predictor which takes advantage of PyTorch
@@ -564,6 +565,12 @@ def predict_disorder_batch(input_sequences,
         disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
 
+    show_progress_bar : bool
+        Flag which, if set to True, means a progress bar is printed as 
+        predictions are made, while if False no progress bar is printed.
+        Default  =  True
+
+
     Returns
     -------------
     dict or list
@@ -602,7 +609,8 @@ def predict_disorder_batch(input_sequences,
                           disorder_threshold = disorder_threshold,
                           minimum_IDR_size = minimum_IDR_size,
                           minimum_folded_domain = minimum_folded_domain,
-                          gap_closure = gap_closure)
+                          gap_closure = gap_closure,
+                          show_progress_bar = show_progress_bar)
 
 
 
