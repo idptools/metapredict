@@ -3,9 +3,12 @@ import scipy
 from scipy.signal import savgol_filter
 from metapredict.metapredict_exceptions import DomainError
 
+
+## Note - this code block means that metapredict can be installed and imported without throwing an exception, which
+# in turn means it can be easily built on readthedocs without needing to compile Cython in line there.
+# This fix was added in May 2023
 try:
-    from .cython.domain_definition import build_domains_from_values as CYTHON_build_domains_from_values
-    
+    from .cython.domain_definition import build_domains_from_values as CYTHON_build_domains_from_values    
 except ModuleNotFoundError as e:
     print('ERROR: Cython module was not found. This will happen if your installation did not correctly compile the cython modules')
 

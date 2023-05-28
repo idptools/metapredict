@@ -5,8 +5,16 @@
 ## Current version: metapredict V2-FF (V2.6)
 The current recommended and default version of metapredict is metapredict V2-FF (version 2.6). Small increments (2.6.x) may be made as bug fixes or feature enhancements.
 
-For context, V2-FF provides identical predictions to metapredict V2, but via `predict_disorder_batch()` provides 10-1000x improvement in performance on CPUs and GPUs. 
+For context, V2-FF provides identical predictions to metapredict V2, but via `predict_disorder_batch()` provides 10-100x improvement in performance on CPUs and GPUs. 
 
+To quantify this yourself, run:
+
+
+	import metapredict
+	metapredict.print_performance(batch=True)
+	metapredict.print_performance(batch=False)
+	
+To compare the number of residues-per-second metapredict V2-FF predicts in batch mode vs. non-batch mode. For CPUs this is typically a 10-20x improvement. If GPUs are available this value can be substantially higher.	
 ## Installation
 
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 

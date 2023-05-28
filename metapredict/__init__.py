@@ -36,7 +36,7 @@ if IGNORE_LIBOMP_ERROR:
 
 
 # Standardized function to check performance
-def print_performance(seq_len=500, num_seqs=100, verbose=True, legacy=False):
+def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legacy=False):
     """
     Function that lets you test metapredicts performance on your local hardware.
 
@@ -51,6 +51,9 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True, legacy=False):
     verbose : bool
         Flag which, if true, means the function prints a summary when finished. If 
         false simply returns an integer
+
+    batch : bool
+        Flag which, if set to true, means we use batch mode, else we use serial mode.
 
     legacy : bool
         Flag which determines if legacy (v1) or updated (v2) metapredict networks
@@ -77,15 +80,23 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True, legacy=False):
         return "".join([random.choice(VALID_AMINO_ACIDS) for i in range(n)])
 
     seqs = []
+    n_res = 0
     for i in range(num_seqs):
-        seqs.append(genseq(seq_len))
+        s = genseq(seq_len)
+        seqs.append(s)
+        n_res = n_res + len(s)
 
     start = time.time()
-    for i in seqs:
-        predict_disorder(i, legacy=legacy)
+
+    if batch:
+        predict_disorder_batch(seqs)
+
+    else:
+        for i in seqs:
+            predict_disorder(i, legacy=legacy)
 
     end = time.time()
-    r_per_second = (seq_len*num_seqs)/(end - start)
+    r_per_second = (n_res)/(end - start)
 
     if verbose:
         print(f'Predicting {r_per_second:f} residues per second!')

@@ -16,7 +16,7 @@ metapredict updates and news
 May 2023: Update to default version (metapredict V2-FF)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As of May 2023, we have pushed our improved version metapredict V2-FF. metapredict V2-FF does not change any of the predictions, but does implement substantial performance improvements. Notably these are realized by using the :code:`predict_disorder_batch()` function.
+As of May 2023, we have pushed our improved version metapredict V2-FF. metapredict V2-FF does not change any of the predictions, but does implement substantial performance improvements. Notably these are realized by using the :code:`predict_disorder_batch()` function. 
 
 February 2022: Update to default version (metapredict V2)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -25,7 +25,7 @@ As of February 15, 2022 we have updated metapredict to V2. This comes with impor
 
 These changes are detailed in a `permanent preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ that lives on bioRxiv. We ask you still cite the original metapredict article rather than this preprint.
 
-July 2021: Initial version (metapredict v1(
+July 2021: Initial version (metapredict v1)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The initial version of metapredict was released in July 2021 with the corresponding paper published shortly thereafter in Biophysical Journal:
 
@@ -93,10 +93,10 @@ These changes and new assessment of performance are available in our preprint: `
 
 As per the 2023 Critical Assessment of Intrinsic Disorder (CAID) competition, metapredict V2 is ranked the 9th most accurate disorder predictor available. However, importantly, it is among the fastest regardless of accuracy, and is accessible across multiple platforms, via a web server, and with very few software dependencies. Among the top 10, the difference in accuracy is 0.95 to 0.93 AUC, suggesting to us that all top 10 predictors are highly accurate. In short, we believe metapredict V2 hits a sweet spot of accuracy and performance.
 
-How was does metapredict V2 differ from V2-FF
+How does metapredict V2 differ from V2-FF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-metapredict V2 and V2-FF are identical in terms of predictions and features, with the major difference that metapredict V2-FF offers batched predictions. Batched predictions are automatically parallelized on either the CPU or GPU. In addition, we re-wrote the metapredict domain decomposition algorithm in C to provide a 10-20x improvement in performance for this step.
+metapredict V2 and V2-FF are identical in terms of predictions and features, with the major difference being that metapredict V2-FF offers batched predictions. Batched predictions are automatically parallelized on either the CPU or GPU. In addition, we rewrote the metapredict domain decomposition algorithm in C to provide a 10-20x improvement in performance for this step.
 
 We note that V2-FF was released after CAID, so the performance reported there is the V2 network performance. Because metapredict V2-FF is implemented in a `Google Colab notebook for batch prediction <https://colab.research.google.com/github/idptools/metapredict/blob/master/colab/metapredict_colab.ipynb>`__ you don't have to take our word for it that it's fast; just upload a proteome and see for yourself! 
 
@@ -118,8 +118,8 @@ Why is metapredict useful?
 We think **metapredict** is useful for three main reasons.
 
 1. It's highly accurate, provide strong boundaries between disordered and folded regions.
-2. It's incredibly fast; on CPUs one can predict every IDR in the human proteome in ~5 minutes. On modest GPUs once can predict every IDR in the human proteome in 40 seconds. This stands in stark contrast to other predictors which place length caps on sequences and can take hours per sequence.
-3. It is easy to use and distributed via a wide range of channels. In addition to this Python package, metapredict is distributed as a stand alone webserver, colab notebooks for large-scale predictions, and as an `API for SHEPHARD <https://shephard.readthedocs.io/en/latest/apis.html#metapredict>`__, our general-purpose toolkit for working with an annotating large protein datasets. This Python package further implements metapredict as both python modules and as a set of command-line tools. 
+2. It's incredibly fast; on CPUs one can predict every IDR in the human proteome in ~5 minutes. On modest GPUs one can predict every IDR in the human proteome in 40 seconds. This stands in stark contrast to other predictors which place length caps on sequences and can take hours per sequence.
+3. It is easy to use and distributed via a wide range of channels. In addition to this Python package, metapredict is distributed as a stand-alone webserver, colab notebooks for large-scale predictions, and as an `API for SHEPHARD <https://shephard.readthedocs.io/en/latest/apis.html#metapredict>`__, our general-purpose toolkit for working with an annotating large protein datasets. This Python package further implements metapredict as both Python modules and as a set of command-line tools. 
 
 In summary, we believe metapredict provides the three key ingredients of a useful disorder predictor: it's extremely accurate, it's incredibly fast, and it's very easy to use.
 
