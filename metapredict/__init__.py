@@ -36,7 +36,7 @@ if IGNORE_LIBOMP_ERROR:
 
 
 # Standardized function to check performance
-def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legacy=False, batch_mode=None):
+def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legacy=False, batch_mode=None, variable_length=False):
     """
     Function that lets you test metapredicts performance on your local hardware.
 
@@ -63,6 +63,9 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legac
         Flag which defines which batch_mode algorithm to use for batched predictions.
         Default = None which means the mode is dynamically picked. Can also be 1 or 2.
 
+    variable_length : bool
+        Flag which, if provided, means sequences vary between 20 and seq_len length.
+
     Returns
     ---------------
     int
@@ -80,8 +83,12 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legac
     def genseq(n):
         """
         Function that generates a random 
-        """    
-        return "".join([random.choice(VALID_AMINO_ACIDS) for i in range(n)])
+        """
+        if variable_length:
+            local_n = random.randint(20,seq_len)
+        else:
+            local_n = n
+        return "".join([random.choice(VALID_AMINO_ACIDS) for i in range(local_n)])
 
     seqs = []
     n_res = 0
