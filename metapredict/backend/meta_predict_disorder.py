@@ -43,7 +43,7 @@ predictor = "{}/networks/meta_predict_disorder_100e_v1.pt".format(PATH)
 # network though, so leaving fo the time being.
 # predictor = "{}/networks/metapredict_network_v2_200epochs_nl1_hs20.pt".format(PATH)
 
-# v3 network has significant increase in accuracy of predicting the actual consensus
+# V3 network has significant increase in accuracy of predicting the actual consensus
 # score values. Actual accuracy from predicting disorder values using the Disprot-PDB
 # testing (as in the paper) were negligent. Therefore, we will not use it as the
 # main network and will continue using V1. 

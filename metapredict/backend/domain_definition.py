@@ -2,6 +2,8 @@ import numpy as np
 import scipy
 from scipy.signal import savgol_filter
 from metapredict.metapredict_exceptions import DomainError
+
+from .cython.domain_definition import build_domains_from_values as CYTHON_build_domains_from_values
 """
 Functions for extracting out discrete disordered domains based on the linear disorder score
 calculated by metapredict.
@@ -282,7 +284,8 @@ def get_domains(sequence,
                 minimum_IDR_size=12,
                 minimum_folded_domain=50,
                 gap_closure=10,
-                override_folded_domain_minsize=False):
+                override_folded_domain_minsize=False,
+                use_python = False):
     """
 
     Parameters
@@ -323,6 +326,11 @@ def get_domains(sequence,
         value. If this flag is set to True this override occurs. This is generally not 
         recommended unless you expect there to be well-defined sharp boundaries which could
         define small (20-30) residue folded domains. Default = False.
+
+
+    use_python : bool
+        Flag which, if set to True means we use the Python implementation used for metapredict V2. Default is set
+        to False so we use the Cython implementation, which is default in metapredict V2-FF.
 
     Returns
     ------------
@@ -365,18 +373,35 @@ def get_domains(sequence,
     # smoothe!!!!
     smoothed_disorder = savgol_filter(disorder, window_size, polynomial_order)
 
-
+    # V2-FF implementation
     # bound 0 and 1
-    smoothed_disorder = np.where(smoothed_disorder<0, 0, smoothed_disorder)
-    smoothed_disorder = np.where(smoothed_disorder>1, 1, smoothed_disorder)    
+    smoothed_disorder = np.clip(smoothed_disorder, a_min=0, a_max=1)
+
+    # v2 implementation
+    #smoothed_disorder = np.where(smoothed_disorder<0, 0, smoothed_disorder)
+    #smoothed_disorder = np.where(smoothed_disorder>1, 1, smoothed_disorder)    
 
     # Using smoothed disorder extract out domains
-    disordered_domain_info = __build_domains_from_values(smoothed_disorder,
-                                                         disorder_threshold,
-                                                         minimum_IDR_size=minimum_IDR_size,
-                                                         minimum_folded_domain=minimum_folded_domain,
-                                                         gap_closure=gap_closure,
-                                                         override_folded_domain_minsize=override_folded_domain_minsize)
+    if use_python:
+        disordered_domain_info = __build_domains_from_values(smoothed_disorder,
+                                                             disorder_threshold,
+                                                             minimum_IDR_size=minimum_IDR_size,
+                                                             minimum_folded_domain=minimum_folded_domain,
+                                                             gap_closure=gap_closure,
+                                                             override_folded_domain_minsize=override_folded_domain_minsize)
+    else:
+
+        # if needed, cast smoothed disorder to be double (bcause the Cython function requires this).
+        if smoothed_disorder.dtype != np.float64:
+            smoothed_disorder = smoothed_disorder.astype(np.float64)
+        
+        disordered_domain_info = CYTHON_build_domains_from_values(smoothed_disorder,
+                                                                  np.double(disorder_threshold),
+                                                                  minimum_IDR_size=minimum_IDR_size,
+                                                                  minimum_folded_domain=minimum_folded_domain,
+                                                                  gap_closure=gap_closure,
+                                                                  override_folded_domain_minsize=override_folded_domain_minsize)
+                                         
                                                          
 
     # finally cycle through and get the actual IDR and FD sequences. Note the if len(d) ==2 means we

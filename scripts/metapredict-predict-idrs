@@ -7,6 +7,9 @@ import os
 import argparse
 import protfasta
 
+from metapredict.meta import predict_disorder_batch
+
+
 
 import metapredict as meta
 
@@ -32,7 +35,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode not in ['fasta', 'shephard-domains','shephard-domains-uniprot', ]:
-        raise Exception("--mode must be set to one of 'fasta' or 'shephard-domains'")
+        raise Exception("--mode must be set to one of 'fasta', 'shephard-domains', or 'shephard-domains-uniprot'")
 
     if args.output_file is None:
         if args.mode == 'fasta':
@@ -45,11 +48,12 @@ if __name__ == "__main__":
     
     if args.legacy:
         use_legacy = True
-        threshold_val = args.threshold_val
+        threshold_val = args.threshold
 
 
     else:
         use_legacy=False
+        
         # if not using legacy and the default legacy value is still being used, adjust it to 0.5.
         if args.threshold == 0.42:
             threshold_val = 0.5
@@ -67,51 +71,82 @@ if __name__ == "__main__":
         print('Read in FASTA file')
 
     idrs = {}
-    
-    c = 0
-    n_seqs = len(sequences)
-    for s in sequences:
-        c=c+1
-        idrs[s] = meta.predict_disorder_domains(sequences[s], disorder_threshold=threshold_val, legacy=use_legacy, return_list=True)
 
-        if n_seqs > 500:
-            if args.verbose:
-                if c % 500 == 0:
-                    print(f'On {c:d} of {n_seqs:d}')
-                
+    if use_legacy is True:
         
-    return_dictionary = {}
+        c = 0
+        n_seqs = len(sequences)
+        for s in sequences:
+            c = c + 1
+            idrs[s] = meta.predict_disorder_domains(sequences[s], disorder_threshold=threshold_val, legacy=use_legacy)
+
+            if n_seqs > 500:
+                if args.verbose:
+                    if c % 500 == 0:
+                        print(f'On {c:d} of {n_seqs:d}')
+
+    else:
+        # if using non-legacy then we use batch mode and request return_domains
+        idrs = predict_disorder_batch(sequences, return_domains=True, disorder_threshold=threshold_val)
+
+    # if the return type is a FASTA file we want to write 
     if args.mode == 'fasta':
-        # for each sequence
+
+        return_dictionary = {}    
+
+        # for each protein
         for s in idrs:
-            # d is IDR start and end positions
-            for d in idrs[s][2]:
-                return_dictionary[f'{s:s} IDR_START={d[0]:d} IDR_END={d[1]:d}'] =  d[2]
+
+            # calculate number of IDRs
+            n_idrs = len(idrs[s].disordered_domains)
+
+            for idx in range(n_idrs):
+
+                idr_start = idrs[s].disordered_domain_boundaries[idx][0]
+                idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
+                idr_seq   = idrs[s].disordered_domains[idx]
                 
-        
+                return_dictionary[f'{s} IDR_START={idr_start} IDR_END={idr_end}'] =  idr_seq
+                        
         protfasta.write_fasta(return_dictionary, outfile_name)
 
+    # if the return type is a SHEPHARD-compliant Domains file
     elif args.mode == 'shephard-domains':
         fh = open(outfile_name, 'w')
-        for s in idrs:
-            # d is IDR start and end positions
-            for d in idrs[s][2]:
 
-                # note need +1 for shephard format
-                start = d[0]+1
-                end = d[1]
-                fh.write(f'{s}\t{start}\t{end}\tIDR\n')
+        # for each protein
+        for s in idrs:
+
+            # calculate number of IDRs
+            n_idrs = len(idrs[s].disordered_domains)
+
+            for idx in range(n_idrs):
+
+                idr_start = idrs[s].disordered_domain_boundaries[idx][0]
+                idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
+
+                fh.write(f'{s}\t{idr_start}\t{idr_end}\tIDR\n')
 
     elif args.mode == 'shephard-domains-uniprot':
         fh = open(outfile_name, 'w')
-        for s in idrs:
-            # d is IDR start and end positions
-            for d in idrs[s][2]:
 
+        # for each protein
+        for s in idrs:
+
+            try:
                 uid = s.split('|')[1]
-                start = d[0]+1
-                end = d[1]
-                fh.write(f'{uid}\t{start}\t{end}\tIDR\n')
+            except IndexError:
+                print(f'Error parsing header line: {s}\nCould not split on "|" characters.')
+                exit(1)
+            
+            # calculate number of IDRs
+            n_idrs = len(idrs[s].disordered_domains)
+
+            for idx in range(n_idrs):                
+                idr_start = idrs[s].disordered_domain_boundaries[idx][0]
+                idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
+
+                fh.write(f'{uid}\t{idr_start}\t{idr_end}\tIDR\n')
                 
         
 

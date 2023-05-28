@@ -17,11 +17,17 @@ import random
 import string
 import numpy as np
 
+import protfasta
+
 from metapredict.metapredict_exceptions import MetapredictError
 
 
 current_filepath = os.getcwd()
 fasta_filepath = "{}/input_data/testing.fasta".format(current_filepath)
+
+onehundred_seqs = "{}/input_data/test_seqs_100.fasta".format(current_filepath)
+onehundred_scores = "{}/input_data/test_scores_100.npy".format(current_filepath)
+
 
 def test_metapredict_imported():
     """Sample test, will always pass so long as import statement worked"""
@@ -102,12 +108,12 @@ def test_metapredict_functions():
 
     
     # make sure fasta stuff works for legacy
-    assert meta.predict_disorder_fasta(fasta_filepath, legacy=True) == {'Q8N6T3': local_data.disorder_Q8N6T3_legacy}
+    # updated May 2023 to deal with the fact that predict_disorder_fasta now returns a dictionary where values are np.ndarrays
+    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, legacy=True)['Q8N6T3'], np.array(local_data.disorder_Q8N6T3_legacy, dtype=np.float32))
 
-    # make sure fasta stuff works for new predictor
-    assert meta.predict_disorder_fasta(fasta_filepath, legacy=False) == {'Q8N6T3': local_data.disorder_Q8N6T3}
-
-
+    # make sure FASTA stuff works for non-legacy predictions
+    # updated May 2023 to deal with the fact that predict_disorder_fasta now returns a dictionary where values are np.ndarrays
+    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, legacy=False)['Q8N6T3'], np.array(local_data.disorder_Q8N6T3, dtype=np.float32))
 
 
 def test_predict_disorder_fail():
@@ -206,4 +212,25 @@ def test_percent_disorder_fail():
     # make sure we get gracefull fail on empty string
     with pytest.raises(MetapredictError):
         DisObj = meta.percent_disorder('')
+
+
+def test_big_test():
+    """
+    Big tests that compares previously computed disordered scores for 100 sequences
+    with the current testable version. This is the most robust test to ensure that
+    the current version reproduces scores of other versions of metapredict
+    
+
+    """
+
+    scores = np.load(onehundred_scores, allow_pickle=True).tolist()
+    seqs = protfasta.read_fasta(onehundred_seqs)
+
+    for idx, k in enumerate(seqs):
+        local_score = meta.predict_disorder(seqs[k])
+        assert np.allclose(scores[idx], meta.predict_disorder(seqs[k], return_numpy=True), atol=0.000001)
+
+
+
+        
 

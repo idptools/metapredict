@@ -1,6 +1,7 @@
 import protfasta
 import re
 from metapredict.metapredict_exceptions import MetapredictError
+import numpy as np
 
 
 def valid_range(inval, minval, maxval):
@@ -230,37 +231,58 @@ def write_caid_format(input_dict, output_file):
     current_output.close()
 
 
-def split_fasta(protfasta_fasta_list, number_splits):
+def split_fasta(fasta_list, number_splits):
     '''
     function to split the dict returned from
     a fasta file read in by protfasta to make
     a specific number of dictionaries with
     approximately equal numbers of proteins. 
+
+    Parameters
+    -----------
+    protfasta_fasta_list : list
+        List of amino acid sequences
+
+    number_splits : int
+        Number of lists to split this list into 
+
+    Returns
+    -----------
+    list
+        Returns a list where each sublist within
+        the list contains either the same number
+        number of sequences or +/- 1 number of 
+        sequences to all other lists, and there
+        are number_splits sublists in the main
+        return list.
+          
     '''
-    all_nums=[num for num in range(0, len(protfasta_fasta_list))]
-    num_per_split=int(len(protfasta_fasta_list)/number_splits)
-    all_vals=[]
-    for val in range(0, number_splits):
-        temp_list=[]
-        for subval in range(0, num_per_split):
-            temp_list.append(all_nums.pop())
-        if val==number_splits-1:
-            for val in all_nums:
-                temp_list.append(val)
-        all_vals.append(temp_list)
-    # keep track of added prots
-    num_prots=0
-    split_lists=[]
-    for val in all_vals:
-        temp_list=[]
-        for prot in val:
-            num_prots+=1
-            temp_list.append([protfasta_fasta_list[prot][0], protfasta_fasta_list[prot][1]])
-        split_lists.append(temp_list)
-    # make sure all proteins added
-    if num_prots!= len(protfasta_fasta_list):
+    
+    # Calculate the number of protein sequences per sublist
+    seqs_per_sublist = len(fasta_list) // num_sublists
+
+    # also count remainder
+    remainder = len(fasta_list) % num_sublists
+
+    # Create the sublists
+    sublists = []
+    start = 0
+    for i in range(num_sublists):
+
+        # note: saying 1 if 1 < remainder else 0 means we distribute
+        # the remainder evenly across the sublists
+        sublist_size = seqs_per_sublist + (1 if i < remainder else 0)
+
+        # create a sublist between start and sublist_size position
+        sublist = strings[start:start+sublist_size]
+        sublists.append(sublist)
+        start = start + sublist_size
+
+    # sanity check - good to be sure!
+    if np.sum([len(s) for s in sublist]) != len(fasta_list):
         raise Exception('splitting of fasta file did not get all proteins')
-    return split_lists
+
+    return sublists
 
 
 def append_to_file(outpath, idrs, mode):
