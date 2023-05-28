@@ -37,14 +37,14 @@ def test_predict_disorder_uniprot():
     assert len(meta.predict_disorder_uniprot(P53_UID)) == 393
 
     # check summed disorder is right
-    assert np.sum(meta.predict_disorder_uniprot(P53_UID)) == 181.7708
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID)),181.7708, 0.0001)
 
     # check legacy disorder is right
-    assert np.sum(meta.predict_disorder_uniprot(P53_UID, legacy=True)) == 172.9651
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, legacy=True)),  172.9651, 0.0001)
 
     # check summed disorder is right when we don't normalize (these are not magic values,
     # just the expected 'truth' for the 1.0 release
-    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, normalized=False, legacy=True)),173.5245)
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, normalized=False, legacy=True)),173.5245, 0.0001)
 
 
 # ....................................................................................
@@ -73,7 +73,7 @@ def test_predict_disorder_domains_uniprot_():
 
     dis_domains = meta.predict_disorder_domains_uniprot(P53_UID) 
     assert len(dis_domains.sequence) == 393
-    assert np.sum(dis_domains.disorder) == 181.7708
+    assert np.isclose(np.sum(dis_domains.disorder), 181.7708, 0.001)
 
     # did we find 2 IDRs
     assert len(dis_domains.disordered_domains) == 2

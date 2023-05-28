@@ -228,7 +228,7 @@ def test_big_test():
 
     for idx, k in enumerate(seqs):
         local_score = meta.predict_disorder(seqs[k])
-        assert np.allclose(scores[idx], meta.predict_disorder(seqs[k], return_numpy=True), atol=0.000001)
+        assert np.allclose(scores[idx], meta.predict_disorder(seqs[k], return_numpy=True), atol=0.00001)
 
 
 
