@@ -1,5 +1,12 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
 
+## Current version: metapredict V2-FF
+The current recommended and default version of metapredict is metapredict V2-FF. 
+
+V2-FF provides identical predictions to metapredict V2, but via `batch_mode()` provides 10-1000x improvement in performance on CPUs and GPUs. 
+
+## Update notice
+
 **Important update** - as of February 15, 2022 we have updated metapredict to V2.0. This comes with important changes that improve the accuracy of metapredict. Please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the *predict_disorder_domains()* function, so please read the documentation on that function if you were using it previously. 
 
 **metapredict** uses a bidirectional recurrent neural network trained on the consensus disorder values from 8 disorder predictors from 12 proteomes that were obtained from [MobiDB](https://mobidb.bio.unipd.it/). In addition, as of version 2, metapredict incorporates an additional layer of predictions by counter-selecting based on structure predictions from AlphaFold2. The creation of metapredict was made possible by [parrot](https://github.com/idptools/parrot).
@@ -115,28 +122,6 @@ If you would like to specify where to save the output, simply use the ``-o`` or 
 **Example**
 
     $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
-
-**Using the original metapredict predictor**
-To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
-
-### Predicting Disorder from a fasta file using multiple cores
-
-The ``metapredict-multipredict`` command from the command line takes a .fasta file as input and returns disorder scores for the sequences in the FASTA file. It works the same as metapredict-predict-disroder but splits the sequences across the number of cores you specify. USE THIS AT YOUR OWN RISK! If you specify too many cores, you're going to have a bad time.
-
-	$ metapredict-multipredict <Path to .fasta file> <number of cores>
-
-**Example - using 5 cores**
-
-	$ metapredict-multipredict /Users/thisUser/Desktop/interestingProteins.fasta 5
-
-**Additional Usage**
-
-**specifying where to save the output -** 
-If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name. By default this command will save the output file as disorder_scores.csv to your current working directory. However, you can specify the file name in the output path.
-
-**Example**
-
-    $ metapredict-multipredict /Users/thisUser/Desktop/interestingProteins.fasta 5 -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
 
 **Using the original metapredict predictor**
 To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
@@ -1116,8 +1101,20 @@ Example data that can be used with metapredict can be found in the metapredict/d
 
 
 ### Recent changes
-
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+
+#### V2.6 (metapredict V2-FF) (May 2023)
+Changes:
+
+* V2.6 represents an update of metapredict to a version we refer to as metapredict V2-FF. V2-F22 provides a dramatic improvement in prediction performance when `batch_mode()` is used. On CPUs, this provides a 5-20x improvement in performance. On GPUs, this enables proteome-wide prediction in seconds. 
+
+* Removed explicit multicore support and replaced with implicit parallelization in via `batch_predict()`.
+
+* `batch_predict()` is now called in non-legacy predict for `predict_disorder_fasta()`, and can also be called via a `predict_disorder_batch()` which can take either a list or dictionary of sequences. 
+
+* From command-line tools, `metapredict-predict-idrs`, and `metapredict-predict-disorder` will also use batch mode if legacy=False (default), which as well as being much faster now provide a status bar.
+
+* Note that this update adds `tqdm` as a dependency for metapredict
 
 
 #### V2.5 (March 2023)

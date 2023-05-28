@@ -330,7 +330,7 @@ def get_domains(sequence,
 
     use_python : bool
         Flag which, if set to True means we use the Python implementation used for metapredict V2. Default is set
-        to False so we use the Cython implementation, which is default in metapredict V3.
+        to False so we use the Cython implementation, which is default in metapredict V2-FF.
 
     Returns
     ------------
@@ -373,7 +373,7 @@ def get_domains(sequence,
     # smoothe!!!!
     smoothed_disorder = savgol_filter(disorder, window_size, polynomial_order)
 
-    # v3 implementation
+    # V2-FF implementation
     # bound 0 and 1
     smoothed_disorder = np.clip(smoothed_disorder, a_min=0, a_max=1)
 

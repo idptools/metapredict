@@ -476,7 +476,7 @@ def predict_disorder_batch(input_sequences,
     CPU, predictions for a set of sequences are performed
     rapidly.
 
-    Batch mode was implemented in metapredict V3, as is 
+    Batch mode was implemented in metapredict V2-FF, as is 
     optimized for the hybrid network first released in V2.
     As such a few options are not available for batch mode
     which include:
