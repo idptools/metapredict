@@ -79,11 +79,14 @@ class Predictor():
         # if gpuid is not set to cpu
         if gpuid != 'cpu':
             if torch.cuda.is_available():
-                device = torch.device(f"cuda:{gpuid}")
+                device_string = f"cuda:{gpuid}"
+                device = torch.device(device_string)
             else:
-                device = torch.device("cpu")
+                device_string = "cpu"
+                device = torch.device(device_string)
         else:
-            device = torch.device("cpu")
+            device_string = "cpu"
+            device = torch.device(device_string)
 
         self.device = device
 
@@ -109,13 +112,14 @@ class Predictor():
         else:
             self.task = "regression"
 
-        # Instantiate network weights into Predictor() object
+        # Instantiate network weights into Predictor() object - note we have to ensure the network
+        # is loaded onto the same model as the device type
         if self.dtype == "sequence":
             self.network = brnn_architecture.BRNN_MtO(20, self.hidden_vector_size, 
-                                            self.num_layers, self.n_classes, 'cpu')
+                                                      self.num_layers, self.n_classes, device_string)
         elif self.dtype == "residues":
             self.network = brnn_architecture.BRNN_MtM(20, self.hidden_vector_size, 
-                                            self.num_layers, self.n_classes, 'cpu')
+                                                      self.num_layers, self.n_classes, device_string)
         else:
             raise ValueError("dtype must equal 'residues' or 'sequence'")
                                         
