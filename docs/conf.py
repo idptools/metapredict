@@ -24,9 +24,8 @@ import metapredict
 # -- Project information -----------------------------------------------------
 
 project = 'metapredict'
-copyright = ("2020, Ryan Emenecker - Holehouse Lab - WUSM. Project structure based on the "
-             "Computational Molecular Science Python Cookiecutter version 1.3")
-author = 'Ryan Emenecker - Holehouse Lab - WUSM'
+copyright = ("2020-2023, Ryan Emenecker - Holehouse Lab - Washington University School of Medicine.")
+author = 'Ryan Emenecker - Holehouse Lab, Washington University School of Medicine'
 
 # The short X.Y version
 version = ''

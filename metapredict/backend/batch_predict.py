@@ -174,20 +174,18 @@ def batch_predict(input_sequences,
     CPU, predictions for a set of sequences are performed
     rapidly.
 
-    Batch mode was implemented in metapredict V3, as is 
+    Batch mode was implemented in metapredict V2-FF, as is 
     optimized for the hybrid network first released in V2.
     As such a few options are not available for batch mode
+
     which include:
 
-    legacy - you cannot predict legacy metapredict scores
-             with batch_mode
-
-    normalize - all predictions are automatically normalized
-            to fall between 0 and 1
-
-    return_numpy - all disorder scores are returned as 
-                   numpy arrays.
-
+    * legacy - you cannot predict legacy metapredict scores with batch_mode
+             
+    * normalize - all predictions are automatically normalized to fall between 0 and 1
+            
+    * return_numpy - all disorder scores are returned as numpy arrays.
+                   
     Note also that batch mode uses 32-bit float vectors
     whereas non-batch uses 64-bit float vectors, so the
     precise values in batch vs. non-batch may differ 

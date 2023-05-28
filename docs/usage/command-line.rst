@@ -8,8 +8,8 @@ Using the original metapredict network
 We have recently updated the network that makes predictions for metapredict to massively improve accuracy. However, if you need to use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
 
 
-Predicting Disorder from Fasta Files
----------------------------------------
+Predicting disorder scores from fasta files
+--------------------------------------------
 
 The ``metapredict-predict-disorder`` command from the command line takes a .fasta file as input and returns disorder scores for the sequences in the FASTA file.
 
@@ -24,7 +24,9 @@ Once metapredict is installed, the user can run ``metapredict-predict-disorder``
 .. code-block:: bash
 	
 	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
-
+	
+	
+Note that as of metapredict V2-FF this will automatically parallelize on a GPU or CPU if available. A progress bar will also be generated in the terminal.	
 
 **Additional Usage:**
 
@@ -47,8 +49,56 @@ To use the original metapredict network, simply use the ``-l`` or ``--legacy`` f
     
     $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv -l
 
-Predicting Disorder from a Sequence
-------------------------------------
+
+Predicting IDRs from a fasta file
+----------------------------------------
+
+The ``metapredict-predict-idrs`` command from the command line takes a .fasta file as input and returns a .fasta file containing the IDRs for every sequence from the input .fasta file. 
+
+.. code-block:: bash
+
+	$ metapredict-predict-idrs <Path to .fasta file> 
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta 
+
+Note that as of metapredict V2-FF this will automatically parallelize on a GPU or CPU if available. A progress bar will also be generated in the terminal.
+
+**Additional Usage**
+
+**specifying where to save the output -** 
+If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name.
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta
+
+**Using the original metapredict predictor**
+To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag! Note that if legacy mode is requested no parallelization is possible.
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta -l
+
+**Changing output threshold for disorder-**
+To change the cutoff value for something to be considered disordered, simply use the ``--threshold`` flag and then specify your value. For legacy, the default is 0.42. For the new version of metapredict, the value is 0.5. 
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta --threshold 0.3
+
+
+Predicting disorder scores from sequence
+------------------------------------------
 
 ``metapredict-quick-predict`` is a command that will let you input a sequence and get disorder values immediately printed to the terminal. The only argument that can be input is the sequence.
 
@@ -69,7 +119,7 @@ To use the original metapredict network, simply use the ``-l`` or ``--legacy`` f
     $ metapredict-quick-predict ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVA -l
 
 
-Predicting AlphaFold2 Confidence Scores from a Fasta File
+Predicting AlphaFold2 confidence scores from a fasta file
 ------------------------------------------------------------
 
 The ``metapredict-predict-pLDDT`` command from the command line takes a .fasta file as input and returns predicted AlphaFold2 pLDDT confidence scores for the sequences in the FASTA file.
@@ -97,8 +147,8 @@ If you would like to specify where to save the output, simply use the ``-o`` or 
 
 
 
-Graphing Disorder from a Fasta file
-------------------------------------
+Plotting disorder profiles from a fasta file
+-----------------------------------------------
 
 The ``metapredict-graph-disorder`` command from the command line takes a .fasta file as input and returns a graph for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file.  
 
@@ -186,8 +236,8 @@ To use the original metapredict network, simply use the ``-l`` or ``--legacy`` f
 
 
 
-Quick Graphing
----------------
+Quick graphing of disorder scores
+-------------------------------------
 
 ``metapredict-quick-graph`` is a command that will let you input a sequence and get a plot of the disorder back immediately. You cannot input fasta files for this command. The command only takes three arguments, 1. the sequence 2. *optional* DPI ``-D``  or ``--dpi`` of the output graph which defaults to 150 DPI, and 3. *optional* to include predicted AlphaFold2 confidence scores, use the ``p`` or ``--pLDDT`` flag.
 
@@ -219,10 +269,10 @@ To use the original metapredict network, simply use the ``-l`` or ``--legacy`` f
     $ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -l
 
 
-Graphing using Uniprot ID
---------------------------
+Graphing disorder scores using UniProt ID
+---------------------------------------------
 
-``metapredict-uniprot`` is a command that will let you input any Uniprot ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the Uniprot ID which is required for this command, the command has four possible additional *optional* arguments, 1. To include predicted AlphaFold2 pLDDT confidence scores, use the ``-p``  or ``--pLDDT`` flag. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 3. Using ``-o``  or ``--output-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the Uniprot ID and as a .png, 4. ``-t``  or ``--title`` will let you specify the title of the plot. By default the title will be *Disorder for* followed by the Uniprot ID.
+``metapredict-uniprot`` is a command that will let you input any UniProt ID and get a plot of the disorder for the corresponding protein. The default behavior is to have a plot automatically appear. Apart from the UniProt ID which is required for this command, the command has four possible additional *optional* arguments, 1. To include predicted AlphaFold2 pLDDT confidence scores, use the ``-p``  or ``--pLDDT`` flag. DPI can be changed with the ``-D``  or ``--dpi`` flags, default is 150 DPI, 3. Using ``-o``  or ``--output-file`` will save the plot to a specified directory (default is current directory) - filenames and file extensions (pdf, jpg, png, etc) can be specified here. If there is no file name specified, it will save as the UniProt ID and as a .png, 4. ``-t``  or ``--title`` will let you specify the title of the plot. By default the title will be *Disorder for* followed by the UniProt ID.
 
 **Example:**
 
@@ -274,7 +324,7 @@ To use the original metapredict network, simply use the ``-l`` or ``--legacy`` f
 Graphing disorder using the common name of a protein
 -----------------------------------------------------
 
-Sometimes you just don't know the Uniprot ID for your favorite protein, and looking it up can be a pain. With the ``metapredict-name`` command, you can input the common name of your favorite protein and get a graph in return. Metapredict will also print the name of the organisms and the uniprot ID it found so you know you're looking at the correct protein. This is because this functionality queries your input protein name on Uniprot and takes the top hit. Sometimes this is the protein you're looking for, but not always. To increase the likelihood of success, use your protein name and the organism name for this command.
+Sometimes you just don't know the UniProt ID for your favorite protein, and looking it up can be a pain. With the ``metapredict-name`` command, you can input the common name of your favorite protein and get a graph in return. Metapredict will also print the name of the organisms and the UniProt ID it found so you know you're looking at the correct protein. This is because this functionality queries your input protein name on UniProt and takes the top hit. Sometimes this is the protein you're looking for, but not always. To increase the likelihood of success, use your protein name and the organism name for this command.
 
 *Example*
 
@@ -282,7 +332,7 @@ Sometimes you just don't know the Uniprot ID for your favorite protein, and look
     
     $ metapredict-name p53 
 
-will graph the metapredict disorder scores for the Homo sapiens p53 protein. This is because Homo sapiens p53 is the top hit on Uniprot when you search p53. However...
+will graph the metapredict disorder scores for the Homo sapiens p53 protein. This is because Homo sapiens p53 is the top hit on UniProt when you search p53. However...
 
 .. code-block:: bash
     
@@ -336,9 +386,9 @@ To use the legacy version of metapredict for your disorder scores, use the ``-l`
     $ metapredict-name p53 -l
 
 
-**Printing the full Uniprot ID to your terminal**
+**Printing the full UniProt ID to your terminal**
 
-To have your terminal print the entire Uniprot ID as well as the full protein sequence from your specified protein upon graphing, use the ``-v`` or ``--verbose`` flag.
+To have your terminal print the entire UniProt ID as well as the full protein sequence from your specified protein upon graphing, use the ``-v`` or ``--verbose`` flag.
 
 **Example**
 
@@ -349,7 +399,7 @@ To have your terminal print the entire Uniprot ID as well as the full protein se
 
 **Turning off all printing to the terminal**
 
-By default, the *metapredict-name* command prints the uniprot ID as well as other information related to your protein to the terminal. The purpose of this is to make it explicitly clear which protein was graphed because grabbing the top hit from Uniprot *does not guarantee* that it is the protein you want or expected. However, this behavior can be turned off by using the ``-s`` or ``--silent`` flag.
+By default, the *metapredict-name* command prints the UniProt ID as well as other information related to your protein to the terminal. The purpose of this is to make it explicitly clear which protein was graphed because grabbing the top hit from UniProt *does not guarantee* that it is the protein you want or expected. However, this behavior can be turned off by using the ``-s`` or ``--silent`` flag.
 
 **Example**
 
@@ -359,7 +409,7 @@ By default, the *metapredict-name* command prints the uniprot ID as well as othe
 
 
 
-Graphing Predicted AlphaFold2 pLDDT Scores from a fasta file
+Graphing predicted AlphaFold2 pLDDT scores from a fasta file
 -------------------------------------------------------------------
 
 The ``metapredict-graph-pLDDT`` command from the command line takes a .fasta file as input and returns a graph of the predicted AlphaFold2 pLDDT confidence score for every sequence within the .fasta file. **Warning** This will return a graph for every sequence in the FASTA file. 
@@ -417,45 +467,4 @@ If you would like to index the file names with a leading unique integer starting
 	$ metapredict-graph-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/pLDDTGraphsFolder/ --indexed-filenames
 
 
-Predicting IDRs from a fasta file
--------------------------------------------------------------------
-
-The ``metapredict-predict-idrs`` command from the command line takes a .fasta file as input and returns a .fasta file containing the IDRs for every sequence from the input .fasta file. 
-
-	$ metapredict-predict-idrs <Path to .fasta file> 
-
-**Example**
-
-.. code-block:: bash
-	
-	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta 
-
-**Additional Usage**
-
-**specifying where to save the output -** 
-If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name.
-
-**Example**
-
-.. code-block:: bash
-	
-	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta
-
-**Using the original metapredict predictor**
-To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
-
-**Example**
-
-.. code-block:: bash
-	
-	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta -l
-
-**Changing output threshold for disorder-**
-To change the cutoff value for something to be considered disordered, simply use the ``--threshold`` flag and then specify your value. For legacy, the default is 0.42. For the new version of metapredict, the value is 0.5. 
-
-**Example**
-
-.. code-block:: bash
-	
-	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta --threshold 0.3
 

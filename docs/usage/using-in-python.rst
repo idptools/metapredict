@@ -1,6 +1,5 @@
-
 metapredict in Python
-=====================
+=======================
 
 In addition to using metapredict from the command line, you can also use it directly in Python. This enables metapredict to be incorporated into your bioinformatic workflows with ease
 
@@ -12,12 +11,33 @@ First import metapredict:
 
 Once metapredict is imported, you can work with individual sequences or .fasta files. :doc:`For a list of all metapredict's public-facing functions and their documentation click here  <api>`
 
-Important update to predict_disorder_domains() function for V2.0 and above
-------------------------------------------------------------------------------
+Important updates
+---------------------
 
-As of February 15, 2022 we have updated metapredict to V2. V2 provides a major improvement in accuracy and interpretability, and works by incorporating in predictions made from AlphaFold2  to provide a new underlying prediction network. The original metapredict network is still available using the ``legacy=True`` flag. For more information, please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the ``predict_disorder_domains()`` function, so please read the documentation on that function if you were using it previously! 
+Update to metapredict V2-FF (May 2023)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We recently released a `preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ documenting all these changes and more!
+In May 2023 the default version of metapredict updated to be V2-FF. V2-FF introduces one primary difference from the user's perspective; disorder scores and disordered domains can now be predicted in parallel batches using:
+
+.. code-block:: python
+	
+	import metapredict as meta
+	
+	# batch disorder in batch
+	meta.predict_disorder_batch(...) 
+		
+If GPU are available, batch prediction will automatically use GPUs. If not, batch prediction will distribute predictions across the CPUs. While all the original functionality is preserved, :code:`predict_disorder_batch()`, offers a 5-10x speedup on CPUs and 30-40x speedup on GPUs.  
+
+:code:`predict_disorder_batch()` can take in a list of sequences or a dictionary of sequences, and returns a list or dictionary that maps input index back to a two-position list of sequence and disorder scores or, if :code:`return_disorder_domains` is set to True, a list of :code:`DisorderDomain` objects.
+
+This functionality is described in detail in the function documentation under the Python Module Documentation entry for :code:`predict_disorder_batch()`.
+
+
+Update to metapredict V2 (Feb 2022)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+As of February 15, 2022 we have updated metapredict to V2. V2 provides a major improvement in accuracy and interpretability and works by incorporating in predictions made from AlphaFold2  to provide a new underlying prediction network. The original metapredict network is still available using the ``legacy=True`` flag. For more information, please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the ``predict_disorder_domains()`` function, so please read the documentation on that function if you were using it previously! 
+
+We released a `preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ documenting all these changes and more!
 
 
 Predicting Disorder
@@ -214,7 +234,7 @@ The minimum IDR size will define the smallest possible region that could be cons
 	meta.predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
 
 **Altering the minimum folded domain size -**
-The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x ``disorder_threshold`` and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two lengthscales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
+The minimum folded domain size defines where we expect the limit of small folded domains to be. *NOTE* this is not a hard limit and functions more to modulate the removal of large gaps. In other words, gaps less than this size are treated less strictly. *Note* that, in addition, gaps < 35 are evaluated with a threshold of 0.35 x ``disorder_threshold`` and gaps < 20 are evaluated with a threshold of 0.25 x disorder_threshold. These two length-scales were decided based on the fact that coiled-coiled regions (which are IDRs in isolation) often show up with reduced apparent disorder within IDRs but can be as short as 20-30 residues. The folded_domain_threshold is used based on the idea that it allows a 'shortest reasonable' folded domain to be identified. Default=50.
 
 **Example**
 
@@ -263,7 +283,7 @@ would output -
 
 The default usage is with the ``threshold`` mode. In this case, each residue is evaluated against a threshold value, where disorder scores above that threshold count towards disordered residues. This mode uses a threshold value of 0.5 (for V2) or 0.3 (for legacy), although the threshold can be changed (see below).
 
-The alternative mode, ``disorder_domains``, makes use of metapredictis ``predict_disorder_domains()`` functionality. Now, the sequence is divided up into IDRs and folded domains, and then the percentage disordered is based on what fraction of residues fall into IDRs. The underlying disorder domain prediction uses the default disorder thresholds as per the  ``predict_disorder_domains()` function, but this can be over-ridden if a ``disorder_threshold`` keyword is passed. For example:
+The alternative mode, ``disorder_domains``, makes use of metapredict's ``predict_disorder_domains()`` functionality. Now, the sequence is divided up into IDRs and folded domains, and then the percentage disordered is based on what fraction of residues fall into IDRs. The underlying disorder domain prediction uses the default disorder thresholds as per the  ``predict_disorder_domains()` function, but this can be over-ridden if a ``disorder_threshold`` keyword is passed. For example:
 
 .. code-block:: python
 
@@ -498,7 +518,7 @@ Just like with ``predict_disorder_fasta``, you can use ``predict_pLDDT_fasta`` t
 Predict Disorder Using Uniprot ID
 -----------------------------------
 
-By using the ``predict_disorder_uniprot()`` function, you can return predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+By using the ``predict_disorder_uniprot()`` function, you can return predicted consensus disorder values for the amino acid sequence of a protein by specifying the UniProt ID. 
 
 **Example**
 
@@ -520,7 +540,7 @@ To use the original metapredict network, simply set ``legacy=True``.
 Predicting AlphaFold2 Confidence Scores Using Uniprot ID
 -----------------------------------------------------------
 
-By using the ``predict_pLDDT_uniprot`` function, you can generate predicted AlphaFold2 pLDDT confidence scores by inputting a Uniprot ID.
+By using the ``predict_pLDDT_uniprot`` function, you can generate predicted AlphaFold2 pLDDT confidence scores by inputting a UniProt ID.
 
 **Example**
 
@@ -614,10 +634,10 @@ By using the ``graph_pLDDT_fasta`` function, you can graph predicted AlphaFold2 
     meta.graph_pLDDT_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs")
 
 
-Generating Graphs Using Uniprot ID
+Generating Graphs Using UniProt ID
 ------------------------------------
 
-By using the ``graph_disorder_uniprot()`` function, you can graph predicted consensus disorder values for the amino acid sequence of a protein by specifying the Uniprot ID. 
+By using the ``graph_disorder_uniprot()`` function, you can graph predicted consensus disorder values for the amino acid sequence of a protein by specifying the UniProt ID. 
 
 **Example**
 
@@ -653,7 +673,7 @@ To use the original metapredict network, simply set ``legacy=True``.
     
     meta.graph_disorder_uniprot("Q8N6T3", legacy=True)
 
-Generating AlphaFold2 Confidnce Score Graphs Using Uniprot ID
+Generating AlphaFold2 Confidence Score Graphs Using UniProt ID
 --------------------------------------------------------------
 
 Just like with disorder predictions, you can also get AlphaFold2 pLDDT confidence score graphs using the Uniprot ID. This will **only display the pLDDT confidence scores** and not the predicted disorder scores. 
@@ -710,6 +730,88 @@ To use the original metapredict network, simply set ``legacy=True``.
 .. code-block:: python
     
     meta.predict_disorder_domains_uniprot('Q8N6T3' legacy=True)
+
+
+
+Batch prediction of disorder scores or disordered domains
+---------------------------------------------------------
+
+As of metapredict V2-FF (V2.6), metapredict enables GPU or CPU enabled batch prediction.
+
+
+Predicting disorder scores in batch mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The simplest usage is to pass a list of sequences to :code:`predict_disorder_batch()` e.g.:
+
+.. code-block:: python
+
+	seqs = ['APSPASPPASPSA','PQPQPQPWQPWPQPW','ASDASFPAPSDPASDPA']
+
+	return_data = meta.predict_disorder_batch(seqs)
+	
+In this scenario, :code:`return_data` is a list of three elements, where each element is itself a list that has two elements; the sequence and the per-residue disorder scores as an :code:`np.ndarray`:
+
+.. code-block:: python
+
+	[['APSPASPPASPSA',
+	  array([0.8983, 0.9628, 0.9682, 0.9767, 0.9798, 0.9904, 0.9774, 0.9711,
+	         0.9656, 0.969 , 0.9361, 0.8879, 0.7606], dtype=float32)],
+	 ['PQPQPQPWQPWPQPW',
+	  array([0.9251, 0.9448, 0.949 , 0.9393, 0.9276, 0.9132, 0.8923, 0.8575,
+	         0.8385, 0.8138, 0.7777, 0.7366, 0.7164, 0.6184, 0.4999],
+	        dtype=float32)],
+	 ['ASDASFPAPSDPASDPA',
+	  array([0.8881, 0.9427, 0.95  , 0.9415, 0.9431, 0.9336, 0.9295, 0.9304,
+	         0.9299, 0.9377, 0.9351, 0.9235, 0.9137, 0.9203, 0.8864, 0.83  ,
+	         0.7037], dtype=float32)]]
+
+Note also that by default this function will print a progress bar to report on how quickly predictions are running. If this is not desired, the progress bar can be turned off using :code:`show_progress_bar=False` option in the function signature.
+
+In addition to passing in a list of sequences, you can also pass in a dictionary of sequences with protein_id:sequence mapping. In this case, the function will return a dictionary that has the same key-value pairing as the input dictionary, but instead of key-value (protein_id:[sequence, disorder prediction]). In this way, predicting disorder scores for large sets of sequences becomes straight forward. 
+
+Predicting disordered domains in batch mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+For disordered domains, the same function can be used with  :code:`return_domains=True` set. If this is the case, the same input/output behavior (lists or dictionaries as inputs) can be used, but rather than returning a two-position list of sequence and disorder score, the return type is a single DisorderDomain object. 
+
+DisorderDomain objects are data structures that present a set of information about a protein. Each object has six so-called "dot variables" (object variables) that provide distinct information:
+
+* `sequence` - reports on the sequence of the full protein
+* `disorder` - reports on the per-residue disorder score for the whole protein (i.e. the same information that would be reported if :code:`return_domains=False` 
+* `disordered_domain_boundaries` - is a list with 0 or more sublists, where those sublists define the start and end positions of the IDRs within the protein sequence. These domain boundaries follow Python notation, i.e. if a disordered region ran between residue 1 and 10 in a protein, the boundaries would be [0,9].
+* `folded_domain_boundaries` - same conceptual idea as described for the `disordered_domain_boundaries`, except here the reciprocal folded domain boundaries are reported.
+* `disordered_domains` - the actual amino acid sequence of the IDRs - i.e. the length of `disordered_domains` is the same as the length of `disordered_domain_boundaries`.
+* `folded_domains` - the actual amino acid sequence of the folded domains - i.e. the length of `folded_domains` is the same as the length of `folded_domain_boundaries`.
+
+As an example:
+
+.. code-block:: python
+
+	seqs = ['APSPASPPASPSA','PQPQPQPWQPWPQPW','ASDASFPAPSDPASDPA']
+
+	return_data = meta.predict_disorder_batch(seqs, return_domains=True)
+
+	# if we then examined one of the return objects
+	tmp = return_data[0]
+	
+	print(tmp)
+	
+		DisorderObject for sequence with 13 residues, 1 IDRs, and 0 folded domains
+		Available dot variables are:
+		  .sequence
+		  .disorder
+		  .disordered_domain_boundaries
+		  .folded_domain_boundaries
+		  .disordered_domains
+		  .folded_domains
+		  
+	print(tmp.disordered_domains)
+		['APSPASPPASPSA']
+		
+	print(disorder)
+		[0.8983 0.9628 0.9682 0.9767 0.9798 0.9904 0.9774 0.9711 0.9656 		0.969 0.9361 0.8879 0.7606]
+		
+The various options for changing the definition of a disordered domain are also available to be passed to :code:`meta.predict_disorder_batch()`. For a complete list of possible input variables we recommend checking out the corresponding Python module documentation.
 
 
 Predicting Disorder Domains from external scores:

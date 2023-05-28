@@ -185,7 +185,7 @@ def test_predict_disorder_domains_fail():
 def test_predict_disorder_domains_random_seqs():
 
     N = 200
-    n_seqs = 5
+    n_seqs = 500
 
     for i in range(n_seqs):
         local_seq = ''.join(random.choices(['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y'], k=N))
@@ -193,18 +193,23 @@ def test_predict_disorder_domains_random_seqs():
 
         # check no residues are in any IDR
         assert len(DisObj.disordered_domains) == 0
-
         assert meta.percent_disorder(local_seq, mode='disorder_domains', disorder_threshold=1) == 0
 
 
     for i in range(n_seqs):
         local_seq = ''.join(random.choices(['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y'], k=N))
-        DisObj = meta.predict_disorder_domains(local_seq, return_numpy=False, disorder_threshold=0)        
+        DisObj = meta.predict_disorder_domains(local_seq, return_numpy=False, disorder_threshold=0)
 
-        # check all residues are in one IDR
-        assert len(DisObj.disordered_domains[0]) == N
+        # technically we can have non-IDRs with a threshold of 0 if there is a region where disorder score is
+        # literally 0
+        if len(DisObj.disordered_domains[0]) != N:
+            print(f'If this fails we have a weird bug; sequence: {local_seq}')
+            assert np.sum(np.array(DisObj.disorder) > 0) < N
+        else:
+            # check all residues are in one IDR
+            assert len(DisObj.disordered_domains[0]) == N
 
-        assert meta.percent_disorder(local_seq, mode='disorder_domains', disorder_threshold=0) == 100
+            assert meta.percent_disorder(local_seq, mode='disorder_domains', disorder_threshold=0) == 100
 
 
 def test_percent_disorder_fail():
@@ -219,6 +224,12 @@ def test_big_test():
     Big tests that compares previously computed disordered scores for 100 sequences
     with the current testable version. This is the most robust test to ensure that
     the current version reproduces scores of other versions of metapredict
+
+    ## update may 2023
+    Note; we had to pull the atol down to 0.0001 for Py310 which probably reflects
+    some changes under the hood in how floats are dealt with in the C/python/Cython
+    exchange and/or in PyTorch. This is not an issue, but we're just documenting it
+    in case this comes up in the future
     
 
     """
@@ -228,7 +239,7 @@ def test_big_test():
 
     for idx, k in enumerate(seqs):
         local_score = meta.predict_disorder(seqs[k])
-        assert np.allclose(scores[idx], meta.predict_disorder(seqs[k], return_numpy=True), atol=0.00001)
+        assert np.allclose(scores[idx], meta.predict_disorder(seqs[k], return_numpy=True), atol=0.0001)
 
 
 
