@@ -354,14 +354,17 @@ def batch_predict(input_sequences,
     # over-ride (for performance testing)
     if force_mode is not None:
         if force_mode not in [1,2]:
-            raise Exception("If mode is to be forced, must be 1 or 2, but we don't recommend this...")
+            raise Exception("Batch mode must be set to 1 or 2")
         batch_mode = force_mode
+        if version.parse(torch.__version__) < version.parse("1.11.0") and batch_mode == 2:
+            print(f'Warning; batch mode 2 not supported in PyTorch {torch.__version__}. Over-riding and switching to mode=1')
+            batch_mode = 1
+        
     else:
         if version.parse(torch.__version__) >= version.parse("1.11.0"):
             batch_mode = 2
         else:
             batch_mode = 1
-
 
     ##
     ## Prepare data by generate a list (sequence_list)

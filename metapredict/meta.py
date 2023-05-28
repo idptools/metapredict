@@ -468,7 +468,8 @@ def predict_disorder_batch(input_sequences,
                            minimum_IDR_size=12,
                            minimum_folded_domain=50,
                            gap_closure=10,
-                           show_progress_bar = True):
+                           show_progress_bar = True,
+                           batch_mode = None):
 
     """
     Batch mode predictor which takes advantage of PyTorch
@@ -568,6 +569,28 @@ def predict_disorder_batch(input_sequences,
         predictions are made, while if False no progress bar is printed.
         Default  =  True
 
+    batch_mode : int
+        Indictora which, if set to 1 or 2 will FORCE the batch 
+        algorithm to use mode 1 or mode 2 for batch 
+        decomposition.
+
+        Mode 1 means we pre-filter sequences into groups where 
+        they're all the same length, avoiding padding/packing. 
+        This works in all versions of torch, and will be faster
+        if you have very large datasets or have many copies of 
+        the same sequence.
+
+        Mode 2 involves padding/packing the sequences so that 
+        all sequences can be passed in a batchsize of 32. This 
+        is only available if pytorch 1.11 or higher is available, 
+        but for small sets of sequences 1-10,000 will be much 
+        faster than mode 1. We default to mode 2 if available, 
+        but in special cases you may want to force mode 1.
+
+        Default = None, which means dynamic selection occurs (2
+        if available, fall-back to 1). However 1 may often actually
+        be more efficient, so it's worth testing modes to see if
+        there's any change in perforance for a given dataset.
 
     Returns
     -------------
@@ -608,7 +631,8 @@ def predict_disorder_batch(input_sequences,
                           minimum_IDR_size = minimum_IDR_size,
                           minimum_folded_domain = minimum_folded_domain,
                           gap_closure = gap_closure,
-                          show_progress_bar = show_progress_bar)
+                          show_progress_bar = show_progress_bar,
+                          force_mode = batch_mode)
 
 
 

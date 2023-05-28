@@ -36,7 +36,7 @@ if IGNORE_LIBOMP_ERROR:
 
 
 # Standardized function to check performance
-def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legacy=False):
+def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legacy=False, batch_mode=None):
     """
     Function that lets you test metapredicts performance on your local hardware.
 
@@ -58,6 +58,10 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legac
     legacy : bool
         Flag which determines if legacy (v1) or updated (v2) metapredict networks
         are used.
+
+    batch_mode : int
+        Flag which defines which batch_mode algorithm to use for batched predictions.
+        Default = None which means the mode is dynamically picked. Can also be 1 or 2.
 
     Returns
     ---------------
@@ -89,7 +93,7 @@ def print_performance(seq_len=500, num_seqs=100, verbose=True, batch=True, legac
     start = time.time()
 
     if batch:
-        predict_disorder_batch(seqs)
+        predict_disorder_batch(seqs, batch_mode=batch_mode)
 
     else:
         for i in seqs:
