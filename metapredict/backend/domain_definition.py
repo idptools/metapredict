@@ -3,7 +3,18 @@ import scipy
 from scipy.signal import savgol_filter
 from metapredict.metapredict_exceptions import DomainError
 
-from .cython.domain_definition import build_domains_from_values as CYTHON_build_domains_from_values
+try:
+    from .cython.domain_definition import build_domains_from_values as CYTHON_build_domains_from_values
+    
+except ModuleNotFoundError as e:
+    print('ERROR: Cython module was not found. This will happen if your installation did not correctly compile the cython modules')
+
+
+    # build a mock function
+    def CYTHON_build_domains_from_values(a,b,c,d,e,f):
+        raise ModuleNotFoundError('Could not import build_domains_from_values() in metapredict.backend.cython.domain_definition. Cython code has not compiled')
+
+    
 """
 Functions for extracting out discrete disordered domains based on the linear disorder score
 calculated by metapredict.
