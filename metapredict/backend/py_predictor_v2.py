@@ -79,8 +79,8 @@ class Predictor():
         # if gpuid is not set to cpu
         if gpuid != 'cpu':
             if torch.cuda.is_available():
-                device_string = f"cuda"
-                device = torch.device(f"cuda:{gpuid}")
+                device_string = f"cuda:{gpuid}"
+                device = torch.device(device_string)
             else:
                 device_string = "cpu"
                 device = torch.device(device_string)
