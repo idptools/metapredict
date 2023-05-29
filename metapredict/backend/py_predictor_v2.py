@@ -79,8 +79,8 @@ class Predictor():
         # if gpuid is not set to cpu
         if gpuid != 'cpu':
             if torch.cuda.is_available():
-                device_string = f"cuda:{gpuid}"
-                device = torch.device(device_string)
+                device_string = f"cuda"
+                device = torch.device(f"cuda:{gpuid}")
             else:
                 device_string = "cpu"
                 device = torch.device(device_string)
@@ -89,6 +89,7 @@ class Predictor():
             device = torch.device(device_string)
 
         self.device = device
+        self.device_string = device_string
 
         # load using the requested device
         loaded_model = torch.load(saved_weights, map_location=device)
