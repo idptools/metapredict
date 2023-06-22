@@ -462,7 +462,7 @@ def predict_all(sequence):
 # ..........................................................................................
 #
 def predict_disorder_batch(input_sequences,
-                           gpuid=0,
+                           gpuid=00,
                            return_domains=False,
                            disorder_threshold=0.5,
                            minimum_IDR_size=12,

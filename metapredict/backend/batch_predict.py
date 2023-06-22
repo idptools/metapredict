@@ -155,7 +155,7 @@ def size_filter(inseqs):
 # ....................................................................................
 #
 def batch_predict(input_sequences,
-                  gpuid=0,
+                  gpuid=00,
                   return_domains=False,
                   disorder_threshold=0.5,
                   minimum_IDR_size=12,
