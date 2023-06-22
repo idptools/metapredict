@@ -402,6 +402,7 @@ def batch_predict(input_sequences,
 
     device = brnn_predictor.device
     model  = brnn_predictor.network
+    model.to(device)
 
     # hardcoded because this is where metapredict was trained
     batch_size = 32
@@ -477,7 +478,7 @@ def batch_predict(input_sequences,
             packed_and_padded = pack_padded_sequence(seqs_padded, lengths.cpu().numpy(), batch_first=True, enforce_sorted=False)
             
             packed_and_padded = packed_and_padded.to(device)
-            
+
             # input packed_and_padded into loaded lstm
             packed_output, (ht, ct) = (model.lstm.forward(packed_and_padded))
             
