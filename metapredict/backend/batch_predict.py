@@ -361,10 +361,11 @@ def batch_predict(input_sequences,
             batch_mode = 1
         
     else:
-        if version.parse(torch.__version__) >= version.parse("1.11.0"):
-            batch_mode = 2
-        else:
-            batch_mode = 1
+        batch_mode=1
+        #if version.parse(torch.__version__) >= version.parse("1.11.0"):
+        #    batch_mode = 2
+        #else:
+        #    batch_mode = 1
 
     ##
     ## Prepare data by generate a list (sequence_list)
