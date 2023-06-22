@@ -155,7 +155,7 @@ def size_filter(inseqs):
 # ....................................................................................
 #
 def batch_predict(input_sequences,
-                  gpuid=00,
+                  gpuid=0,
                   return_domains=False,
                   disorder_threshold=0.5,
                   minimum_IDR_size=12,
@@ -475,6 +475,8 @@ def batch_predict(input_sequences,
             
             # pack up for vacation
             packed_and_padded = pack_padded_sequence(seqs_padded, lengths.cpu().numpy(), batch_first=True, enforce_sorted=False)
+            
+            packed_and_padded = packed_and_padded.to(device)
             
             # input packed_and_padded into loaded lstm
             packed_output, (ht, ct) = (model.lstm.forward(packed_and_padded))
