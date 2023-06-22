@@ -94,7 +94,7 @@ setup(
     # url='http://www.my_package.com',  # Website
     install_requires=[
         'cython',
-        'torch',
+        'torch < 2.0.0',
         'numpy',
         'matplotlib',
         'protfasta',

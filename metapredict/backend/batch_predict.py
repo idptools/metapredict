@@ -155,7 +155,7 @@ def size_filter(inseqs):
 # ....................................................................................
 #
 def batch_predict(input_sequences,
-                  gpuid=00,
+                  gpuid=0,
                   return_domains=False,
                   disorder_threshold=0.5,
                   minimum_IDR_size=12,
@@ -361,10 +361,11 @@ def batch_predict(input_sequences,
             batch_mode = 1
         
     else:
-        if version.parse(torch.__version__) >= version.parse("1.11.0"):
-            batch_mode = 2
-        else:
-            batch_mode = 1
+        batch_mode=1
+        #if version.parse(torch.__version__) >= version.parse("1.11.0"):
+        #    batch_mode = 2
+        #else:
+        #    batch_mode = 1
 
     ##
     ## Prepare data by generate a list (sequence_list)
@@ -402,6 +403,7 @@ def batch_predict(input_sequences,
 
     device = brnn_predictor.device
     model  = brnn_predictor.network
+    model.to(device)
 
     # hardcoded because this is where metapredict was trained
     batch_size = 32
@@ -476,6 +478,8 @@ def batch_predict(input_sequences,
             # pack up for vacation
             packed_and_padded = pack_padded_sequence(seqs_padded, lengths.cpu().numpy(), batch_first=True, enforce_sorted=False)
             
+            packed_and_padded = packed_and_padded.to(device)
+
             # input packed_and_padded into loaded lstm
             packed_output, (ht, ct) = (model.lstm.forward(packed_and_padded))
             
