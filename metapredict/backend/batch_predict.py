@@ -457,7 +457,6 @@ def batch_predict(input_sequences,
         # errors in prediction, but is only available in pytorch 1.11 or higher. This is definitley
         # the better approach, but we want to avoid a hard-dependency on pytorch 1.11 in metapredict
         # so offer both modes for backwards compatibility.
-        #
         
         start_time = time.time()
         seq_loader = DataLoader(sequence_list, batch_size=batch_size, shuffle=False)
