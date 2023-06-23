@@ -569,28 +569,26 @@ def predict_disorder_batch(input_sequences,
         predictions are made, while if False no progress bar is printed.
         Default  =  True
 
-    batch_mode : int
-        Indictora which, if set to 1 or 2 will FORCE the batch 
-        algorithm to use mode 1 or mode 2 for batch 
-        decomposition.
+    batch_mode : string
+        Indictor which, if set to 'pack-n-pad', 'size-collect' 
+        will FORCE the batch algorithm to use mode 'pack-n-pad', 
+        'size-collect' for batch decomposition.
 
-        Mode 1 means we pre-filter sequences into groups where 
-        they're all the same length, avoiding padding/packing. 
+        Mode 'size-collect'  means we pre-filter sequences into 
+        groups where they're all the same length, avoiding padding/packing. 
         This works in all versions of torch, and will be faster
         if you have very large datasets or have many copies of 
         the same sequence.
 
-        Mode 2 involves padding/packing the sequences so that 
+        Mode 'pack-n-pad' involves padding/packing the sequences so that 
         all sequences can be passed in a batchsize of 32. This 
-        is only available if pytorch 1.11 or higher is available, 
-        but for small sets of sequences 1-10,000 will be much 
-        faster than mode 1. We default to mode 2 if available, 
-        but in special cases you may want to force mode 1.
+        is only available if pytorch 1.11 or higher is available.
+        In testing, we found that pack-n-pad is about 2x faster than
+        size-collect if running on CPU with variable length sequence. 
+        On GPU, size-collect was consistently faster.
 
-        Default = None, which means dynamic selection occurs (2
-        if available, fall-back to 1). However 1 may often actually
-        be more efficient, so it's worth testing modes to see if
-        there's any change in perforance for a given dataset.
+        Default = None, which means dynamic selection occurs. Default
+        is to use size-collect because it is faster.
 
     Returns
     -------------

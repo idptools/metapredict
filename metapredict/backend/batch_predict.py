@@ -289,24 +289,27 @@ def batch_predict(input_sequences,
         for the two stages in the prediction algorithm. Again 
         useful for profiling and debugging. Default = False
     
-    force_mode : int
-        Flag which, if set to 1 or 2 will FORCE the batch 
-        algorithm to use mode 1 or mode 2 for batch 
-        decomposition.
+    force_mode : string
+        Default is None. When set as None, chooses the size-collect
+        approach.
 
-        Mode 1 means we pre-filter sequences into groups where 
+        Chooses how the sequnces are input for
+        batch prediction. In our testing, size-collect is faster
+        so it uses that by default. You can also use pack-n-pad
+        by specifying 'pack-n-pad' here. 
+
+        size-collect - means we pre-filter sequences into groups where 
         they're all the same length, avoiding padding/packing. 
         This works in all versions of torch, and may be faster 
         for BIG sets of sequences (40,000+) but is        
         generally slower than mode 2.
 
-        Mode 2 involves padding/packing the sequences so that 
+        pack-n-pad - involves padding/packing the sequences so that 
         all sequences can be passed in a batchsize of 32. This 
-        is only available if pytorch 1.11 or higher is available, 
-        but for small sets of sequences 1-10,000 will be much 
-        faster than mode 1. We default to mode 2 if available, 
-        but in special cases you may want to force mode 1.
-        Default = None, which means dynamic selection occurs.
+        is only available if pytorch 1.11 or higher is available. 
+        In testing, we found that pack-n-pad is about 2x faster than
+        size-collect if running on CPU with variable length sequence. 
+        On GPU, size-collect was consistently faster.
 
     show_progress_bar : bool
         Flag which, if set to True, means a progress bar is printed as 
@@ -353,19 +356,16 @@ def batch_predict(input_sequences,
     # define the mode based on torch version or a manual
     # over-ride (for performance testing)
     if force_mode is not None:
-        if force_mode not in [1,2]:
-            raise Exception("Batch mode must be set to 1 or 2")
+        if force_mode not in ['pack-n-pad', 'size-collect']:
+            raise Exception("force_mode must be set to 'pack-n-pad', 'size-collect'")
         batch_mode = force_mode
-        if version.parse(torch.__version__) < version.parse("1.11.0") and batch_mode == 2:
-            print(f'Warning; batch mode 2 not supported in PyTorch {torch.__version__}. Over-riding and switching to mode=1')
-            batch_mode = 1
+        if version.parse(torch.__version__) < version.parse("1.11.0") and batch_mode == 'pack-n-pad':
+            print(f'Warning; batch mode pack-n-pad not supported in PyTorch {torch.__version__}. Over-riding and switching to mode=size-collect')
+            batch_mode = 'size-collect'
         
     else:
-        batch_mode=1
-        #if version.parse(torch.__version__) >= version.parse("1.11.0"):
-        #    batch_mode = 2
-        #else:
-        #    batch_mode = 1
+        batch_mode='size-collect'
+
 
     ##
     ## Prepare data by generate a list (sequence_list)
@@ -403,23 +403,25 @@ def batch_predict(input_sequences,
 
     device = brnn_predictor.device
     model  = brnn_predictor.network
+
+    # move model to device. If you don't do this and it goes to GPU, 
+    # the input will go to GPU but the model will remain on CPU leading to problems.
     model.to(device)
 
     # hardcoded because this is where metapredict was trained
     batch_size = 32
 
-                
     # initialize the return dictionary that maps sequence to
     # disorder profile
     pred_dict = {}
 
     # if we're in a a version of torch that does not supported unpadding
-    if batch_mode == 1:
+    if batch_mode == 'size-collect':
 
-        # Mode 1 means we systematically subdivide the sequences into groups 
+        # Mode 'size-collect' means we systematically subdivide the sequences into groups 
         # where they're all the same length in a given megabatch, meaning we don't
         # need to pad. This works well in earlier version or torch, but is not optimal
-        # in that the effective batch size ends up being 1 for every uniquely-lengthed
+        # in that the effective batch size ends up being 'size-collect' for every uniquely-lengthed
         # sequence.
         #
 
@@ -452,9 +454,9 @@ def batch_predict(input_sequences,
                 for j, seq in enumerate(batch):
                     pred_dict[seq] = np.squeeze(np.round(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1),4))
 
-    elif batch_mode == 2:
+    elif batch_mode == 'pack-n-pad':
 
-        # Mode 2 involves packing/padding and unpacking/unpadding to avoid packing causing
+        # Mode 'pack-n-pad' involves packing/padding and unpacking/unpadding to avoid packing causing
         # errors in prediction, but is only available in pytorch 1.11 or higher. This is definitley
         # the better approach, but we want to avoid a hard-dependency on pytorch 1.11 in metapredict
         # so offer both modes for backwards compatibility.
