@@ -299,17 +299,14 @@ def batch_predict(input_sequences,
         by specifying 'pack-n-pad' here. 
 
         size-collect - means we pre-filter sequences into groups where 
-        they're all the same length, avoiding padding/packing. 
-        This works in all versions of torch, and may be faster 
-        for BIG sets of sequences (40,000+) but is        
-        generally slower than mode 2.
+        they're all the same length.
 
         pack-n-pad - involves padding/packing the sequences so that 
         all sequences can be passed in a batchsize of 32. This 
         is only available if pytorch 1.11 or higher is available. 
         In testing, we found that pack-n-pad is about 2x faster than
-        size-collect if running on CPU with variable length sequence. 
-        On GPU, size-collect was consistently faster.
+        size-collect if running on CPU with variable length sequence
+        if fewer 5000 sequences. On GPU, size-collect was consistently faster.
 
     show_progress_bar : bool
         Flag which, if set to True, means a progress bar is printed as 
