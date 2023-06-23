@@ -584,8 +584,8 @@ def predict_disorder_batch(input_sequences,
         all sequences can be passed in a batchsize of 32. This 
         is only available if pytorch 1.11 or higher is available.
         In testing, we found that pack-n-pad is about 2x faster than
-        size-collect if running on CPU with variable length sequence. 
-        On GPU, size-collect was consistently faster.
+        size-collect if running on CPU with variable length sequence
+        if fewer 5000 sequences. On GPU, size-collect was consistently faster.
 
         Default = None, which means dynamic selection occurs. Default
         is to use size-collect because it is faster.
