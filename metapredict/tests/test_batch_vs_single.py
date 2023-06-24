@@ -94,16 +94,16 @@ def test_batch_prediction():
         s = build_seq()
         seqs[idx] = s
 
-    # mode 1 should be available everywhere, so test this regardless
-    preds = batch_predict.batch_predict(seqs, force_mode=1)
+    # size-collect should be available everywhere, so test this regardless
+    preds = batch_predict.batch_predict(seqs, force_mode='size-collect')
     
     for s in seqs:
         single = meta.predict_disorder(seqs[s])
         assert score_compare(np.array(preds[s][1]), single)
 
-    # if we're on toruch 1.11 or higher also test mode 2
+    # if we're on toruch 1.11 or higher also test pad-n-pack 
     if version.parse(torch.__version__) >= version.parse("1.11.0"):
-        preds = batch_predict.batch_predict(seqs, force_mode=2)    
+        preds = batch_predict.batch_predict(seqs, force_mode='pad-n-pack')    
         for s in seqs:
             single = meta.predict_disorder(seqs[s])
             assert score_compare(np.array(preds[s][1]), single)        
@@ -116,7 +116,7 @@ def test_batch_idrs():
         seqs[idx] = s
 
     # mode 1 should be available everywhere, so test this regardless
-    preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode=1)
+    preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode='size-collect')
     
     for s in seqs:
         single = meta.predict_disorder_domains(seqs[s])
@@ -131,7 +131,7 @@ def test_batch_idrs():
             assert p.folded_domain_boundaries[idx] == single.folded_domain_boundaries[idx]
 
     if version.parse(torch.__version__) >= version.parse("1.11.0"):
-        preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode=2)
+        preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode='pad-n-pack')
 
         for s in seqs:
             single = meta.predict_disorder_domains(seqs[s])
