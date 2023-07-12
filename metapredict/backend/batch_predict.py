@@ -32,8 +32,6 @@ if version.parse(torch.__version__) >= version.parse("1.11.0"):
     
 
 
-
-
 # ....................................................................................
 #
 def build_DisorderObject(s,
@@ -401,6 +399,9 @@ def batch_predict(input_sequences,
     device = brnn_predictor.device
     model  = brnn_predictor.network
 
+    # make sure we are in eval mode because we are only doing inference.
+    model.eval()
+
     # move model to device. If you don't do this and it goes to GPU, 
     # the input will go to GPU but the model will remain on CPU leading to problems.
     model.to(device)
@@ -445,7 +446,8 @@ def batch_predict(input_sequences,
                 seqs_padded = seqs_padded.to(device)
 
                 # Forward pass
-                outputs = model.forward(seqs_padded).detach().cpu().numpy()
+                with torch.no_grad():
+                    outputs = model.forward(seqs_padded).detach().cpu().numpy()
             
                 # Save predictions
                 for j, seq in enumerate(batch):
@@ -471,15 +473,17 @@ def batch_predict(input_sequences,
             seqs_padded = pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)
             
             # get lengths for input into pack_padded_sequence
-            lengths = torch.tensor([len(seq) for seq in batch])
+            lengths = [len(seq) for seq in batch]
             
             # pack up for vacation
-            packed_and_padded = pack_padded_sequence(seqs_padded, lengths.cpu().numpy(), batch_first=True, enforce_sorted=False)
+            packed_and_padded = pack_padded_sequence(seqs_padded, lengths, batch_first=True, enforce_sorted=False)
             
+            # move to device
             packed_and_padded = packed_and_padded.to(device)
 
             # input packed_and_padded into loaded lstm
-            packed_output, (ht, ct) = (model.lstm.forward(packed_and_padded))
+            with torch.no_grad():
+                packed_output, (ht, ct) = model.lstm.forward(packed_and_padded)
             
             # inverse of pack_padded_sequence
             output, input_sizes = pad_packed_sequence(packed_output, batch_first=True)

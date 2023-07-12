@@ -106,6 +106,8 @@ class BRNN_MtM(torch.nn.Module):
         # out: tensor of shape: [batch_size, seq_length, hidden_size*2]
         out, (h_n, c_n) = self.lstm(x, (h0, c0))
 
-        # Decode the hidden state for each time step
+        # Decode the hidden state for each time step    
         fc_out = self.fc(out)
+
+        # return decoded hidden state
         return fc_out

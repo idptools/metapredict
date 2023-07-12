@@ -126,8 +126,9 @@ saved_weights = predictor
 
 brnn_network = brnn_architecture.BRNN_MtM(input_size, hidden_size, num_layers, num_classes, device).to(device)
 # if you want to use the V3 network, uncomment line below and comment out line above.
-#brnn_network = nn.DataParallel(brnn_architecture.BRNN_MtM(input_size, hidden_size, num_layers, num_classes, device).to(device))
 brnn_network.load_state_dict(torch.load(saved_weights, map_location=torch.device(device)))
+# set to eval mode
+brnn_network.eval()
 ###############################################################################
 
 def get_metapredict_legacy_network_version():
@@ -189,12 +190,13 @@ def meta_predict(sequence, normalized=True, network=brnn_network, device=device,
     if encoding_scheme == 'onehot':
         seq_vector = encode_sequence.one_hot(sequence)
     else:
-        raise MetapredictError('fCannot understand encoding scheme [{encoding_scheme}]')
+        raise MetapredictError(f'Cannot understand encoding scheme [{encoding_scheme}]')
 
     seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
     # get output values from the seq_vector based on the network (brnn_network)
-    outputs = network(seq_vector.float()).detach().numpy()[0]
+    with torch.no_grad():
+        outputs = network(seq_vector.float()).detach().numpy()[0]
 
     # make empty list to add in outputs
     output_values = []

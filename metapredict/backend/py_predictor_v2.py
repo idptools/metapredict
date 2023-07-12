@@ -51,8 +51,6 @@ class Predictor():
             Number of data classes that the network was trained for. If 1, then
             network is designed for regression task. If >1, then classification
             task with n_classes.
-    task : str
-            Designates if network is designed for "classification" or "regression".
     network : PyTorch object
             Initialized PARROT network with loaded weights.
     """
@@ -108,22 +106,10 @@ class Predictor():
         self.hidden_vector_size = int(np.shape(loaded_model['lstm.weight_ih_l0'])[0] / 4)
         self.n_classes = np.shape(loaded_model['fc.bias'])[0]
 
-        if self.n_classes > 1:
-            self.task = "classification"
-        else:
-            self.task = "regression"
-
         # Instantiate network weights into Predictor() object - note we have to ensure the network
         # is loaded onto the same model as the device type
-        if self.dtype == "sequence":
-            self.network = brnn_architecture.BRNN_MtO(20, self.hidden_vector_size, 
-                                                      self.num_layers, self.n_classes, device_string)
-        elif self.dtype == "residues":
-            self.network = brnn_architecture.BRNN_MtM(20, self.hidden_vector_size, 
-                                                      self.num_layers, self.n_classes, device_string)
-        else:
-            raise ValueError("dtype must equal 'residues' or 'sequence'")
-                                        
+        self.network = brnn_architecture.BRNN_MtM(20, self.hidden_vector_size, 
+                                                      self.num_layers, self.n_classes, device_string)     
         self.network.load_state_dict(loaded_model)
 
 
@@ -149,15 +135,8 @@ class Predictor():
         seq_vector = seq_vector.view(1, len(seq_vector), -1)  # formatting
 
         # Forward pass
-        prediction = self.network(seq_vector.float()).detach().numpy().flatten()
+        with torch.no_grad():
+            prediction = self.network(seq_vector.float()).detach().numpy().flatten()
 
-        # softmax to get class probabilities
-        if self.task == "classification":
-            if self.dtype == "residues":
-                prediction = prediction.reshape(-1, self.n_classes)
-                prediction = np.array(list(map(softmax, prediction)))
-
-            else:
-                prediction = softmax(prediction)
-
+        # return the prediction
         return prediction
