@@ -101,9 +101,9 @@ def test_batch_prediction():
         single = meta.predict_disorder(seqs[s])
         assert score_compare(np.array(preds[s][1]), single)
 
-    # if we're on toruch 1.11 or higher also test pad-n-pack 
+    # if we're on toruch 1.11 or higher also test pack-n-pad 
     if version.parse(torch.__version__) >= version.parse("1.11.0"):
-        preds = batch_predict.batch_predict(seqs, force_mode='pad-n-pack')    
+        preds = batch_predict.batch_predict(seqs, force_mode='pack-n-pad')    
         for s in seqs:
             single = meta.predict_disorder(seqs[s])
             assert score_compare(np.array(preds[s][1]), single)        
@@ -131,7 +131,7 @@ def test_batch_idrs():
             assert p.folded_domain_boundaries[idx] == single.folded_domain_boundaries[idx]
 
     if version.parse(torch.__version__) >= version.parse("1.11.0"):
-        preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode='pad-n-pack')
+        preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode='pack-n-pad')
 
         for s in seqs:
             single = meta.predict_disorder_domains(seqs[s])
@@ -159,8 +159,8 @@ def test_batch_prediction_mode1_vs_mode2():
             s = build_seq()
             seqs[idx] = s
         
-        preds_v1 = batch_predict.batch_predict(seqs, force_mode=1, print_performance=True)
-        preds_v2 = batch_predict.batch_predict(seqs, force_mode=2, print_performance=True)
+        preds_v1 = batch_predict.batch_predict(seqs, force_mode='size-collect', print_performance=True)
+        preds_v2 = batch_predict.batch_predict(seqs, force_mode='pack-n-pad', print_performance=True)
         for s in seqs:
 
             # note even here <1e-3 seems to be the magic number in terms of inprecision

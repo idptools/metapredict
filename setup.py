@@ -94,7 +94,7 @@ setup(
     # url='http://www.my_package.com',  # Website
     install_requires=[
         'cython',
-        'torch < 2.0.0',
+        'torch',
         'numpy',
         'matplotlib',
         'protfasta',
@@ -102,7 +102,7 @@ setup(
         'urllib3',
         'tqdm',
         'alphaPredict==1.0',
-        'getSequence >= 1.3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+        'getSequence >= 1.6'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',
