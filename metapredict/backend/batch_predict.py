@@ -193,7 +193,7 @@ def batch_predict(input_sequences,
 
     Note the reason to use this function instead of 
     meta.predict_disorder_batch is here there are a few 
-    additional 
+    additional arguments one can pass in which may be useful.
 
     Parameters
     ----------
@@ -353,9 +353,12 @@ def batch_predict(input_sequences,
     if force_mode is not None:
         if force_mode not in ['pack-n-pad', 'size-collect']:
             raise Exception("force_mode must be set to 'pack-n-pad', 'size-collect'")
+        
         batch_mode = force_mode
-        if version.parse(torch.__version__) < version.parse("1.11.0") and batch_mode == 'pack-n-pad':
-            print(f'Warning; batch mode pack-n-pad not supported in PyTorch {torch.__version__}. Over-riding and switching to mode=size-collect')
+
+        # updated to 2.0.1 in July 2023 due to small numerical instabilities in earlier versions of pack-n-pad
+        if version.parse(torch.__version__) < version.parse("2.0.1") and batch_mode == 'pack-n-pad':
+            print(f'Warning; batch mode pack-n-pad not supported in PyTorch {torch.__version__}. Requires 2.0.1 or higher. Over-riding and switching to mode=size-collect')
             batch_mode = 'size-collect'
         
     else:

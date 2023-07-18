@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert' ", default='convert')
 
-    parser.add_argument('--mode', help='Defines the mode in which IDRs are reported. By default this generates a FASTA file with header format that matches the input file with an additional set of fields that are "IDR_START=$START  IDR_END=$END" where $START and $END are the starting and ending IDRs. If mode is set to shephard-domains than a SHEPHAD-compliant domains file is generated. If shephard-domains-uniprot the uniprot ID is extracted from the header assuming standard uniprot formatting. Default = fasta', default='fasta')
+    parser.add_argument('--mode', help='Defines the mode in which IDRs are reported. Options are currently: "fasta", "shephard-domains", "shephard-domains-uniprot". By default this generates a FASTA file with header format that matches the input file with an additional set of fields that are "IDR_START=$START  IDR_END=$END" where $START and $END are the starting and ending IDRs (indexing from 0, as in Python slice notation). If mode is set to shephard-domains than a SHEPHAD-compliant domains file is generated (where indexing starts at 1 to match protein numbering). If shephard-domains-uniprot the uniprot ID is extracted from the header assuming standard uniprot formatting (where indexing starts at 1 to match protein numbering). Default = fasta', default='fasta')
 
     parser.add_argument('--threshold', help='Defines the threshold used to define a region as disordered or not. Default=0.42 which is recommended.', default=0.42, type=float)
     parser.add_argument('--verbose', help='If included then prints out status updates', action='store_true')
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
             for idx in range(n_idrs):
 
-                idr_start = idrs[s].disordered_domain_boundaries[idx][0]
+                idr_start = idrs[s].disordered_domain_boundaries[idx][0] + 1
                 idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
 
                 fh.write(f'{s}\t{idr_start}\t{idr_end}\tIDR\n')
@@ -143,7 +143,7 @@ if __name__ == "__main__":
             n_idrs = len(idrs[s].disordered_domains)
 
             for idx in range(n_idrs):                
-                idr_start = idrs[s].disordered_domain_boundaries[idx][0]
+                idr_start = idrs[s].disordered_domain_boundaries[idx][0] + 1
                 idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
 
                 fh.write(f'{uid}\t{idr_start}\t{idr_end}\tIDR\n')
