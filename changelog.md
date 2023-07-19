@@ -5,6 +5,10 @@ This section is a log of recent changes with metapredict. My hope is that as I c
 #### V2.62 (metapredict V2-FF) (July 2023)
 Changes:
 
+* Made sure predictions used `torch.no_grad()`
+
+* Removed torch dependency on < 2.0.
+
 * Bug fix: When running `metapredict-predict-idrs` using `--mode shephard-domains` and `--mode shephard-domains-uniprot` in the 2.6 update, we accidentally return the start index of each IDR as the 0th indexed position, but SHEPHARD uses 1-index inclusive indexing. This has now been fixed.
 
 * Bug fix: We discovered that when using torch 1.13.0 pack-n-pad (which is not the default and must be specifically requested) can lead to some small numerical inaccuracies in disorder predictions (<0.01). The reason this can be problematic is that it MAY alter the boundary between a disordered and folded domain when compared to the single iterative analysis. This issue is fixed in torch 2.0.1 and as such we now internally require torch 2.0.1 if pack-n-pad is going to be used, otherwise we fall back to size-collect. Note that this approach avoids a hard dependency on torch 2.0.1. To be clear, using pack-n-pad is currently impossible from the command line and would require someone to explicitly have requested it from the API.
@@ -12,9 +16,9 @@ Changes:
 #### V2.61 (metapredict V2-FF) (July 2023)
 Changes:
 
-* Removed torch dependency on < 2.0
-* Made sure predictions used torch.no_grad 
+
 * Renamed batch algorithms from mode 1 and mode 2 to size-collect and pack-n-pad.
+
 * Default batch mode is always `size-collect` which in most cases is faster and is always available. You can force `pack-n-pad`
 
 #### V2.6 (metapredict V2-FF) (May 2023)

@@ -1,5 +1,5 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
-### Last updated May 2023
+### Last updated July 2023
 
 
 ## Current version: metapredict V2-FF (V2.6)
@@ -15,6 +15,7 @@ To quantify this yourself, run:
 	metapredict.print_performance(batch=False)
 	
 To compare the number of residues-per-second metapredict V2-FF predicts in batch mode vs. non-batch mode. For CPUs this is typically a 10-20x improvement. If GPUs are available this value can be substantially higher.	
+
 ## Installation
 
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
