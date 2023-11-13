@@ -1,6 +1,13 @@
 ## Changelog
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
+#### V2.63 (November 2023)
+Changes:
+
+* Changed max version of Python compatibility to 3.11 because of issues in 3.12
+
+* Changed line 207 in /backend/meta_predict_disorder.py from *output_values.append(round(float(i), 4))* to *output_values.append(round(float(i[0]), 4))* to git rid of Numpy deprecation warning when using Numpy 1.25 or later. Adding to change log in case this causes mayhem, but is passing all tests and additional local tests at this time so should be OK. 
+
 
 #### V2.62 (metapredict V2-FF) (July 2023)
 Changes:

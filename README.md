@@ -1,5 +1,5 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
-### Last updated July 2023
+### Last updated November 2023
 
 
 ## Current version: metapredict V2-FF (V2.6)
