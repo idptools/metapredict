@@ -175,9 +175,12 @@ def predict(inputs,
         Options incllude V1, V2, or V3. 
 
     use_device : int or str 
-        Identifier for the device to be used for predictions. Torch
-        supports 'cpu', 'mps', 'cuda', or an int that corresponds to
-        the index of a specific cuda-enabled GPU. 
+        Identifier for the device to be used for predictions. 
+        Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
+        the index of a specific cuda-enabled GPU. If 'cuda' is specified and
+        cuda.is_available() returns False, instead of falling back to CPU, 
+        metapredict will raise an Exception so you know that you are not
+        using CUDA as you were expecting. 
         Default: None
             When set to None, we will check if there is a cuda-enabled
             GPU. If there is, we will try to use that GPU. 
@@ -335,25 +338,36 @@ def predict(inputs,
     # get params
     params=net['parameters']
 
-    # check if gpuid was set to CPU. If so, run on CPU. 
-    # This makes it easier for us to test CPU vs GPU performance. 
-    if str(use_device).lower()=='cpu':
-        device_string='cpu'
-    elif str(use_device).lower()=='mps':
-        device_string='mps'
-    elif use_device==None:
-        # if not specified, use a cuda enabled GPU
+    # by default, don't check if cuda is available.
+    check_cuda=False
+
+    # see if a device was specified. 
+    if use_device==None:
+        # if not specified, use a cuda enabled GPU if one is available. Otherwise fall back to CPU. 
         if torch.cuda.is_available():
             device_string=f'cuda'
         else:
-            device_string = 'cpu'
-    elif isinstance(use_device, int)==True:
-        # otherwise an int was specified, so use the 
-        # int to specify the index of the GPU
-        device_string=f'cuda:{use_device}'
-    else:
-        raise MetapredictError('The variable use_device can only be set to None, cpu, mps, or an integer value if specifying the index of a cuda GPU')
-
+            device_string = 'cpu'  
+    else:      
+        if str(use_device).lower()=='cpu':
+            device_string='cpu'
+        elif str(use_device).lower()=='mps':
+            device_string='mps'
+        elif str(use_device).lower()=='cuda':
+            device_string=f'cuda' 
+            check_cuda=True   
+        elif isinstance(use_device, int)==True:
+            device_string=f'cuda:{use_device}'
+            check_cuda=True
+        else:
+            raise MetapredictError('The variable use_device can only be set to: None, cpu, mps, cuda, or an integer value specifying the index of a cuda GPU')
+    
+    # if user manually set either an GPU index or 'cuda', make sure cuda is available. 
+    # this will help us avoid falling back to CPU unintentionally.   
+    if check_cuda==True:
+        if torch.cuda.is_available()==False:
+            raise MetapredictError('cuda was specified as use_device, but torch.cuda.is_available() returned False.') 
+    
     # set device
     device=torch.device(device_string)
 
