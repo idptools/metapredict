@@ -144,7 +144,7 @@ def size_filter(inseqs):
 
 def predict(inputs,
             network='V3',
-            gpuid=0,
+            use_device=None,
             normalized=True,
             return_domains=False,
             disorder_threshold=None,
@@ -174,13 +174,19 @@ def predict(inputs,
         The network to use for prediction. Default is V3.
         Options incllude V1, V2, or V3. 
 
-    gpuid : int 
-        Identifier for the GPU being requested. Note that if
-        this is left unset the code will use the first GPU available
-        and if none is available will default back to CPU; in 
-        general it is recommended to not try and set this unless
-        there's a specific reason why a specific GPU should be
-        used.
+    use_device : int or str 
+        Identifier for the device to be used for predictions. Torch
+        supports 'cpu', 'mps', 'cuda', or an int that corresponds to
+        the index of a specific cuda-enabled GPU. 
+        Default: None
+            When set to None, we will check if there is a cuda-enabled
+            GPU. If there is, we will try to use that GPU. 
+            If you set the value to be an int, we will use cuda:int as the device
+            where int is the int you specify. The GPU numbering is 0 indexed, so 0 
+            corresponds to the first GPU and so on. Only specify this if you
+            know which GPU you want to use. 
+            * Note: MPS is only supported in Pytorch 2.1 or later. If I remember
+            right it might have been beta supported in 2.0 *.
 
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1. 
@@ -312,6 +318,8 @@ def predict(inputs,
         An exception is raised if the requested network is not one of the available options.
     """
     # check network chosen
+    # make sure network is uppercase.
+    network=network.upper()
     if network not in metapredict_networks:
         raise MetapredictError(f'Network {network} not available. Available networks are {metapredict_networks.keys()}')
     else:
@@ -321,18 +329,30 @@ def predict(inputs,
     if disorder_threshold is None:
         disorder_threshold = net['parameters']['disorder_threshold']
 
-
     # load and setup the network (same code as used by the non-batch version)
     PATH = os.path.dirname(os.path.realpath(__file__))
     predictor_path = f"{PATH}/networks/{net['weights']}"
     # get params
     params=net['parameters']
 
-    # see if we can use a GPU
-    if torch.cuda.is_available():
-        device_string=f'cuda:{gpuid}'
+    # check if gpuid was set to CPU. If so, run on CPU. 
+    # This makes it easier for us to test CPU vs GPU performance. 
+    if str(use_device).lower()=='cpu':
+        device_string='cpu'
+    elif str(use_device).lower()=='mps':
+        device_string='mps'
+    elif use_device==None:
+        # if not specified, use a cuda enabled GPU
+        if torch.cuda.is_available():
+            device_string=f'cuda'
+        else:
+            device_string = 'cpu'
+    elif isinstance(use_device, int)==True:
+        # otherwise an int was specified, so use the 
+        # int to specify the index of the GPU
+        device_string=f'cuda:{use_device}'
     else:
-        device_string = 'cpu'
+        raise MetapredictError('The variable use_device can only be set to None, cpu, mps, or an integer value if specifying the index of a cuda GPU')
 
     # set device
     device=torch.device(device_string)
@@ -351,7 +371,6 @@ def predict(inputs,
         model=architectures.BRNN_MtM_lightning
         model = model.load_from_checkpoint(predictor_path)
 
-    #model.load_state_dict(network)
     # set to eval mode
     model.eval()
 
@@ -396,16 +415,13 @@ def predict(inputs,
             end_time = time.time()
             print(f"Time taken for predictions on {device}: {end_time - start_time} seconds") 
 
-        # see if to build disorder_domsins
+        # see if need to build disorder_domsins
         if return_domains:
-            outputs= build_DisorderObject(inputs, 
-                                            outputs,
+            outputs= build_DisorderObject(inputs, outputs, 
                                             disorder_threshold=disorder_threshold,
                                             minimum_IDR_size=minimum_IDR_size, 
                                             minimum_folded_domain=minimum_folded_domain,
-                                            gap_closure=gap_closure,
-                                            use_slow=use_slow)
-
+                                            gap_closure=gap_closure,use_slow=use_slow)
         # return the output
         return outputs
 
@@ -428,7 +444,7 @@ def predict(inputs,
             mode = 'list'
             sequence_list = list(set(inputs))
         else:
-            raise Exception('Invalid data type passed into batch_predict - expect a list or a dictionary of sequences')
+            raise Exception('Invalid data type passed - expect a single sequence or a list or dictionary of sequences')
         
         # initialize the return dictionary that maps sequence to
         # disorder profile
@@ -461,13 +477,12 @@ def predict(inputs,
                 # Move padded sequences to device
                 seqs_padded = seqs_padded.to(device)
 
-                # Forward pass
+                # Forward pass, then send to CPU for numpy rounding / normalization
                 with torch.no_grad():
                     outputs = model.forward(seqs_padded).detach().cpu().numpy()
                 
                 # Save predictions
                 for j, seq in enumerate(batch):
-
                     if normalized==True and round_values==True:
                         prediction=np.squeeze(np.round(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1),4))
                     elif normalized==True and round_values==False:
@@ -527,13 +542,10 @@ def predict(inputs,
             # ID mapping (even if two IDs map to the same sequence)
             if mode == 'dictionary':
                 return_dict = {}
-                
                 for s in seq2id:
-
                     # for each ID associated with that sequence, assign the disorder object
                     for seq_id in seq2id[s]:
                         return_dict[seq_id] = seq2DisorderObject[s]
-
                 return return_dict
 
             # and if we passed a list return a list in the same order it came in, even if
@@ -542,29 +554,23 @@ def predict(inputs,
                 return_list = []
                 for s in inputs:
                     return_list.append(seq2DisorderObject[s])
-
                 return return_list
-
             else:
                 raise Exception('How did we get here? What did we do wrong? Is this the darkest timeline? Probably')
 
         # just return scores with no domains
         else:
-        
             if mode == 'dictionary':
                 return_dict = {}
                 for s in seq2id:
                     for seq_id in seq2id[s]:
                         return_dict[seq_id] = [s, pred_dict[s]]                
-
                 return return_dict
             elif mode == 'list':
                 return_list = []
                 for s in inputs:
                     return_list.append([s, pred_dict[s]])
-
                 return return_list
-
             else:
                 raise Exception('How did we get here? What did we do wrong? Is this the darkest timeline? Definitely')
 
