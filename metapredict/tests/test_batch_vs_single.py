@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 from metapredict.metapredict_exceptions import MetapredictError
-from metapredict.backend import batch_predict
+from metapredict.backend import predictor
 import protfasta
 
 from packaging import version
@@ -53,10 +53,8 @@ def test_size_filter():
     """
     Function that tests the size_filter function in batch_predict
     """
-    
-    
     in_seqs = ['A','AA','AAA','A','AAAAAA']
-    out = batch_predict.size_filter(in_seqs)
+    out = predictor.size_filter(in_seqs)
     assert len(out[1]) == 2
     assert len(out[2]) == 1
     assert len(out[3]) == 1
@@ -70,11 +68,11 @@ def test_metapredict_predictor():
     """
 
     seq = 'RDCAPNNGKKMDNQQHGDVSNQSDNRDSVQQQPPQMAGSQERQKSTESQQSPRSKENKQQAGHSHPESMPRSMSEKEPEMQHDESTGMQNHNRGMQSQDP'
-    assert meta.predict_disorder(seq) == local_data.S2
+    assert score_compare(meta.predict_disorder(seq), local_data.S2)==True
 
     test = {'test':seq}
     
-    out = batch_predict.batch_predict(test)
+    out = meta.predict_disorder_batch(test)
 
     # using a tolerance of 1e-3 because batch works on single and on double
     # precision, but if no pair of residues is different than 1e-4 these are
@@ -94,19 +92,13 @@ def test_batch_prediction():
         s = build_seq()
         seqs[idx] = s
 
-    # size-collect should be available everywhere, so test this regardless
-    preds = batch_predict.batch_predict(seqs, force_mode='size-collect')
+    # get predictions
+    preds = meta.predict_disorder_batch(seqs)
     
     for s in seqs:
         single = meta.predict_disorder(seqs[s])
         assert score_compare(np.array(preds[s][1]), single)
-
-    # if we're on toruch 1.11 or higher also test pack-n-pad 
-    if version.parse(torch.__version__) >= version.parse("1.11.0"):
-        preds = batch_predict.batch_predict(seqs, force_mode='pack-n-pad')    
-        for s in seqs:
-            single = meta.predict_disorder(seqs[s])
-            assert score_compare(np.array(preds[s][1]), single)        
+    
 
 def test_batch_idrs():
 
@@ -115,8 +107,8 @@ def test_batch_idrs():
         s = build_seq()
         seqs[idx] = s
 
-    # mode 1 should be available everywhere, so test this regardless
-    preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode='size-collect')
+    # predictions
+    preds = meta.predict_disorder_batch(seqs, return_domains=True)
     
     for s in seqs:
         single = meta.predict_disorder_domains(seqs[s])
@@ -129,43 +121,9 @@ def test_batch_idrs():
         for idx in range(len(p.folded_domains)):
             assert p.folded_domains[idx] == single.folded_domains[idx]
             assert p.folded_domain_boundaries[idx] == single.folded_domain_boundaries[idx]
-
-    if version.parse(torch.__version__) >= version.parse("1.11.0"):
-        preds = batch_predict.batch_predict(seqs, return_domains=True, force_mode='pack-n-pad')
-
-        for s in seqs:
-            single = meta.predict_disorder_domains(seqs[s])
-
-            p = preds[s]
-            for idx in range(len(p.disordered_domains)):
-                assert p.disordered_domains[idx] == single.disordered_domains[idx]
-
-                assert p.disordered_domain_boundaries[idx] == single.disordered_domain_boundaries[idx] 
-
-            for idx in range(len(p.folded_domains)):
-                assert p.folded_domains[idx] == single.folded_domains[idx]
-                assert p.folded_domain_boundaries[idx] == single.folded_domain_boundaries[idx]
-        
-            
             
 
-def test_batch_prediction_mode1_vs_mode2():
-    nseqs=100
-    
-    if version.parse(torch.__version__) >= version.parse("1.11.0"):
-    
-        seqs = {}
-        for idx, _ in enumerate(range(nseqs)):
-            s = build_seq()
-            seqs[idx] = s
-        
-        preds_v1 = batch_predict.batch_predict(seqs, force_mode='size-collect', print_performance=True)
-        preds_v2 = batch_predict.batch_predict(seqs, force_mode='pack-n-pad', print_performance=True)
-        for s in seqs:
 
-            # note even here <1e-3 seems to be the magic number in terms of inprecision
-            # for predictions 
-            assert score_compare(preds_v1[s][1], preds_v2[s][1]) 
 
 
 
@@ -174,15 +132,13 @@ def test_big_test_batch():
     Big tests that compares previously computed disordered scores for 100 sequences
     with the current testable version. This is the most robust test to ensure that
     the current version reproduces scores of other versions of metapredict
-    
 
     """
-
     scores = np.load(onehundred_scores, allow_pickle=True).tolist()
     seqs = protfasta.read_fasta(onehundred_seqs)
 
 
-    batch_predictions = batch_predict.batch_predict(seqs)
+    batch_predictions = meta.predict_disorder_batch(seqs)
 
     for idx, k in enumerate(seqs):
         assert np.allclose(scores[idx], batch_predictions[k][1], atol=1e-3)

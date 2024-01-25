@@ -462,7 +462,11 @@ def predict(inputs,
             else:
                 # otherwise just return the flattened array as a list. 
                 outputs=outputs.flatten().tolist()
-        # if printing performance
+        else:
+            # if we want a numpy array, we need to make sure it's a 1D array
+            outputs=outputs.flatten()
+
+        # print performance
         if print_performance:
             end_time = time.time()
             print(f"Time taken for prediction on {device}: {end_time - start_time} seconds") 
@@ -667,4 +671,4 @@ def predict(inputs,
 
 
 
-
+predict('GSGSGSGSGSGGSGS')

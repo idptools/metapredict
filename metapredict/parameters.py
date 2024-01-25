@@ -7,4 +7,4 @@ METAPREDICT_V2_THRESHOLD=0.5
 METAPREDICT_V3_THRESHOLD=0.5
 
 # set the current default network for metapredict.
-DEFAULT_NETWORK = 'V3'
+DEFAULT_NETWORK = 'V2'
