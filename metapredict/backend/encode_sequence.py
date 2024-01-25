@@ -17,14 +17,8 @@ https://github.com/idptools/parrot
 Licensed under the MIT license. 
 """
 
-
-import sys
-import os
 import numpy as np
 import torch
-ONE_HOT = {'A': 0, 'C': 1, 'D': 2, 'E': 3, 'F': 4, 'G': 5, 'H': 6, 'I': 7, 'K': 8, 'L': 9,
-                   'M': 10, 'N': 11, 'P': 12, 'Q': 13, 'R': 14, 'S': 15, 'T': 16, 'V': 17, 'W': 18, 'Y': 19}
-
 
 def one_hot(seq):
     """Convert an amino acid sequence to a PyTorch tensor of one-hot vectors
@@ -45,9 +39,13 @@ def one_hot(seq):
     torch.IntTensor
             a PyTorch tensor representing the encoded sequence
     """
-
+    # ONE HOT encoding per standard amino acid
+    ONE_HOT = {'A': 0, 'C': 1, 'D': 2, 'E': 3, 'F': 4, 'G': 5, 'H': 6, 'I': 7, 'K': 8, 'L': 9,
+                   'M': 10, 'N': 11, 'P': 12, 'Q': 13, 'R': 14, 'S': 15, 'T': 16, 'V': 17, 'W': 18, 'Y': 19}
     l = len(seq)
     m = np.zeros((l, 20))
+
+    # try to encode, if there's an invalid amino acid, raise an exception. 
     try:
         for i in range(l):
             m[i, ONE_HOT[seq[i]]] = 1
@@ -56,28 +54,3 @@ def one_hot(seq):
         raise ValueError(error_str)
     return torch.from_numpy(m)
 
-
-def rev_one_hot(seq_vectors):
-    """Decode a list of one-hot sequence vectors into amino acid sequences
-
-    Parameters
-    ----------
-    seq_vectors : list of numpy arrays
-            A list containing sequence vectors
-
-    Returns
-    -------
-    list
-            Strings of amino acid sequences
-    """
-
-    REV_ONE_HOT = 'ACDEFGHIKLMNPQRSTVWY'
-    sequences = []
-
-    for seq_vector in seq_vectors:
-        seq = []
-        for residue in seq_vector:
-            seq.append(REV_ONE_HOT[np.argmax(residue)])
-        sequences.append("".join(seq))
-
-    return sequences
