@@ -94,15 +94,17 @@ setup(
     # url='http://www.my_package.com',  # Website
     install_requires=[
         'cython',
-        'torch',
-        'numpy',
+        'torch >= 2.1.0',         # adding >= 2.1 to add mps support
+        'numpy < 2',            # numpy 2 is rumored to be coming soon, keeping below 2 until I can test it. 
         'matplotlib',
         'protfasta',
         'scipy',
         'urllib3',
         'tqdm',
         'alphaPredict==1.0',
-        'getSequence >= 1.6'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+        'getSequence >= 1.6',
+        'lightning>=2.1.3'],     # tested using lightning 2.1.3. Having >= for now....         
+        # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',

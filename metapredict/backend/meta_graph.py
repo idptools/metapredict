@@ -9,10 +9,10 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from metapredict.backend import meta_predict_disorder
-from metapredict.backend.meta_predict_disorder import meta_predict as legacy_predict
 from metapredict.metapredict_exceptions import MetapredictError
-from metapredict.backend.metameta_hybrid_predict import metameta_predict
+from metapredict.backend.predictor import predict
+from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.backend.network_parameters import metapredict_networks
 
 def graph(sequence,
           title='Predicted protein disorder',
@@ -27,7 +27,7 @@ def graph(sequence,
           confidence_threshold_color = 'black',
           DPI=150,
           output_file=None,
-          legacy_metapredict=False):
+          network=DEFAULT_NETWORK):
     """
     Function for graphing predicted  disorder. By default, this function will show a graph.
     However, you can specify output_file as the
@@ -100,7 +100,11 @@ def graph(sequence,
     legacy_metapredict : bool
         Whether or not to use the original version of metapredict for
         predicting disorder values.
-        
+
+    network : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3.         
 
     Returns
     -----------
@@ -127,16 +131,12 @@ def graph(sequence,
     #set n_res to lenght of seq
     n_res = len(sequence)
 
+    # make network uppercase
+    network=network.upper()
+
     # set yValues equal to the predicted disorder from the sequence (normalized)
     if disorder_scores == True:
-        if legacy_metapredict == True:
-            yValues = legacy_predict(sequence)
-            if disorder_threshold == None:
-                disorder_threshold = 0.3
-        else:
-            yValues = metameta_predict(sequence)
-            if disorder_threshold == None:
-                disorder_threshold = 0.5
+        yValues = predict(sequence, network=network, return_numpy=False)
         
     # if a name is set, the figure will hold that name as the identifier
     if pLDDT_scores == True and disorder_scores==True:
@@ -149,6 +149,10 @@ def graph(sequence,
     
     # set x label
     axes.set_xlabel("Residue")
+
+    # set disorder threshold
+    if disorder_threshold==None:
+        disorder_threshold = metapredict_networks[network.upper()]['parameters']['disorder_threshold']
 
     # if default title is used
     if title == 'Predicted protein disorder':

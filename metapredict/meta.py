@@ -10,6 +10,7 @@
 # NOTE - any new functions must be added to this list!
 __all__ =  ['predict_disorder_domains', 'predict_disorder', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid', 'predict_disorder_batch']
  
+# import packages
 import os
 import sys
 import numpy as np
@@ -18,24 +19,24 @@ import numpy as np
 
 #import protfasta to read .fasta files
 import protfasta as _protfasta
+# import getseq to get sequences from uniprot
+import getSequence as _getseq
 
 # import stuff for confidence score predictions
 from alphaPredict import alpha as _AF2pLDDTscores
-from metapredict import parameters
+from metapredict.backend.network_parameters import metapredict_networks
+from metapredict.parameters import DEFAULT_NETWORK
 
 # import stuff for IDR predictor from backend. Note the 'as _*' hides the imported
 # module from the user
-from metapredict.backend.meta_predict_disorder import meta_predict as _meta_predict
-from metapredict.backend.metameta_hybrid_predict import metameta_predict as _metameta_predict
+from metapredict.backend.predictor import predict as _predict
 from metapredict.backend import meta_tools as _meta_tools
-from metapredict.backend.batch_predict import batch_predict as _batch_predict
 
 #import stuff for graphing from backend
 from metapredict.backend.meta_graph import graph as _graph
 from metapredict.backend import domain_definition as _domain_definition
 
-# stuff for uniprot from backend
-from metapredict.backend.uniprot_predictions import fetch_sequence as _fetch_sequence
+# import stuff for exceptions
 from metapredict.metapredict_exceptions import MetapredictError
 
 # stuff for data structures
@@ -207,7 +208,7 @@ def predict_disorder_domains(sequence,
                              gap_closure=10, 
                              normalized=True,
                              return_numpy=True,
-                             legacy=False,
+                             version=DEFAULT_NETWORK,
                              return_list=False):
     """
     This function takes an amino acid sequence and one or more 
@@ -228,11 +229,6 @@ def predict_disorder_domains(sequence,
     disorder_threshold : float
         Set to None such that it will change to 0.42 for legacy
         and 0.5 for metapredict. Can still manually set value.
-
-        Value that defines what 'disordered' is based on the 
-        metapredict disorder score. The higher the value the more
-        stringent the cutoff. Default = 0.5 for new version
-        and 0.42 for legacy metapredict.
 
     minimum_IDR_size : int
         Defines the smallest possible IDR. This is a hard limit - 
@@ -273,8 +269,10 @@ def predict_disorder_domains(sequence,
         Flag which if set to true means all numerical types are returned
         as numpy.ndlist. Default is True
 
-    legacy : bool
-        Whether to use the original metapredict network
+    version : str
+        Which version of metapredict to use. Default is DEFAULT_NETWORK which 
+        is the latest version as defined in parameters. Alternatively, 'V1', 'V2',
+        or 'V3' can be specified to access a specific version of metapredict
 
     return_list : bool
         Flag that determines i to return the old format where a 
@@ -320,52 +318,46 @@ def predict_disorder_domains(sequence,
     # sanity check
     _meta_tools.raise_exception_on_zero_length(sequence)
 
+    # make version uppercase
+    version=version.upper()
+
+    if version not in metapredict_networks:
+        raise MetapredictError(f'Specified version of {version} is not available. Use {list(metapredict_networks.keys())}')
+
     if disorder_threshold == None:
-        if legacy == True:
-            disorder_threshold = 0.42
-        else:
-            disorder_threshold = 0.5
+        disorder_threshold = metapredict_networks[version]['parameters']['disorder_threshold']
 
     # check that a valid range was passed for disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
 
-    # predict the disorder
-    disorder = predict_disorder(sequence, normalized, legacy=legacy)
-
-    # extract out disordered 
-    return_tuple = _domain_definition.get_domains(sequence, 
-                                                 disorder, 
-                                                 disorder_threshold=disorder_threshold,                                            
-                                                 minimum_IDR_size=minimum_IDR_size, 
-                                                 minimum_folded_domain=minimum_folded_domain,
-                                                 gap_closure=gap_closure)
-
-    # if returning the old style list of tuples
-    if return_list == True:
+    # if not returning list, we can do everything using the predict function
+    if return_list==False:
+        # get the disorder obj and return it. 
+        DomObj = _predict(sequence, network=version, normalized=normalized,
+            return_numpy=return_numpy, return_domains=True,
+            disorder_threshold=disorder_threshold, minimum_IDR_size=minimum_IDR_size, 
+            minimum_folded_domain=minimum_folded_domain, gap_closure=gap_closure)
+        return DomObj
+    else:
+        # get disorder
+        disorder = _predict(sequence, network=version, normalized=normalized,
+            return_numpy=return_numpy)
+        
+        # extract out disordered 
+        return_tuple = _domain_definition.get_domains(sequence, 
+                                                     disorder, 
+                                                     disorder_threshold=disorder_threshold,                                            
+                                                     minimum_IDR_size=minimum_IDR_size, 
+                                                     minimum_folded_domain=minimum_folded_domain,
+                                                     gap_closure=gap_closure)
+        # return the list
         return [disorder, return_tuple[0], return_tuple[1], return_tuple[2]]
 
-    # other
-    else:
-
-        # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
-        IDRs = []
-
-        for local_idr in return_tuple[1]:
-            IDRs.append([local_idr[0], local_idr[1]])
-
-        FDs = []
-
-        for local_fd in return_tuple[2]:
-            FDs.append([local_fd[0], local_fd[1]])
-
-                                             
-        # return DisorderObject
-        return _DisorderObject(sequence, disorder, IDRs, FDs, return_numpy=return_numpy)
 
 
 # ..........................................................................................
 #
-def predict_disorder(sequence, normalized=True, return_numpy=False, legacy=False):
+def predict_disorder(sequence, normalized=True, return_numpy=False, round_values=True, version=DEFAULT_NETWORK):
     """
     Function to return disorder of a single input sequence. Returns the
     predicted values as a list.
@@ -386,8 +378,13 @@ def predict_disorder(sequence, normalized=True, return_numpy=False, legacy=False
     return_numpy : bool
         Flag which if set to true means the function returns a np.array.
 
-    legacy : bool
-        Whether to use the original metapredict disorder predictor.
+    round_values : True
+        whether to round the values to 4 decimal places. Default is True
+
+    version : str
+        Which version of metapredict to use. Default is DEFAULT_NETWORK which 
+        is the latest version as defined in parameters. Alternatively, 'V1', 'V2',
+        or 'V3' can be specified to access a specific version of metapredict
 
     Returns
     --------
@@ -404,24 +401,17 @@ def predict_disorder(sequence, normalized=True, return_numpy=False, legacy=False
     # make all residues upper case 
     sequence = sequence.upper()
 
-    if legacy == True:
-        d = _meta_predict(sequence, normalized=normalized)
-    else:
-        d = _metameta_predict(sequence, normalized = normalized)
-
-    if return_numpy:
-        return np.array(d)
-
-    else:
-        return d
+    # get disorder
+    disorder = _predict(sequence, network=version, normalized=normalized,
+        return_numpy=return_numpy, round_values=round_values)
 
 
 # ..........................................................................................
 #
 def predict_all(sequence):
     """
-    Function to return all three types of predictions (legacy_metapredict,
-    metapredict, and ppLDDT). Returns as a tuple of numpy 
+    Function to return all three types of predictions (V1, V2, V3
+    (metapredict), and ppLDDT). Returns as a tuple of numpy 
     arrays, with ppLDDT returned as normalized between 0 and 1 
     (rather than 0 and 100) so can be plotted on same axis easily.
 
@@ -430,16 +420,15 @@ def predict_all(sequence):
     sequence : str 
         Input amino acid sequence (as string) to be predicted.
 
-    
-
     Returns
     --------
      
     tuple with three np.ndarrays:
 
-        [0] - metapredict disorder scores (updated metapredict disorder)
+        [0] - normalized ppLDDT scores
         [1] - legacy metapredict disorder (original metapredict disorder)
-        [2] - normalized ppLDDT scores
+        [2] - meta disorder (updated metapredict disorder) - V2
+        [3] - meta disorder (updated metapredict disorder) - V3
 
     """
 
@@ -450,26 +439,31 @@ def predict_all(sequence):
     sequence = sequence.upper()
 
     # compute pLDDT and metapredict disorder
-    meta_disorder = predict_disorder(sequence, return_numpy = True)
-    legacy_disorder = predict_disorder(sequence, return_numpy=True, legacy=True)
+    v1 = _predict(sequence, network='V1')
+    v2 = _predict(sequence, network='V2')
+    v3 = _predict(sequence, network='V3')
     ppLDDT = predict_pLDDT(sequence, return_numpy=True, normalized=True)
     
-
-    return (meta_disorder, legacy_disorder, ppLDDT)
+    return (ppLDDT, V1, V2, V3)
 
 
 
 # ..........................................................................................
 #
 def predict_disorder_batch(input_sequences,
-                           gpuid=0,
-                           return_domains=False,
-                           disorder_threshold=0.5,
-                           minimum_IDR_size=12,
-                           minimum_folded_domain=50,
-                           gap_closure=10,
-                           show_progress_bar = True,
-                           batch_mode = None):
+                                version = DEFAULT_NETWORK,
+                                device=None,
+                                normalized=True,
+                                round_values=True,
+                                return_numpy=True,                                
+                                return_domains=False,
+                                disorder_threshold=None,
+                                minimum_IDR_size=12,
+                                minimum_folded_domain=50,
+                                gap_closure=10,
+                                override_folded_domain_minsize=False,
+                                show_progress_bar = True,
+                                disable_batch = False):
 
     """
     Batch mode predictor which takes advantage of PyTorch
@@ -477,17 +471,7 @@ def predict_disorder_batch(input_sequences,
     CPU, predictions for a set of sequences are performed
     rapidly.
 
-    Batch mode was implemented in metapredict V2-FF, as is 
-    optimized for the hybrid network first released in V2.
-    As such a few options are not available for batch mode
-    which include:
-
-    * legacy - you cannot predict legacy metapredict scores with batch_mode
-             
-    * normalize - all predictions are automatically normalized to fall between 0 and 1
-            
-    * return_numpy - all disorder scores are returned as numpy arrays.
-                   
+    This now works with all versions of metapredict.     
 
     Note also that batch mode uses 32-bit float vectors
     whereas non-batch uses 64-bit float vectors, so the
@@ -503,13 +487,39 @@ def predict_disorder_batch(input_sequences,
         as a list of sequences or a dictionary of key-value
         pairs where values are sequences.
 
-    gpuid : int 
-        Identifier for the GPU being requested. Note that if
-        this is left unset the code will use the first GPU available
-        and if none is available will default back to CPU; in 
-        general it is recommended to not try and set this unless
-        there's a specific reason why a specific GPU should be
-        used
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
+
+    device : int or str 
+        Identifier for the device to be used for predictions. 
+        Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
+        the index of a specific cuda-enabled GPU. If 'cuda' is specified and
+        cuda.is_available() returns False, instead of falling back to CPU, 
+        metapredict will raise an Exception so you know that you are not
+        using CUDA as you were expecting. 
+        Default: None
+            When set to None, we will check if there is a cuda-enabled
+            GPU. If there is, we will try to use that GPU. 
+            If you set the value to be an int, we will use cuda:int as the device
+            where int is the int you specify. The GPU numbering is 0 indexed, so 0 
+            corresponds to the first GPU and so on. Only specify this if you
+            know which GPU you want to use. 
+            * Note: MPS is only supported in Pytorch 2.1 or later. If I remember
+            right it might have been beta supported in 2.0 *.
+
+    normalized : bool
+        Whether or not to normalize disorder values to between 0 and 1. 
+        Default : True
+
+    round_values : bool
+        Whether to round the values to 4 decimal places. 
+        Default : True
+
+    return_numpy : bool
+        Whether to return a numpy array or a list for single predictions. 
+        Default : True   
 
     return_domains : bool
         Flag which, if set to true, means we return DisorderDomain
@@ -522,7 +532,6 @@ def predict_disorder_batch(input_sequences,
     
     disorder_threshold : float
         Used only if return_domains = True.
-
         Threshold used to deliniate between folded and disordered
         regions. We use a value of 0.5 because predict_disorder_batch
         does not support legacy. 
@@ -564,31 +573,28 @@ def predict_disorder_batch(input_sequences,
         disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
 
+    override_folded_domain_minsize : bool
+        By default this function includes a fail-safe check that
+        assumes folded domains really shouldn't be less than 
+        35 or 20 residues. However, for some approaches we may 
+        wish to over-ride these thresholds to match the passed 
+        minimum_folded_domain value. If this flag is set to 
+        True this override occurs. This is generally not 
+        recommended unless you expect there to be well-defined 
+        sharp boundaries which could define small (20-30) 
+        residue folded domains. This is not provided as an option 
+        in the normal predict_disorder_domains for metapredict. 
+        Default = False. 
+
     show_progress_bar : bool
         Flag which, if set to True, means a progress bar is printed as 
         predictions are made, while if False no progress bar is printed.
         Default  =  True
 
-    batch_mode : string
-        Indictor which, if set to 'pack-n-pad', 'size-collect' 
-        will FORCE the batch algorithm to use mode 'pack-n-pad', 
-        'size-collect' for batch decomposition.
-
-        Mode 'size-collect'  means we pre-filter sequences into 
-        groups where they're all the same length, avoiding padding/packing. 
-        This works in all versions of torch, and will be faster
-        if you have very large datasets or have many copies of 
-        the same sequence.
-
-        Mode 'pack-n-pad' involves padding/packing the sequences so that 
-        all sequences can be passed in a batchsize of 32. This 
-        is only available if pytorch 1.11 or higher is available.
-        In testing, we found that pack-n-pad is about 2x faster than
-        size-collect if running on CPU with variable length sequence
-        if fewer 5000 sequences. On GPU, size-collect was consistently faster.
-
-        Default = None, which means dynamic selection occurs. Default
-        is to use size-collect because it is faster.
+    disable_batch : bool
+        Whether to override any use of batch predictions and predict
+        sequences individually.
+        Default = False    
 
     Returns
     -------------
@@ -622,29 +628,33 @@ def predict_disorder_batch(input_sequences,
 
     """
 
-    return _batch_predict(input_sequences,
-                          gpuid = gpuid,
-                          return_domains = return_domains,                          
-                          disorder_threshold = disorder_threshold,
-                          minimum_IDR_size = minimum_IDR_size,
-                          minimum_folded_domain = minimum_folded_domain,
-                          gap_closure = gap_closure,
-                          show_progress_bar = show_progress_bar,
-                          force_mode = batch_mode)
+    return _predict(input_sequences,
+                        network=version,
+                        use_device=device,
+                        round_values=round_values,
+                        return_numpy=return_numpy,
+                        return_domains = return_domains,                          
+                        disorder_threshold = disorder_threshold,
+                        minimum_IDR_size = minimum_IDR_size,
+                        minimum_folded_domain = minimum_folded_domain,
+                        override_folded_domain_minsize=False,
+                        gap_closure = gap_closure,
+                        show_progress_bar = show_progress_bar,
+                        force_disable_batch = disable_batch)
 
 
 
 # ..........................................................................................
 #
 def graph_disorder(sequence, 
+                   version = DEFAULT_NETWORK,
                    title = 'Predicted protein disorder', 
                    disorder_threshold = None,
                    pLDDT_scores=False,
                    shaded_regions = None,
                    shaded_region_color = 'red',
                    DPI=150, 
-                   output_file=None,
-                   legacy=False):
+                   output_file=None):
     """
     Function to plot the disorder of an input sequece. Displays immediately.
 
@@ -653,6 +663,11 @@ def graph_disorder(sequence,
 
     sequence : str 
         Input amino acid sequence (as string) to be predicted.
+
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
 
     title : str
         Sets the title of the generated figure. Default = "Predicted protein 
@@ -698,8 +713,6 @@ def graph_disorder(sequence,
         ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
-    legacy : bool
-        whether to use the legacy metapredict predictions
 
     Returns
     --------
@@ -712,11 +725,15 @@ def graph_disorder(sequence,
     # sanity check
     _meta_tools.raise_exception_on_zero_length(sequence)
 
+    # make version uppercase
+    version=version.upper()
+
+    if version not in list(metapredict_networks.keys()):
+        raise MetapredictError(f'Specified version of {version} is not available. Use {list(metapredict_networks.keys())}')
+
     if disorder_threshold == None:
-        if legacy == True:
-            disorder_threshold = 0.3
-        else:
-            disorder_threshold = 0.5
+        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
+    
 
     # check that a valid range was passed for disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -731,7 +748,7 @@ def graph_disorder(sequence,
     _graph(sequence, title = title, disorder_threshold = disorder_threshold, 
         pLDDT_scores = pLDDT_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
-        DPI=DPI, output_file = output_file, legacy_metapredict=legacy) 
+        DPI=DPI, output_file = output_file, network=version) 
 
 
 # ..........................................................................................
@@ -804,7 +821,8 @@ def graph_pLDDT(sequence,
                 shaded_regions = None,
                 shaded_region_color = 'red',
                 DPI=150, 
-                output_file=None):
+                output_file=None,
+                version = DEFAULT_NETWORK):
     """
     Function to plot the AF2 pLDDT scores of an input sequece. Displays immediately.
 
@@ -850,6 +868,11 @@ def graph_pLDDT(sequence,
         ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
+
     Returns
     --------
 
@@ -872,12 +895,13 @@ def graph_pLDDT(sequence,
     _graph(sequence, title = title, pLDDT_scores = True,
         disorder_scores=disorder_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
-        DPI=DPI, output_file = output_file) 
+        DPI=DPI, output_file = output_file, network=version) 
 
 
 # ..........................................................................................
 #
-def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy=False):
+def percent_disorder(sequence, disorder_threshold=None, mode='threshold', 
+                    version=DEFAULT_NETWORK):
     """
     Function that returns the percent disorder for any given protein.
     By default, uses 0.5 as a cutoff for the new version of metapredict
@@ -915,8 +939,11 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy
         predict_disorder_domains() function and then calculate what fraction of
         the protein's residues are in the predicted IDRs.
         
-    legacy : bool
-        Whether or not to use the legacy metapredict. 
+
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
 
     Returns
     -----------
@@ -935,35 +962,30 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy
     if mode not in ['threshold', 'disorder_domains']:
         raise MetapredictError(f"Mode must be one of 'threshold' or 'disorder_domains', but '{mode}' was passed instead")
 
+    # make version uppercase
+    version=version.upper()
+
+    # check verison
+    if version not in list(metapredict_networks.keys()):
+        raise MetapredictError(f'Specified version of {version} is not available. Use {list(metapredict_networks.keys())}')
+
     # make all residues upper case 
     sequence = sequence.upper()
 
+    # set the disorder threshold
+    if disorder_threshold == None:        
+        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
 
     if mode == 'threshold':
 
-        # set dis equal to the predicted disorder for the input sequence
-        if legacy == True:
-            dis = predict_disorder(sequence, legacy=True)
-            if disorder_threshold == None:
-                disorder_threshold = 0.3            
-
-        else:
-            dis = predict_disorder(sequence)
-            if disorder_threshold == None:
-                disorder_threshold = 0.5
-
+        # get disorder
+        dis = _predict(sequence, network=version, return_numpy=True)
+        
         # check threshold is valid
         _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
             
-
-        # set arbitrarily chosen variable n to equal 0
-        n = 0
-
-        # for predicted disorder values in dis:
-        for i in dis:
-            #if predicted value is greater than cutoff, add one to n
-            if i >= disorder_threshold:
-                n += 1
+        # get number over value
+        disorder_count = (dis >= disorder_threshold).sum()
 
         """
         percent disorder is equal to n (number of residues with predicted
@@ -971,19 +993,12 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold', legacy
         input sequence.
         """
 
-        percent_disordered = round(100*((n / len(dis))), 3)
+        percent_disordered = round(100*((disorder_count / len(sequence))), 3)
 
     # else using disordered domains
     else:
-
         # if no specified threshold use the defaults
-        if disorder_threshold is None:
-            idrs = predict_disorder_domains(sequence,legacy=legacy).disordered_domains
-
-        # else us the passed threshold
-        else:
-            idrs = predict_disorder_domains(sequence,legacy=legacy, disorder_threshold=disorder_threshold).disordered_domains
-
+        idrs=predict_disorder_domains(sequence, disorder_threshold, version=version).disordered_domains
         fraction_disordered = sum([len(i) for i in idrs])/len(sequence)
         percent_disordered = round(100*(fraction_disordered), 3)
 
@@ -1003,7 +1018,7 @@ def predict_disorder_fasta(filepath,
                            output_file = None,
                            normalized=True,
                            invalid_sequence_action='convert',
-                           legacy=False):
+                           version=DEFAULT_NETWORK):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of disorder values where the key is the 
@@ -1034,8 +1049,10 @@ def predict_disorder_fasta(filepath,
         rules. See https://protfasta.readthedocs.io/en/latest/read_fasta.html 
         for more information.
 
-    legacy : bool
-        Whether to use the legacy metapredict predictor. Default = False.
+     version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
 
     Returns
     --------
@@ -1059,51 +1076,11 @@ def predict_disorder_fasta(filepath,
     if not os.path.isfile(test_data_file):
         raise FileNotFoundError(f'Datafile [{filepath}] does not exist.')
 
-    protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
-
+    protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action)
 
     # initialize return dictionary
-    disorder_dict = {}
-    
-    # Batch mode only supports normalized=True and legacy=False, so if
-    # either of these are set use the slower non batch mode
-    # 
-    if normalized is False or legacy is True:
+    disorder_dict = _predict(protfasta_seqs, network=version, normalized=normalized, return_numpy=False)
 
-        # initialize empty dictionary to be populated with the the fasta headers (key) 
-        # and the predicted disorder values (value)
-        
-
-        # for the sequences in the protffasta_seqs list:
-        for seqs in protfasta_seqs:
-
-            # set cur_header equal to the fasta header
-            cur_header = seqs[0]
-
-            # set cur_seq equal to the sequence associated with the fasta header
-            cur_seq = seqs[1]
-
-            # make all values for curSeq uppercase so they work with predictor
-            cur_seq = cur_seq.upper()
-
-            # set cur_disorder equal to the predicted values for cur_seq
-            cur_disorder = predict_disorder(cur_seq, normalized=normalized, legacy=legacy, return_numpy=True)
-
-            disorder_dict[cur_header] = cur_disorder
-            
-    else:
-
-        # clean dict will be a dictionary of mapping from header
-        # to sequence, but will overwrite entries where the same
-        # header is present
-        clean_dict = {}
-        for k in protfasta_seqs:
-            clean_dict[k[0]] = k[1]
-
-        tmp_dict = _batch_predict(clean_dict)
-        for k in tmp_dict:
-            disorder_dict[k] = tmp_dict[k][1]
-    
     # if we did not request an output file 
     if output_file is None:
         return disorder_dict
@@ -1111,7 +1088,6 @@ def predict_disorder_fasta(filepath,
     # else write to disk 
     else:
         _meta_tools.write_csv(disorder_dict, output_file)
-
 
 
 
@@ -1207,7 +1183,7 @@ def graph_disorder_fasta(filepath,
                          output_filetype='png', 
                          invalid_sequence_action='convert',
                          indexed_filenames=False,
-                         legacy=False):
+                         version=DEFAULT_NETWORK):
 
     """
     Function to make graphs of predicted disorder from the sequences
@@ -1261,8 +1237,10 @@ def graph_disorder_fasta(filepath,
     indexed_filenames : bool
         Bool which, if set to true, means filenames start with an unique integer.
 
-    legacy : bool
-        Whether to use the legacy metapredict predictor.
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
 
     Returns
     ---------
@@ -1271,12 +1249,12 @@ def graph_disorder_fasta(filepath,
         No return object, but, the graph is saved to disk or displayed locally.
 
     """
+    version=version.upper()
+    if version not in list(metapredict_networks.keys()):
+        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
 
     if disorder_threshold == None:
-        if legacy == True:
-            disorder_threshold = 0.3
-        else:
-            disorder_threshold = 0.5
+        disorder_threshold = metapredict_networks[version][parameters]['disorder_threshold']
 
     # check that a valid range was passed for disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -1323,13 +1301,13 @@ def graph_disorder_fasta(filepath,
             title = idx[0:14]
 
             # plot!        
-            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, output_file=filename, legacy=legacy)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, output_file=filename, network=version)
 
         # if no output_dir specified just graph the seq        
         else:
             # define title (including bad chars)
             title = idx[0:14]            
-            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, legacy=legacy)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, network=version)
 
 
 # ..........................................................................................
@@ -1444,7 +1422,7 @@ def graph_pLDDT_fasta(filepath,
 
 # ..........................................................................................
 #
-def predict_disorder_uniprot(uniprot_id, normalized=True, legacy=False):
+def predict_disorder_uniprot(uniprot_id, normalized=True, version=DEFAULT_NETWORK):
     """
     Function to return disorder of a single input sequence. Uses a 
     Uniprot ID to get the sequence.
@@ -1458,6 +1436,11 @@ def predict_disorder_uniprot(uniprot_id, normalized=True, legacy=False):
     no_ID : str
          The uniprot ID of the sequence to predict
 
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
+
     Returns
     ----------
 
@@ -1465,12 +1448,16 @@ def predict_disorder_uniprot(uniprot_id, normalized=True, legacy=False):
         No return object, but, the graph is saved to disk or displayed locally.
     
     """
+    # check version
+    version=version.upper()
+    if version not in list(metapredict_networks.keys()):
+        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
 
     # fetch sequence from Uniprot
-    sequence = _fetch_sequence(uniprot_id)
+    sequence = _getseq(uniprot_id)[1]
         
     # return predicted values of disorder for sequence
-    return predict_disorder(sequence, normalized, legacy=legacy)
+    return _predict(sequence, normalized=normalized, network=version)
 
 
 # ..........................................................................................
@@ -1493,9 +1480,8 @@ def predict_pLDDT_uniprot(uniprot_id):
         No return object, but, the graph is saved to disk or displayed locally.
     
     """
-
     # fetch sequence from Uniprot
-    sequence = _fetch_sequence(uniprot_id)
+    sequence = _getseq(uniprot_id)[1]
         
     # return predicted values of disorder for sequence
     return _AF2pLDDTscores.predict(sequence)
@@ -1511,7 +1497,7 @@ def graph_disorder_uniprot(uniprot_id,
                            shaded_region_color = 'red',
                            DPI=150, 
                            output_file=None,
-                           legacy=False):
+                           version=DEFAULT_NETWORK):
 
     """
     Function to plot the disorder of an input sequece. Displays immediately.
@@ -1560,8 +1546,10 @@ def graph_disorder_uniprot(uniprot_id,
         to the ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
-    legacy : bool
-        whether to use the legacy metapredict predictor
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
 
     Returns
     ----------
@@ -1570,20 +1558,24 @@ def graph_disorder_uniprot(uniprot_id,
         No return object, but, the graph is saved to disk or displayed locally.
     
     """
-    if disorder_threshold == None:
-        if legacy == True:
-            disorder_threshold = 0.3
-        else:
-            disorder_threshold = 0.5
+
+    # check version
+    version=version.upper()
+    if version not in list(metapredict_networks.keys()):
+        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
+
+    if disorder_threshold==None:
+        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
 
     # check that a valid range was passed for 
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
 
     # grab uniprot sequence
-    sequence = _fetch_sequence(uniprot_id)
+    sequence = _getseq(uniprot_id)[1]
 
     # graph sequence
-    _graph(sequence, title=title, pLDDT_scores=pLDDT_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file, legacy_metapredict=legacy) 
+    _graph(sequence, title=title, pLDDT_scores=pLDDT_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, 
+        shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file, network=version) 
     
 
 # ..........................................................................................
@@ -1640,7 +1632,7 @@ def graph_pLDDT_uniprot(uniprot_id,
     """
 
     # grab uniprot sequence
-    sequence = _fetch_sequence(uniprot_id)
+    sequence = _getseq(uniprot_id)[1]
 
     # graph sequence
     _graph(sequence, title=title, disorder_scores=False, pLDDT_scores=True, shaded_regions=shaded_regions, shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file) 
@@ -1654,7 +1646,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
                              gap_closure=10, 
                              normalized=True,
                              return_numpy=True,
-                             legacy = False):
+                             version=DEFAULT_NETWORK):
     """
 
     This function takes an amino acid sequence, a disorder score, and 
@@ -1708,6 +1700,10 @@ def predict_disorder_domains_uniprot(uniprot_id,
         Flag which if set to true means all numerical types are returned
         as numpy.ndlist. Default is True
 
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
 
     Returns
     ---------
@@ -1735,43 +1731,28 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
     """
 
-    if disorder_threshold == None:
-        if legacy == True:
-            disorder_threshold = 0.42
-        else:
-            disorder_threshold = 0.5
+    # check version
+    version=version.upper()
+    if version not in list(metapredict_networks.keys()):
+        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
 
-    sequence = _fetch_sequence(uniprot_id)
+    if disorder_threshold==None:
+        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
 
-    disorder = predict_disorder(sequence, normalized=normalized, legacy=legacy)
+    sequence = _getseq(uniprot_id)[1]
 
-    return_tuple = _domain_definition.get_domains(sequence, 
-                                                 disorder, 
-                                                 disorder_threshold=disorder_threshold,                                            
-                                                 minimum_IDR_size=minimum_IDR_size, 
-                                                 minimum_folded_domain=minimum_folded_domain,
-                                                 gap_closure=gap_closure)
-                                                 
+    DisObj = _predict(sequence, normalized=normalized, network=version, return_domains=True,
+                                disorder_threshold=disorder_threshold, minimum_IDR_size=minimum_IDR_size,
+                                minimum_folded_domain=minimum_folded_domain,return_numpy=return_numpy,
+                                gap_closure=gap_closure)
 
-    # extract out the IDR and FD boundaires, discarding the sequence info which is irrelevant
-    IDRs = []
-
-    for local_idr in return_tuple[1]:
-        IDRs.append([local_idr[0], local_idr[1]])
-
-    FDs = []
-
-    for local_fd in return_tuple[2]:
-        FDs.append([local_fd[0], local_fd[1]])
-
-    # return DisorderObject
-    return _DisorderObject(sequence, disorder, IDRs, FDs, return_numpy=return_numpy)
+    return DisObj
 
 
 
 # ..........................................................................................
 #
-def predict_disorder_caid(input_fasta, output_file):
+def predict_disorder_caid(input_fasta, output_file, version=DEFAULT_NETWORK):
     '''
     executing script for generating a caid-compliant output file for disorder
     predictions using a .fasta file as the input.
@@ -1786,27 +1767,28 @@ def predict_disorder_caid(input_fasta, output_file):
         the output file name as a string. This can include a file path to a specific
         save location or by default saves to the curdir
 
+    version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
+
     Returns
     --------
     None
         Does not return anything, saves a file to the destination output file
 
     '''
+    # check version
+    version=version.upper()
+    if version not in list(metapredict_networks.keys()):
+        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
 
     # read in the ids and seqs as a list of lists where each list has a first element that corresponds
     # to the ID and the second corresponds to the sequence. Convert invalid amino acids if needed.
-    entry_id_and_seqs = _protfasta.read_fasta(input_fasta, return_list=True, invalid_sequence_action = 'convert')
+    entry_id_and_seqs = _protfasta.read_fasta(input_fasta, return_list=False, invalid_sequence_action = 'convert')
 
-    # iterated through id and seqs to make a dict to use to write output file.
-    output_dict = {}
-
-    for id_and_seq in entry_id_and_seqs:
-        cur_id = f'>{id_and_seq[0]}'
-        cur_sequence = id_and_seq[1]
-        # predict disorder of cur_sequence
-        cur_disorder = predict_disorder(cur_sequence)
-        # now add all to output_dict
-        output_dict[cur_id] = [[cur_sequence], cur_disorder]
+    # predict
+    predictions = _predict(entry_id_and_seqs, network=version, return_numpy=False)
 
     # write the output file
     _meta_tools.write_caid_format(output_dict, output_file)

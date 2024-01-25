@@ -3,11 +3,15 @@
 Functionality previously scattered across various different modules. 
 This holds all of the functionality for disorder prediction. 
 This includes batch and single sequence. 
+Device selection can be carried out from the predict function. 
+Output data type also from the predict function. 
 """
+
 # local imports
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 from metapredict.backend import domain_definition as _domain_definition
 from metapredict.backend.network_parameters import metapredict_networks
+from metapredict.parameters import DEFAULT_NETWORK
 from metapredict.backend import encode_sequence
 from metapredict.backend import architectures
 from metapredict.metapredict_exceptions import MetapredictError
@@ -19,7 +23,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
-from packaging import version
 from tqdm import tqdm
 
 # ....................................................................................
@@ -31,7 +34,7 @@ def build_DisorderObject(s,
                          minimum_folded_domain=50,
                          gap_closure=10,
                          override_folded_domain_minsize=False,
-                         use_slow = False):
+                         use_slow = False, return_numpy=True):
 
     """
     Function which takes a sequence, a disorder profile, and some
@@ -86,6 +89,9 @@ def build_DisorderObject(s,
         the domain decomposition algorithm used to excise IDRs from the linear
         disorder profile.
 
+    return_numpy : bool
+        whether to reutrn np array or not
+
     """
 
     # extract out disordered domains                 
@@ -107,7 +113,7 @@ def build_DisorderObject(s,
         FDs.append([local_fd[0], local_fd[1]])
 
     # build an DisorderObject and return it!
-    return _DisorderObject(s, disorder, IDRs, FDs, return_numpy=True)
+    return _DisorderObject(s, disorder, IDRs, FDs, return_numpy=return_numpy)
 
 
 # ....................................................................................
@@ -138,25 +144,26 @@ def size_filter(inseqs):
         retdict[len(s)].append(s)
 
     return retdict
-                               
+
 
 # ....................................................................................
 
 def predict(inputs,
-            network='V3',
+            network=DEFAULT_NETWORK,
             use_device=None,
             normalized=True,
-            return_domains=False,
-            disorder_threshold=None,
             round_values=True,
             return_numpy=True,
+            return_domains=False,
+            disorder_threshold=None,
             minimum_IDR_size=12,
             minimum_folded_domain=50,
             gap_closure=10,
             override_folded_domain_minsize=False,
             use_slow = False,
             print_performance=False,
-            show_progress_bar = True):
+            show_progress_bar = True,
+            force_disable_batch=False):
     """
     Batch mode predictor which takes advantage of PyTorch
     parallelization such that whether it's on a GPU or a 
@@ -171,8 +178,9 @@ def predict(inputs,
         a dictionary of key-value pairs where values are sequences.
 
     network : string
-        The network to use for prediction. Default is V3.
-        Options incllude V1, V2, or V3. 
+        The network to use for prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2, or V3. 
 
     use_device : int or str 
         Identifier for the device to be used for predictions. 
@@ -194,6 +202,14 @@ def predict(inputs,
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1. 
         Default : True
+    
+    round_values : bool
+        Whether to round the values to 4 decimal places. 
+        Default : True
+
+    return_numpy : bool
+        Whether to return a numpy array or a list for single predictions. 
+        Default : True    
 
     return_domains : bool
         Flag which, if set to true, means we return DisorderDomain
@@ -210,19 +226,12 @@ def predict(inputs,
         values depending on the network (V1 = 0.42, V2=0.5). You can
         override this value. 
 
-    round_values : bool
-        Whether to round the values to 4 decimal places. 
-        Default : True
-
-    return_numpy : bool
-        Whether to return a numpy array or a list for single predictions. 
-        Default : True
-
     minimum_IDR_size : int
         Used only if return_domains = True.
 
         Defines the smallest possible IDR. This is a hard limit - 
         i.e. we CANNOT get IDRs smaller than this. Default = 12.
+
 
     minimum_folded_domain : int
         Used only if return_domains = True.
@@ -284,10 +293,14 @@ def predict(inputs,
         predictions are made, while if False no progress bar is printed.
         Default  =  True
 
+    force_disable_batch : bool
+        Whether to override any use of batch predictions and predict
+        sequences individually.
+        Default = False
 
     Returns
     -------------
-    dict or list
+    DisorderDomain object str dict or list
 
         IF RETURN DOMAINS == FALSE: this function returns either
         a list or a dictionary.
@@ -320,8 +333,10 @@ def predict(inputs,
     MetapredictError
         An exception is raised if the requested network is not one of the available options.
     """
-    # check network chosen
-    # make sure network is uppercase.
+    ##
+    ## FIGURE OUT WHAT NETWORK WE ARE USING
+    ##
+    ## ....................................................................................
     network=network.upper()
     if network not in metapredict_networks:
         raise MetapredictError(f'Network {network} not available. Available networks are {metapredict_networks.keys()}')
@@ -338,29 +353,42 @@ def predict(inputs,
     # get params
     params=net['parameters']
 
+    ##
+    ## FIGURE OUT WHERE WE ARE DOING THE PREDICTIONS
+    ##
+    ## ....................................................................................    
+
     # by default, don't check if cuda is available.
     check_cuda=False
 
-    # see if a device was specified. 
-    if use_device==None:
-        # if not specified, use a cuda enabled GPU if one is available. Otherwise fall back to CPU. 
-        if torch.cuda.is_available():
-            device_string=f'cuda'
-        else:
-            device_string = 'cpu'  
-    else:      
-        if str(use_device).lower()=='cpu':
-            device_string='cpu'
-        elif str(use_device).lower()=='mps':
-            device_string='mps'
-        elif str(use_device).lower()=='cuda':
-            device_string=f'cuda' 
-            check_cuda=True   
-        elif isinstance(use_device, int)==True:
-            device_string=f'cuda:{use_device}'
-            check_cuda=True
-        else:
-            raise MetapredictError('The variable use_device can only be set to: None, cpu, mps, cuda, or an integer value specifying the index of a cuda GPU')
+    # if a single sequence, just use cpu. Using GPU for a single sequence would be silly.
+    if isinstance(inputs, str)==True:
+        device_string='cpu'
+    else:
+        # If a batch of sequences, figure out what device to use or if a device was specified. 
+        if use_device==None:
+            # if not specified, use a cuda enabled GPU if one is available. Otherwise fall back to CPU. 
+            if torch.cuda.is_available():
+                device_string=f'cuda'
+            else:
+                device_string = 'cpu'  
+        else:      
+            if str(use_device).lower()=='cpu':
+                device_string='cpu'
+            elif str(use_device).lower()=='mps':
+                # check if mps is available. 
+                if torch.backends.mps.is_available():
+                    device_string='mps'
+                else:
+                    raise MetapredictError('use_device was specified as mps, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
+            elif str(use_device).lower()=='cuda':
+                device_string=f'cuda' 
+                check_cuda=True   
+            elif isinstance(use_device, int)==True:
+                device_string=f'cuda:{use_device}'
+                check_cuda=True
+            else:
+                raise MetapredictError('The variable use_device can only be set to: None, cpu, mps, cuda, or an integer value specifying the index of a cuda GPU')
     
     # if user manually set either an GPU index or 'cuda', make sure cuda is available. 
     # this will help us avoid falling back to CPU unintentionally.   
@@ -370,6 +398,11 @@ def predict(inputs,
     
     # set device
     device=torch.device(device_string)
+
+    ##
+    ## LOAD IN THE NETWORK
+    ##
+    ## ....................................................................................    
 
     # load network. We do this differently depending on if we used
     # pytorch or pytorch-lightning to make the network. 
@@ -390,14 +423,19 @@ def predict(inputs,
 
     # make sure network is on correct device. 
     model.to(device)
-
-    # if we want to print the performance, start tracking time per prediction. 
-    if print_performance:
-        start_time = time.time()
+        
+    ##
+    ## START PREDICTIONS
+    ##
+    ## .................................................................................... 
 
     # now we can start up the predictions. 
     # if a single prediction, we can just ignore the batch stuff. 
     if isinstance(inputs, str)==True:
+        # if we want to print the performance, start tracking time per prediction. 
+        if print_performance:
+            start_time = time.time()        
+        
         # encode the sequence
         seq_vector = encode_sequence.one_hot(inputs)
         seq_vector = seq_vector.view(1, len(seq_vector), -1)
@@ -427,7 +465,7 @@ def predict(inputs,
         # if printing performance
         if print_performance:
             end_time = time.time()
-            print(f"Time taken for predictions on {device}: {end_time - start_time} seconds") 
+            print(f"Time taken for prediction on {device}: {end_time - start_time} seconds") 
 
         # see if need to build disorder_domsins
         if return_domains:
@@ -435,7 +473,8 @@ def predict(inputs,
                                             disorder_threshold=disorder_threshold,
                                             minimum_IDR_size=minimum_IDR_size, 
                                             minimum_folded_domain=minimum_folded_domain,
-                                            gap_closure=gap_closure,use_slow=use_slow)
+                                            gap_closure=gap_closure,use_slow=use_slow,
+                                            return_numpy=return_numpy)
         # return the output
         return outputs
 
@@ -459,65 +498,103 @@ def predict(inputs,
             sequence_list = list(set(inputs))
         else:
             raise Exception('Invalid data type passed - expect a single sequence or a list or dictionary of sequences')
-        
+
+        # if we want to print the performance, start tracking time per prediction. 
+        if print_performance:
+            start_time = time.time()   
+
         # initialize the return dictionary that maps sequence to
         # disorder profile
         pred_dict = {}
 
-        # Here, we systematically subdivide the sequences into groups 
-        # where they're all the same length in a given megabatch, meaning we don't
-        # need to pad. This works well in earlier version or torch, but is not optimal
-        # in that the effective batch size ends up being 'size-collect' for every uniquely-lengthed
-        # sequence.
+        # check if we are disabling batch predictions. If we are, we need to
+        # do all predictions individually
+        if force_disable_batch==True:
+            # iterate through sequence list
+            for seq in sequence_list:
+                # encode the sequence
+                seq_vector = encode_sequence.one_hot(inputs)
+                seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
-        # build a dictionary where keys are sequence length
-        # and values is a list of sequences of that exact length
-        size_filtered =  size_filter(sequence_list)
-
-        # set progress bar info
-        loop_range = tqdm(size_filtered) if show_progress_bar else size_filtered
-
-        # iterate through local size
-        for local_size in loop_range:
-            local_seqs = size_filtered[local_size]
-            # load the data
-            seq_loader = DataLoader(local_seqs, batch_size=params['batch_size'], shuffle=False)
-
-            # iterate through batches in seq_loader
-            for batch in seq_loader:
-                # Pad the sequence vector to have the same length as the longest sequence in the batch
-                seqs_padded = pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)
-
-                # Move padded sequences to device
-                seqs_padded = seqs_padded.to(device)
-
-                # Forward pass, then send to CPU for numpy rounding / normalization
+                # get output values from the seq_vector based on the network (brnn_network)
                 with torch.no_grad():
-                    outputs = model.forward(seqs_padded).detach().cpu().numpy()
+                    outputs = model(seq_vector.float()).detach().numpy()[0]
+
+                # Take care of rounding and normalization
+                if normalized == True and round_values==True:
+                    outputs=np.round(np.clip(outputs, a_min=0, a_max=1),4)
+                elif normalized==True and round_values==False:
+                    outputs=np.clip(outputs, a_min=0, a_max=1)
+                elif normalized==False and round_values==True:
+                    outputs=np.round(outputs, 4)
+                # if both ==False, we don't need to do anything. 
                 
-                # Save predictions
-                for j, seq in enumerate(batch):
-                    if normalized==True and round_values==True:
-                        prediction=np.squeeze(np.round(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1),4))
-                    elif normalized==True and round_values==False:
-                        prediction=np.squeeze(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1))
-                    elif normalized==False and round_values==True:
-                        prediction=np.squeeze(np.round(outputs[j][0:len(seq)]))
+                # make list if user wants a list instead of a np.array
+                if return_numpy==False:
+                    if round_values==True:
+                        # need to round again because the np.round doesn't 
+                        # keep the rounded values when we convert to list. 
+                        outputs = [round(x, 4) for x in outputs.flatten()]
                     else:
-                        prediction=np.squeeze(outputs[j][0:len(seq)])
+                        # otherwise just return the flattened array as a list. 
+                        outputs=outputs.flatten().tolist()
 
-                    # make list if user wants a list instead of a np.array
-                    if return_numpy==False:
-                        if round_values==True:
-                            # need to round again because the np.round doesn't 
-                            # keep the rounded values when we convert to list. 
-                            prediction = [round(x, 4) for x in prediction.flatten()]
+                # add to dict
+                pred_dict[seq]=outputs
+
+        else:         
+            # Here, we systematically subdivide the sequences into groups 
+            # where they're all the same length in a given batch, meaning we don't
+            # need to pad. 
+
+            # build a dictionary where keys are sequence length
+            # and values is a list of sequences of that exact length
+            size_filtered =  size_filter(sequence_list)
+
+            # set progress bar info
+            loop_range = tqdm(size_filtered) if show_progress_bar else size_filtered
+
+            # iterate through local size
+            for local_size in loop_range:
+                local_seqs = size_filtered[local_size]
+                # load the data
+                seq_loader = DataLoader(local_seqs, batch_size=params['batch_size'], shuffle=False)
+
+                # iterate through batches in seq_loader
+                for batch in seq_loader:
+                    # Pad the sequence vector to have the same length as the longest sequence in the batch
+                    seqs_padded = pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)
+
+                    # Move padded sequences to device
+                    seqs_padded = seqs_padded.to(device)
+
+                    # Forward pass, then send to CPU for numpy rounding / normalization
+                    with torch.no_grad():
+                        outputs = model.forward(seqs_padded).detach().cpu().numpy()
+                    
+                    # Save predictions
+                    for j, seq in enumerate(batch):
+                        if normalized==True and round_values==True:
+                            prediction=np.squeeze(np.round(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1),4))
+                        elif normalized==True and round_values==False:
+                            prediction=np.squeeze(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1))
+                        elif normalized==False and round_values==True:
+                            prediction=np.squeeze(np.round(outputs[j][0:len(seq)]))
                         else:
-                            # otherwise just return the flattened array as a list. 
-                            prediction=prediction.flatten().tolist()
+                            prediction=np.squeeze(outputs[j][0:len(seq)])
 
-                    # see if we need to make prediction a list
-                    pred_dict[seq] = prediction
+                        # make list if user wants a list instead of a np.array
+                        if return_numpy==False:
+                            if round_values==True:
+                                # need to round again because the np.round doesn't 
+                                # keep the rounded values when we convert to list. 
+                                prediction = [round(x, 4) for x in prediction.flatten()]
+                            else:
+                                # otherwise just return the flattened array as a list. 
+                                prediction=prediction.flatten().tolist()
+
+                        # see if we need to make prediction a list
+                        pred_dict[seq] = prediction
 
 
         # if printing performance
@@ -546,7 +623,7 @@ def predict(inputs,
                                                              minimum_IDR_size=minimum_IDR_size, 
                                                              minimum_folded_domain=minimum_folded_domain,
                                                              gap_closure=gap_closure,
-                                                             use_slow=use_slow)
+                                                             use_slow=use_slow, return_numpy=return_numpy)
 
             end_time = time.time()
             if print_performance:

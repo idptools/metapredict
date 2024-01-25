@@ -11,7 +11,6 @@ See idptools-parrot.
 import torch
 import torch.nn as nn
 import pytorch_lightning as L
-from torch import optim
 
 
 
