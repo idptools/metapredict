@@ -402,7 +402,7 @@ def predict_disorder(sequence, normalized=True, return_numpy=False, round_values
     sequence = sequence.upper()
 
     # get disorder
-    disorder = _predict(sequence, network=version, normalized=normalized,
+    return _predict(sequence, network=version, normalized=normalized,
         return_numpy=return_numpy, round_values=round_values)
 
 
@@ -732,7 +732,7 @@ def graph_disorder(sequence,
         raise MetapredictError(f'Specified version of {version} is not available. Use {list(metapredict_networks.keys())}')
 
     if disorder_threshold == None:
-        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
+        disorder_threshold=metapredict_networks[version]['parameters']['disorder_threshold']
     
 
     # check that a valid range was passed for disorder_threshold
@@ -974,7 +974,7 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold',
 
     # set the disorder threshold
     if disorder_threshold == None:        
-        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
+        disorder_threshold=metapredict_networks[version]['parameters']['disorder_threshold']
 
     if mode == 'threshold':
 
@@ -1254,7 +1254,7 @@ def graph_disorder_fasta(filepath,
         raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
 
     if disorder_threshold == None:
-        disorder_threshold = metapredict_networks[version][parameters]['disorder_threshold']
+        disorder_threshold = metapredict_networks[version]['parameters']['disorder_threshold']
 
     # check that a valid range was passed for disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -1565,7 +1565,7 @@ def graph_disorder_uniprot(uniprot_id,
         raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
 
     if disorder_threshold==None:
-        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
+        disorder_threshold=metapredict_networks[version]['parameters']['disorder_threshold']
 
     # check that a valid range was passed for 
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -1737,7 +1737,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
         raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
 
     if disorder_threshold==None:
-        disorder_threshold=metapredict_networks[version][parameters]['disorder_threshold']
+        disorder_threshold=metapredict_networks[version]['parameters']['disorder_threshold']
 
     sequence = _getseq(uniprot_id)[1]
 
