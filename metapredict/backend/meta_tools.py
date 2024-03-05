@@ -45,7 +45,11 @@ def write_csv(input_dict, output_file):
 
         # for each score write
         for score in input_dict[idx]:
-            fh.write(f', {score:1.3f}')
+            # remove any brackets
+            score=str(score)
+            score = score.replace('[', '')
+            score = score.replace(']', '')
+            fh.write(f', {score}')
         fh.write(f'\n')
 
     fh.close()

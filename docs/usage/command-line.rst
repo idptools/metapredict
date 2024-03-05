@@ -5,7 +5,7 @@ metapredict from the command-line
 Using the original metapredict network
 ---------------------------------------
 
-We have recently updated the network that makes predictions for metapredict to massively improve accuracy. However, if you need to use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag!
+We have recently updated the network that makes predictions for metapredict to massively improve accuracy. However, if you need to use the original metapredict predictor as opposed to our new, updated predictor, you can specify the version by using the ``-v`` or ``--version`` flag and choosing V1, V2, or V3!
 
 
 Predicting disorder scores from fasta files
@@ -41,7 +41,7 @@ If you would like to specify where to save the output, simply use the ``-o`` or 
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+To use the original metapredict network, simply use the ``-v`` or ``--version`` flag.
 
 **Example:** 
 
@@ -78,8 +78,8 @@ If you would like to specify where to save the output, simply use the ``-o`` or 
 	
 	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta
 
-**Using the original metapredict predictor**
-To use the original metapredict predictor as opposed to our new, updated predictor, use the ``-l`` or ``--legacy`` flag! Note that if legacy mode is requested no parallelization is possible.
+**Using the an older version of the metapredict predictor**
+If you want to use an older version of metapredict, you can specify the version by using the ``-v`` or ``--version`` flag and choosing V1, V2, or V3!
 
 **Example**
 
@@ -88,7 +88,7 @@ To use the original metapredict predictor as opposed to our new, updated predict
 	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta -l
 
 **Changing output threshold for disorder-**
-To change the cutoff value for something to be considered disordered, simply use the ``--threshold`` flag and then specify your value. For legacy, the default is 0.42. For the new version of metapredict, the value is 0.5. 
+To change the cutoff value for something to be considered disordered, simply use the ``--threshold`` flag and then specify your value. For legacy, the default is 0.42. For the newer versions of metapredict, the value is 0.5. 
 
 **Example**
 
@@ -110,7 +110,7 @@ Predicting disorder scores from sequence
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+To use the original metapredict network, simply use the ``-v`` or ``--version`` flag and specify V1. You can also specify V2 or V3 here.
 
 **Example:** 
 
@@ -226,7 +226,7 @@ If you would like to change the disorder threshold line plotted on the graph, us
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+To use the original metapredict network, simply use the ``-v`` or ``--version`` flag and specify V1. You can also specify V2 or V3 here..
 
 **Example:** 
 
@@ -260,7 +260,7 @@ Quick graphing of disorder scores
 	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -D 200
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+To use the original metapredict network, simply use the ``-v`` or ``--version`` flag and specify V1. You can also specify V2 or V3 here.
 
 **Example:** 
 
@@ -312,7 +312,7 @@ Graphing disorder scores using UniProt ID
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-l`` or ``--legacy`` flag.
+To use the original metapredict network, simply use the ``-v`` or ``--version`` flag and specify V1. You can also specify V2 or V3 here.
 
 **Example:** 
 
@@ -375,9 +375,9 @@ To change the title, use the ``-t`` or ``--title`` flag.
     $ metapredict-name p53 -t my_cool_graph_of_p53
 
 
-**Using the legacy version of metapredict**
+**Using older versions of metapredict**
 
-To use the legacy version of metapredict for your disorder scores, use the ``-l`` or ``--legacy`` flag.
+If you want to use an older version of metapredict, you can specify the version by using the ``-v`` or ``--version`` flag and choosing V1, V2, or V3!
 
 **Example**
 

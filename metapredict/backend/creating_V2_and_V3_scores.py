@@ -55,7 +55,7 @@ def meta_predict_hybrid(sequence, cooperative=True):
 
     """
     # get the metapredict scores. 
-    metapredict_disorder = predict(sequence, network='V1', round_values=False)
+    metapredict_disorder = predict(sequence, version='V1', round_values=False)
     ppLDDT = alpha.predict(sequence)
 
     # defines functionally the limits that the predicted pLDDT score
@@ -104,4 +104,3 @@ def meta_predict_hybrid(sequence, cooperative=True):
 
     return hybrid
 
-#print(meta_predict_hybrid('AAAAAGSGSGSGSGAAAAAGSGSGSGSGAAAAAGSGSGSGSGAAAAAGSGSGSGSGAAAAAGSGSGSGSG'))
