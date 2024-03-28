@@ -8,3 +8,4 @@ METAPREDICT_V3_THRESHOLD=0.5
 
 # set the current default network for metapredict.
 DEFAULT_NETWORK = 'V2'
+DEFAULT_NETWORK_PLDDT = 'V2'
