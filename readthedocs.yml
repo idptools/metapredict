@@ -5,6 +5,17 @@
 # Required
 version: 2
 
+# need to set this for readthedocs to not fail. 
+build:
+  os: ubuntu-20.04  
+  tools:
+    python: "3.10"
+  jobs: 
+    pre_install:
+      - pip install cython 
+      - pip install numpy 
+      - pip install sphinx-rtd-theme
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
@@ -18,7 +29,8 @@ formats:
   - pdf
 
 # Optionally set the version of Python and requirements required to build your docs
+# commenting this out, I think this is deprecated now with the addition of the
+# 'build' info above.
 python:
-  version: 3.7
   install:
     - requirements: docs/requirements.txt
