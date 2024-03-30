@@ -1,6 +1,5 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
-### Last updated November 2023
-
+### Last updated March 2024
 
 ## Current version: metapredict V2-FF (V2.6)
 The current recommended and default version of metapredict is metapredict V2-FF (version 2.6). Small increments (2.6.x) may be made as bug fixes or feature enhancements.
@@ -9,7 +8,6 @@ For context, V2-FF provides identical predictions to metapredict V2, but via `pr
 
 To quantify this yourself, run:
 
-
 	import metapredict
 	metapredict.print_performance(batch=True)
 	metapredict.print_performance(batch=False)
@@ -17,13 +15,32 @@ To quantify this yourself, run:
 To compare the number of residues-per-second metapredict V2-FF predicts in batch mode vs. non-batch mode. For CPUs this is typically a 10-20x improvement. If GPUs are available this value can be substantially higher.	
 
 ## Installation
+Metapredict is a software package written in Python. It can be installed from [PyPI](https://pypi.org/project/metapredict/) (the Python Package Index) using the tool `pip`. We always recommend managing your Python environment with conda. If these ideas are foreign to you, we recommend reading up a bit on Python package management and [conda](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) before continuing.
 
+#### TL/DR: Recommended install commands are:
+In most situations, the following two commands will ensure all the necessary dependencies are installed and work correctly:
+
+	# ensure dependencies are from the same ecosystem (conda)
+	conda install numpy pytorch scipy cython matplotlib  -c pytorch
+	
+	# install from PyPI
+	pip install metapredict
+
+To check the installation has worked run:
+
+	metapredict-predict-disorder --help
+	
+from the command line; this should yield help info on the `metapredict-predict-disorder` command.
+	
+#### WARNING: Segfault when mixing `conda` and `pip` installs (March 2024)
+As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities between `pip` and `conda` versions of PyTorch and numpy. Therefore, it is essential your numpy and PyTorch installs are from the same package manager. metapredict will - by default - pull dependencies from PyPI. However, other packages installed from conda may require conda-dependent numpy installations, which can "brick" a previously-working installation.
+
+#### Extended installation info
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
 
 To install from PyPI, run:
 
 	pip install metapredict
-
 
 You can also install the current development version from
 
@@ -61,7 +78,7 @@ Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict: a fast, accurate,
 
 Note that in addition to the original paper, there's a V2 preprint; HOWEVER, we ask you only cite the original paper and describe the version being used (V1, V2 or V2-FF).
 
-Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict V2: An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure. bioRxiv 2022.06.06.494887 (2022). doi:10.1101/2022.06.06.494887## Changes
+Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict V2: An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure. bioRxiv 2022.06.06.494887 (2022). doi:10.1101/2022.06.06.494887
 
 ## Changes
 
@@ -78,7 +95,7 @@ We would like to thank the **DeepMind** team for developing AlphaFold and EBI/Un
 We would also like to thank the team at MobiDB for creating the database that was used to train this predictor. Check out their awesome stuff at [https://mobidb.bio.unipd.it](https://mobidb.bio.unipd.it)
 
 ## Copyright
-Copyright (c) 2020-2023, Holehouse Lab - Washington University School of Medicine
+Copyright (c) 2020-2024, Holehouse Lab - Washington University School of Medicine
 
 
 
