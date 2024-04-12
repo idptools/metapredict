@@ -147,9 +147,30 @@ def parse_plddt_data(path_to_fi):
             seq_to_dat[seq] = dat
     return seq_to_dat
 
+def moving_average(scores, window_size):
+    """
+    Smooths an array of scores over a user-specified sliding window size.
+
+    Parameters:
+        scores (array-like): Array of scores to be smoothed.
+        window_size (int): Size of the sliding window for smoothing.
+
+    Returns:
+        smoothed_scores (ndarray): Smoothed scores with the same length as the input array.
+    """
+    if window_size % 2 == 0:
+        raise ValueError("Window size must be an odd number.")
+
+    half_window = window_size // 2
+    pad_width = ((half_window, half_window),)  # Pad equally on both sides
+    padded_scores = np.pad(scores, pad_width, mode='reflect') 
+    smoothed_scores = np.convolve(padded_scores, np.ones(window_size) / window_size, mode='valid')
+    return smoothed_scores
+
+
 
 def meta_predict_hybrid_v3(inputs, metapredict_version='v1', vmax_cutoff=0.5,
-    base=0.34, top=1.0):
+    base=0.35, top=0.95, windowed_averaging=None):
     """
     Code used to generate the scores used to train metapredict V3. 
 
@@ -168,11 +189,14 @@ def meta_predict_hybrid_v3(inputs, metapredict_version='v1', vmax_cutoff=0.5,
 
     base : float
         The base value for the plddt scores. 
-        Default = 0.34
+        Default = 0.35
 
     top : float
         The top value for the plddt scores. 
-        Default = 1.0
+        Default = 0.95
+
+    windowed_averaging : Int
+        Whether to smooth scores. Default is None. Tested value that works well is 25. 
 
     Returns
     ----------
@@ -232,13 +256,18 @@ def meta_predict_hybrid_v3(inputs, metapredict_version='v1', vmax_cutoff=0.5,
         
         # flatten so all values in the bounds of 0 to 1
         smoothed = np.where(smoothed<0, 0, smoothed)
-        hybrid = np.where(smoothed>1, 1, smoothed)
-        hybrid_scores[seq]=np.round(hybrid,4).tolist()
+        smoothed = np.where(smoothed>1, 1, smoothed)
+
+        # moving averaging
+        if windowed_averaging != None:
+            smoothed=moving_average(smoothed, windowed_averaging)
+
+        hybrid_scores[seq]=np.round(smoothed,4).tolist()
     return hybrid_scores
 
 
 
-def generate_parrot_file(path_to_plddt_data, path_to_save_file):
+def generate_parrot_file(path_to_plddt_data, path_to_save_file, windowed_averaging=None):
     '''
     function taht will read in a TSV of plddt data and sequences 
     and save out a file that will be PARROT formatted with a sequence
@@ -260,7 +289,7 @@ def generate_parrot_file(path_to_plddt_data, path_to_save_file):
     print('Reading in data.')
     seq_to_dat = parse_plddt_data(path_to_plddt_data)
     print('Predicting hybrid scores.')
-    hybrid_scores = meta_predict_hybrid_v3(seq_to_dat)
+    hybrid_scores = meta_predict_hybrid_v3(seq_to_dat, windowed_averaging=windowed_averaging)
     print('Saving output data.')
     num=0
     with open(path_to_save_file, 'w') as fh:
