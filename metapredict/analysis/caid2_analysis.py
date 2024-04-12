@@ -8,8 +8,11 @@ from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, pr
 import math
 import matplotlib.pyplot as plt
 
-def read_caid2_seq_disorder(caid_file='caid1_and_2_disorder_pdb.fasta'):
+def read_caid2_seq_disorder(caid_file='caid2_disorder_pdb.fasta'):
     '''
+    
+    # caid1_and_2_disorder_pdb
+
     function to read in the modified Caid2 
     fasta file that includes a header, the
     ID, the sequence, and then the scores as
@@ -34,7 +37,37 @@ def read_caid2_seq_disorder(caid_file='caid1_and_2_disorder_pdb.fasta'):
         caid2_seqs_scores[lines[n].strip()]={'sequence':lines[n+1].strip(), 'scores':lines[n+2].strip()}
     return caid2_seqs_scores
     
-def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False):
+
+def moving_average(scores, window_size):
+    """
+    Smooths an array of scores over a user-specified sliding window size.
+
+    Parameters:
+        scores (array-like): Array of scores to be smoothed.
+        window_size (int): Size of the sliding window for smoothing.
+
+    Returns:
+        smoothed_scores (ndarray): Smoothed scores with the same length as the input array.
+    """
+    if window_size % 2 == 0:
+        raise ValueError("Window size must be an odd number.")
+
+    half_window = window_size // 2
+    pad_width = ((half_window, half_window),)  # Pad equally on both sides
+    padded_scores = np.pad(scores, pad_width, mode='reflect') 
+    smoothed_scores = np.convolve(padded_scores, np.ones(window_size) / window_size, mode='valid')
+    return smoothed_scores
+
+
+def stretch(scores, base=0.1, top=0.95): 
+    scores= (scores - base)*(1/(top-base))
+    scores=np.where(scores<0, 0, scores)
+    scores=np.where(scores>1, 1, scores)
+    return scores
+
+
+
+def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False, smoothing=None, stretch_scores=False):
     '''
     function to get the metapredict scores that match
     to each sequence in the caid2 dataset.
@@ -48,6 +81,10 @@ def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False)
         version of metapredict to use
     cutoff : float
         cutoff to use for the metapredict version
+    smoothing : int
+        whether to smooth scores over some window. Default=None (no smoothing)
+    stretch_scores : bool
+        whether to stretch the scores
 
     Returns
     --------
@@ -80,7 +117,23 @@ def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False)
         metapredict_scores = predict(caid2_seqs, version=version)
     else:
         metapredict_scores = predict_pLDDT(caid2_seqs, version=version, return_as_disorder_score=True)
-    
+
+    if stretch_scores==True:
+        for prot_name in metapredict_scores:
+            scores=metapredict_scores[prot_name][1]
+            stretched_scores = stretch(scores)
+            metapredict_scores[prot_name][1] = stretched_scores
+
+    # smooth
+    if smoothing!=None:
+        allscores=[]
+        for prot_name in metapredict_scores:
+            scores=metapredict_scores[prot_name][1]
+            smoothed_scores = moving_average(scores, smoothing)
+            metapredict_scores[prot_name][1] = smoothed_scores
+            allscores.extend(smoothed_scores)
+
+        
     # now make metapredict scores dict
     results={}
     for s in metapredict_scores:
@@ -142,7 +195,7 @@ def calc_mcc(metapredict_scores, caid_scores):
     mcc_value = numerator / denomenator
     return mcc_value
 
-def calculate_stats(version='V2', cutoff=None):
+def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=False):
     """
     Calculate the AUC, APS, and F1 max
 
@@ -150,6 +203,16 @@ def calculate_stats(version='V2', cutoff=None):
     ----------
     version : str
         the version of metapredict to use as a string
+
+    cutoff : float
+        the cutoff value if you want to hardcode it.
+        Otherwise uses default
+
+    smoothing : int
+        window over which to smoooth scores.
+        default is to not smooth
+
+    whether to stretch the scores
 
     Returns
     -------
@@ -165,7 +228,7 @@ def calculate_stats(version='V2', cutoff=None):
     # get caid dict. 
     caid_vals = read_caid2_seq_disorder()
     # do metapredict prediction
-    metapredict_vals = get_metapredict_scores(caid_vals, version, cutoff=cutoff)
+    metapredict_vals = get_metapredict_scores(caid_vals, version, cutoff=cutoff, smoothing=smoothing, stretch_scores=stretch_scores)
     # get linear values for metapredict and caid
     metapredict_linear = []
     caid_linear = ''
@@ -229,4 +292,3 @@ def get_individual_accuracy(version, cutoff=None, plddt=False):
                     error+=1
         metapredict_binarized_error[error/tot_scores]=cur_sequence
     return metapredict_binarized_error
-
