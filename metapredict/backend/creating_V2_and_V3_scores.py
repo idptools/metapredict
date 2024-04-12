@@ -137,8 +137,14 @@ def parse_plddt_data(path_to_fi):
     fh.close()
     seq_to_dat={}
     for line in tqdm(lines):
-        seq_id, seq, dat = line.split('\t')
-        seq_to_dat[seq] = np.genfromtxt(StringIO(dat), delimiter=' ', dtype=float).tolist()
+        if line != '':
+            split_vals=line.split()
+            seq_id=split_vals[0]
+            seq=split_vals[1]
+            dat = []
+            for val in split_vals[2:]:
+                dat.append(float(val))
+            seq_to_dat[seq] = dat
     return seq_to_dat
 
 
@@ -227,8 +233,10 @@ def meta_predict_hybrid_v3(inputs, metapredict_version='v1', vmax_cutoff=0.5,
         # flatten so all values in the bounds of 0 to 1
         smoothed = np.where(smoothed<0, 0, smoothed)
         hybrid = np.where(smoothed>1, 1, smoothed)
-        hybrid_scores[seq]=np.round(hybrid,3).tolist()
+        hybrid_scores[seq]=np.round(hybrid,4).tolist()
     return hybrid_scores
+
+
 
 def generate_parrot_file(path_to_plddt_data, path_to_save_file):
     '''
@@ -266,6 +274,4 @@ def generate_parrot_file(path_to_plddt_data, path_to_save_file):
             fh.write(f'seq_{num}\t{seq}\t{temp}\n')
     fh.close()
     print('Done!')
-
-
 

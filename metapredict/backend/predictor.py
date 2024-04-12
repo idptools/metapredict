@@ -657,7 +657,7 @@ def predict(inputs,
                     packed_seqs = torch.nn.utils.rnn.pack_padded_sequence(seqs_padded, lengths, batch_first=True, enforce_sorted=True)
                     
                     # move packed seqs to device. 
-                    packed_seqs.to(device)
+                    packed_seqs = packed_seqs.to(device)
 
                     # lstm forward pass.
                     with torch.no_grad():
@@ -716,9 +716,6 @@ def predict(inputs,
             end_time = time.time()
             print(f"\nTime taken for predictions on {device}: {end_time - start_time} seconds") 
         
-
-    
-
 
         ##
         ## PREDICTION DONE
@@ -1267,7 +1264,7 @@ def predict_pLDDT(inputs,
                     packed_seqs = torch.nn.utils.rnn.pack_padded_sequence(seqs_padded, lengths, batch_first=True, enforce_sorted=True)
                     
                     # move packed seqs to device. 
-                    packed_seqs.to(device)
+                    packed_seqs = packed_seqs.to(device)
 
                     # lstm forward pass.
                     with torch.no_grad():

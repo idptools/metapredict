@@ -77,7 +77,7 @@ epoch_49_step_42600_ckpt={
     'used_lightning': True,
     'last_epoch': 62,
     'disorder_threshold': METAPREDICT_V3_THRESHOLD,
-    'info': "Network given to me by Jeff to start testing out Lightning implementations into metapredict. Putative V3 network. ",
+    'info': "Network given to me by Jeff to start testing out Lightning implementations into metapredict. Putative V3 network. Trained on dataset similar to V2.",
     'type': 'disorder'
 }
 
@@ -141,16 +141,70 @@ pae={
     'type': 'disorder'
 }
 
+# pLDDT-based disorder predictor Jeff made. 1 Layer version. April 11 2024
+pLDDT_disorder_1_layer = {
+    'network_name': 'epoch029_val_loss959.58.ckpt',
+    'public_name': 'plddt_disorder_1_layer',
+    'pytorch-lightning_version': '2.0.4', 
+    'input_size': 20, 
+    'lstm_hidden_size': 61, 
+    'num_lstm_layers': 1, 
+    'num_classes': 1, 
+    'problem_type': 'regression', 
+    'datatype': 'residues', 
+    'optimizer_name': 'SGD', 
+    'learn_rate': 0.028282345952988428, 
+    'num_linear_layers': 1, 
+    'use_dropout': False, 
+    'momentum': 0.9978645519597096,
+    'batch_size': 256,
+    'used_lightning': True,
+    'last_epoch': 30,
+    'disorder_threshold': 0.5,
+    'info': "pLDDT-based disorder predictor Jeff made. 1 Layer version.", 
+    'type': 'disorder'
+}
+
+# pLDDT-based disorder predictor Jeff made. 2 Layer version. April 11 2024
+pLDDT_disorder_2_layer = {
+    'network_name': 'epoch029_val_loss791.84.ckpt',
+    'public_name': 'plddt_disorder_2_layer',
+    'pytorch-lightning_version': '2.0.4', 
+    'input_size': 20, 
+    'lstm_hidden_size': 75, 
+    'num_lstm_layers': 2, 
+    'num_classes': 1, 
+    'problem_type': 'regression', 
+    'datatype': 'residues', 
+    'optimizer_name': 'SGD', 
+    'learn_rate': 0.02395817120927791, 
+    'num_linear_layers': 1, 
+    'use_dropout': False, 
+    'momentum': 0.9982945868161136,
+    'batch_size': 256,
+    'used_lightning': True,
+    'last_epoch': 30,
+    'disorder_threshold': 0.5,
+    'info': "pLDDT-based disorder predictor Jeff made. 2 Layer version.", 
+    'type': 'disorder'
+}
+
 # dict to hold the networks that are user-facing.
 metapredict_networks = {
     'V1':{'weights':'meta_predict_disorder_100e_v1.pt',
           'parameters': meta_predict_disorder_100e_v1},
     'V2':{'weights':'metameta_2_7_22_nl2_hs20_b32_V3.pt',
           'parameters': metameta_2_7_22_nl2_hs20_b32_V3},
-    'V3':{'weights':'epoch-49-step-42600.ckpt',
-          'parameters': epoch_49_step_42600_ckpt},
+    #'V3':{'weights':'epoch-49-step-42600.ckpt',
+    #      'parameters': epoch_49_step_42600_ckpt},
+     'V3':{'weights':'epoch029_val_loss791.84.ckpt',
+       'parameters': pLDDT_disorder_2_layer},
     'PAE':{'weights':'non_bin_PAE_hs40_nl2.pt',
-          'parameters': pae}  
+          'parameters': pae},
+    'PLDDT_1L':{'weights':'epoch029_val_loss959.58.ckpt',
+          'parameters': pLDDT_disorder_1_layer},
+    'PLDDT_2L':{'weights':'epoch029_val_loss791.84.ckpt',
+          'parameters': pLDDT_disorder_2_layer}  
 }
 
 pplddt_networks = {
