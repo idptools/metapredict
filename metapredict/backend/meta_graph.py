@@ -10,8 +10,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from metapredict.metapredict_exceptions import MetapredictError
-from metapredict.backend.predictor import predict
-from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.backend.predictor import predict, predict_pLDDT
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
 from metapredict.backend.network_parameters import metapredict_networks
 
 def graph(sequence,
@@ -27,7 +27,8 @@ def graph(sequence,
           confidence_threshold_color = 'black',
           DPI=150,
           output_file=None,
-          version=DEFAULT_NETWORK):
+          version=DEFAULT_NETWORK,
+          pLDDT_version=DEFAULT_NETWORK_PLDDT):
     """
     Function for graphing predicted  disorder. By default, this function will show a graph.
     However, you can specify output_file as the
@@ -241,12 +242,8 @@ def graph(sequence,
     # if graphing both confidence and disorder
     if pLDDT_scores == True and disorder_scores==True:
 
-        # import alpha predict
-        from alphaPredict import alpha
-
         # get confidence scores
-        pLDDT_scores = alpha.predict(sequence)
-
+        pLDDT_scores = predict_pLDDT(sequence, version=pLDDT_version)
         twin1 = axes.twinx()
         af1, = twin1.plot(xValues, pLDDT_scores, color = confidence_line_color, label="Predicted AF2pLDDT")
         twin1.set_ylim(0, 100)

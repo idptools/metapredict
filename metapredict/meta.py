@@ -23,13 +23,13 @@ import protfasta as _protfasta
 import getSequence as _getseq
 
 # import stuff for confidence score predictions
-from alphaPredict import alpha as _AF2pLDDTscores
 from metapredict.backend.network_parameters import metapredict_networks
-from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
 
 # import stuff for IDR predictor from backend. Note the 'as _*' hides the imported
 # module from the user
 from metapredict.backend.predictor import predict as _predict
+from metapredict.backend.predictor import predict_pLDDT as _predict_pLDDT
 from metapredict.backend import meta_tools as _meta_tools
 
 #import stuff for graphing from backend
@@ -365,8 +365,11 @@ def predict_disorder(sequence, normalized=True, return_numpy=False, round_values
     Parameters
     ------------
 
-    sequence : str 
-        Input amino acid sequence (as string) to be predicted.
+    sequence : str, list, or dict 
+        Input amino acid sequence(s) as a string, list, or dictionary.
+        If a list, needs to be just a list of amino acid sequences
+        If a dictionary, each key needs to be a sequence name and 
+        each value needs to be the corresponding sequence.
 
     normalized : bool
         Flag which defines in the predictor should control and normalize 
@@ -649,6 +652,7 @@ def predict_disorder_batch(input_sequences,
 #
 def graph_disorder(sequence, 
                    version = DEFAULT_NETWORK,
+                   plddt_version = DEFAULT_NETWORK_PLDDT,
                    title = 'Predicted protein disorder', 
                    disorder_threshold = None,
                    pLDDT_scores=False,
@@ -669,6 +673,11 @@ def graph_disorder(sequence,
         The network to use for prediction. Default is DEFAULT_NETWORK,
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3. 
+
+    plddt_version : string
+        The network to use for pLDDT prediction. Default is DEFAULT_NETWORK,
+        which is defined at the top of /parameters.
+        Options currently include V1, V2.
 
     title : str
         Sets the title of the generated figure. Default = "Predicted protein 
@@ -754,7 +763,7 @@ def graph_disorder(sequence,
 
 # ..........................................................................................
 #
-def predict_pLDDT(sequence, return_numpy=False, normalized=False):
+def predict_pLDDT(sequence, return_numpy=False, normalized=False, version=DEFAULT_NETWORK_PLDDT):
     """
     Function to return predicted pLDDT scores. pLDDT scores are the scores
     reported by AlphaFold2 (AF2) that provide a measure of the confidence 
@@ -781,6 +790,9 @@ def predict_pLDDT(sequence, return_numpy=False, normalized=False):
         Flag which, if set to true, means the function returns values
         scaled between 0 and 1 (rather than 0 and 100).
 
+    version : str
+        The version of the pLDDT predictor to use. 
+
     Returns
     --------
     
@@ -798,20 +810,7 @@ def predict_pLDDT(sequence, return_numpy=False, normalized=False):
     sequence = sequence.upper()
 
     # return predicted values of disorder for sequence
-    ppLDDT =  _AF2pLDDTscores.predict(sequence)
-
-    # parse numpy flag
-    if return_numpy:
-        ppLDDT = np.array(ppLDDT)
-
-    # parse normalized flags
-    if normalized:
-        if return_numpy:
-            return ppLDDT*0.01
-        else:
-            return [i*0.01 for i in ppLDDT]
-    else:
-        return ppLDDT
+    return  _predict_pLDDT(sequence, return_numpy=return_numpy, return_decimals=normalized, version=version)
 
 
 # ..........................................................................................
@@ -1003,7 +1002,6 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold',
         fraction_disordered = sum([len(i) for i in idrs])/len(sequence)
         percent_disordered = round(100*(fraction_disordered), 3)
 
-
     return percent_disordered
 
 
@@ -1096,7 +1094,8 @@ def predict_disorder_fasta(filepath,
 #
 def predict_pLDDT_fasta(filepath, 
                         output_file = None,
-                        invalid_sequence_action='convert'):
+                        invalid_sequence_action='convert',
+                        version=DEFAULT_NETWORK):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of pLDDT values where the key is the 
@@ -1122,6 +1121,9 @@ def predict_pLDDT_fasta(filepath,
         rules. See https://protfasta.readthedocs.io/en/latest/read_fasta.html 
         for more information.
 
+    version : str
+        The version of the pLDDT predictor to use.
+
     Returns
     --------
 
@@ -1144,26 +1146,8 @@ def predict_pLDDT_fasta(filepath,
 
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
 
-    # initialize empty dictionary to be populated with the the fasta headers (key) 
-    # and the predicted confidence values (value)
-    confidence_dict = {}
-
-    # for the sequences in the protffasta_seqs list:
-    for seqs in protfasta_seqs:
-
-        # set cur_header equal to the fasta header
-        cur_header = seqs[0]
-
-        # set cur_seq equal to the sequence associated with the fasta header
-        cur_seq = seqs[1]
-
-        # make all values for curSeq uppercase so they work with predictor
-        cur_seq = cur_seq.upper()
-
-        # set cur_disorder equal to the predicted values for cur_seq
-        cur_disorder = _AF2pLDDTscores.predict(cur_seq)
-
-        confidence_dict[cur_header] = cur_disorder
+    # new predict_pLDDT function can handle string, list, or dict. 
+    confidence_dict = _predict_pLDDT(protfasta_seqs)
 
     # if we did not request an output file 
     if output_file is None:
@@ -1485,7 +1469,7 @@ def predict_pLDDT_uniprot(uniprot_id):
     sequence = _getseq(uniprot_id)[1]
         
     # return predicted values of disorder for sequence
-    return _AF2pLDDTscores.predict(sequence)
+    return _predict_pLDDT(sequence)
 
 
 # ..........................................................................................
