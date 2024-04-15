@@ -101,7 +101,6 @@ setup(
         'scipy',
         'urllib3',
         'tqdm',
-        'alphaPredict==1.0',
         'getSequence >= 2.0',
         'lightning>=2.1.3'],     # tested using lightning 2.1.3. Having >= for now....         
         # Required packages, pulls from pip if needed; do not use for Conda deployment

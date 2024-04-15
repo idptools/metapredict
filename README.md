@@ -1,20 +1,17 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
-### Last updated March 2024
+### Last updated April 2024
 
+## Current version: metapredict V3 (V3.0)
+The current recommended and default version of metapredict is metapredict V3 (version 3.0). There are major changes to how metapredict V3 works behind the scenes *and a new (and from our benchmarks more accurate) network*. For this update, we did try to make sure everything we have is backwards compatible. If you have any compatibility issues, let us know! 
 
-## Current version: metapredict V2-FF (V2.6)
-The current recommended and default version of metapredict is metapredict V2-FF (version 2.6). Small increments (2.6.x) may be made as bug fixes or feature enhancements.
+## What is new with V3?
+1. **A new disorder prediction network**: We have trained a new disorder prediction network for metapredict V3, which is more accurate than our previous networks.
+2. **A new pLDDT prediction network**: metapredict used to rely on an external package called alphaPredict for pLDDT prediction. This same network is still available in metapredict, but with additional data availability and more computational power, we made a new (and by all metrics better) network for pLDDT prediction!
+3. **Easier batch predictions**: V2 previously required you to use `predict_disorder_batch()` to take advantage of the 10-100x improvement in prediction speed on CPUs and GPUs. However, you can now use a single function - `predict_disorder()` - on individual sequences, lists of sequences, and dictionaries of sequences, and metapredict will automatically take care of the rest for you while automatically doing batch predictions if more than 1 sequence is present.
+4. **Batch prediction for all**: Previously, batch predictions were only available for the V2 disorder prediction network of metapredict. Now, you can do batch predictions using all of the disorder prediction networks - v1 (legacy), v2, and v3!
+5. **Batch pLDDT predictions**: Batch predictions (and therefore the massive speedups) are now available for pLDDT predictions using the `predict_pLDDT()` function. 
+6. **More robust device selection**: Newer versions of Torch (>2.0) support MacOS GPU utilization through the Metal Performance Shaders (MPS) framework, so you can now choose to use *mps* on MacOS. In addition, if you try to specify using a GPU and it does not work, metapredict will not automatically fall back to CPU. 
 
-For context, V2-FF provides identical predictions to metapredict V2, but via `predict_disorder_batch()` provides 10-100x improvement in performance on CPUs and GPUs. 
-
-To quantify this yourself, run:
-
-
-	import metapredict
-	metapredict.print_performance(batch=True)
-	metapredict.print_performance(batch=False)
-	
-To compare the number of residues-per-second metapredict V2-FF predicts in batch mode vs. non-batch mode. For CPUs this is typically a 10-20x improvement. If GPUs are available this value can be substantially higher.	
 
 ## Installation
 
@@ -59,7 +56,9 @@ If you use metapredict for your work, please cite the metapredict paper:
  
 Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure. Biophys. J. 120, 4312–4319 (2021).
 
-Note that in addition to the original paper, there's a V2 preprint; HOWEVER, we ask you only cite the original paper and describe the version being used (V1, V2 or V2-FF).
+Note that in addition to the original paper, there's a V2 preprint; HOWEVER, we ask you only cite the original paper and describe the version being used (V1, V2, V2-FF, or V3).
+
+We are hoping to get a paper out for V3 in the near future (if we already have, then we just forgot to delete this sentence)...
 
 Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict V2: An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure. bioRxiv 2022.06.06.494887 (2022). doi:10.1101/2022.06.06.494887## Changes
 

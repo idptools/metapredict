@@ -1,5 +1,10 @@
 # code to carry out the caid analsis for Disorder PDB dataset. 
 
+"""
+#  This is commented out because it requires sklearn. Given that none of the stuff
+#  in the analysis part of metapredict is necessary for users, I'm leaving
+#  stuff back here commenting out to avoid addint sklearn as another dependency.  
+
 import os
 import math
 import numpy as np
@@ -118,7 +123,7 @@ def read_caid_scores_with_actual_plddt():
 
 
 def calculate_stats_testing_actual_plddt():
-    """
+    '''
     Calculate the AUC, APS, and F1 max
 
     Parameters
@@ -129,7 +134,7 @@ def calculate_stats_testing_actual_plddt():
     -------
     dict:
         dict with AUC, APS, and MCC as keys
-    """
+    '''
 
     # set cutoff for binary scores
     cutoff=0.5
@@ -197,7 +202,7 @@ def get_me_the_caid_seqs():
     return list(seq_dict.keys())
 
 def calculate_stats_custom_disorder(seq_to_disorder_scores_dict, cutoff=0.5):
-    """
+    '''
     Calculate the AUC, APS, and F1 max
 
     Parameters
@@ -212,7 +217,7 @@ def calculate_stats_custom_disorder(seq_to_disorder_scores_dict, cutoff=0.5):
     -------
     dict:
         dict with AUC, APS, and MCC as keys
-    """
+    '''
 
     # get dict with sequences as the keys and plddt scores / caid scores as the values
     get_caid_plddt = read_caid_scores_with_actual_plddt()
@@ -255,3 +260,4 @@ def calculate_stats_custom_disorder(seq_to_disorder_scores_dict, cutoff=0.5):
     return {'AUC':round(auc,5), 'APS':round(aps,5), 'MCC':round(mcc,5)}
 
 
+"""

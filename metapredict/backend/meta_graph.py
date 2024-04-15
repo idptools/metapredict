@@ -103,6 +103,11 @@ def graph(sequence,
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3.         
 
+    pLDDT_version : string
+        The network to use for prediction. Default is DEFAULT_NETWORK_PLDDT,
+        which is defined at the top of /parameters.
+        Options currently include V1 or V2    
+
     Returns
     -----------
     None 
