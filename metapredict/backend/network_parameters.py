@@ -20,6 +20,10 @@ changes for whatever reason.
 # import the cutoff value parameters for each network from parameters.
 from metapredict.parameters import METAPREDICT_LEGACY_THRESHOLD, METAPREDICT_V2_THRESHOLD, METAPREDICT_V3_THRESHOLD
 
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+#=-=-=-=-=-= DISORDER NETWORKS =-=-=-=-=-=#
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+
 #V1 AKA metapredict legacy
 meta_predict_disorder_100e_v1 = {
     'public_name': 'V1',
@@ -56,31 +60,34 @@ metameta_2_7_22_nl2_hs20_b32_V3 = {
     'type': 'disorder'
 }
 
-# V3 *unofficial*
-epoch_49_step_42600_ckpt={
+# V3 network
+smoothed_v3 = {
+    'network_name': 'epoch099_val_loss1107.08.ckpt',
     'public_name': 'V3',
-    'pytorch-lightning_version': '2.0.4', 
-    'input_size': 20, 
-    'lstm_hidden_size': 45, 
-    'num_lstm_layers': 2, 
-    'num_classes': 1, 
-    'problem_type': 'regression', 
-    'datatype': 'residues', 
-    'optimizer_name': 'SGD', 
-    'learn_rate': 0.009927612390810909, 
-    'num_linear_layers': 4, 
-    'linear_hidden_size': 376, 
-    'use_dropout': False, 
-    'dropout': 0.0,
-    'momentum': 0.9924023043863971,
+    'pytorch-lightning_version': '2.1.3',
+    'input_size': 20,
+    'lstm_hidden_size': 52,
+    'num_lstm_layers': 2,
+    'num_classes': 1,
+    'problem_type': 'regression',
+    'datatype': 'residues',
+    'optimizer_name': 'SGD',
+    'learn_rate': 0.014268372321431562,
+    'num_linear_layers': 1,
+    'gradient_clip_val':   1,
+    'use_dropout': False,
     'batch_size': 256,
     'used_lightning': True,
-    'last_epoch': 62,
-    'disorder_threshold': METAPREDICT_V3_THRESHOLD,
-    'info': "Network given to me by Jeff to start testing out Lightning implementations into metapredict. Putative V3 network. Trained on dataset similar to V2.",
+    'momentum':    0.9968434498981696,
+    'last_epoch': 100,
+    'disorder_threshold': 0.5,
+    'info': 'Similar to v2 metapredict as far as training data except real pLDDT scores pLDDT scores were based on AF2 V4 structures. Values were smoothed over a 25 residue sliding window post processing. Our current putative V3 network.',
     'type': 'disorder'
 }
 
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+#=-=-=-=-=-= pLDDT NETWORKS -=-=-=-=-=#
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
 
 # predicted PLDDT network (v1)
 alpha_fold_networkV7_hs100_nL2_200e_all_prot={
@@ -123,71 +130,9 @@ epoch019_val_loss1477_45_ckpt={
     'type': 'pLDDT'
 }
 
-#PAE
-pae={
-    'network_name' : 'non_bin_PAE_hs30_nl2.pt',
-    'public_name': 'v3_beta',
-    'input_size': 20, 
-    'hidden_size': 40, 
-    'num_layers': 2, 
-    'num_classes': 1, 
-    'problem_type': 'regression', 
-    'datatype': 'residues', 
-    'learn_rate': 0.0009, 
-    'batch_size': 128,
-    'used_lightning': False,
-    'disorder_threshold': 0.5,
-    'info': "Network that used PAE scores to predict disorder. Not optimized. Ended up not being much more accurate than v2.",
-    'type': 'disorder'
-}
-
-# pLDDT-based disorder predictor Jeff made. 1 Layer version. April 11 2024
-pLDDT_disorder_1_layer = {
-    'network_name': 'epoch029_val_loss959.58.ckpt',
-    'public_name': 'plddt_disorder_1_layer',
-    'pytorch-lightning_version': '2.0.4', 
-    'input_size': 20, 
-    'lstm_hidden_size': 61, 
-    'num_lstm_layers': 1, 
-    'num_classes': 1, 
-    'problem_type': 'regression', 
-    'datatype': 'residues', 
-    'optimizer_name': 'SGD', 
-    'learn_rate': 0.028282345952988428, 
-    'num_linear_layers': 1, 
-    'use_dropout': False, 
-    'momentum': 0.9978645519597096,
-    'batch_size': 256,
-    'used_lightning': True,
-    'last_epoch': 30,
-    'disorder_threshold': 0.5,
-    'info': "pLDDT-based disorder predictor Jeff made. 1 Layer version.", 
-    'type': 'disorder'
-}
-
-# pLDDT-based disorder predictor Jeff made. 2 Layer version. April 11 2024
-pLDDT_disorder_2_layer = {
-    'network_name': 'epoch029_val_loss791.84.ckpt',
-    'public_name': 'plddt_disorder_2_layer',
-    'pytorch-lightning_version': '2.0.4', 
-    'input_size': 20, 
-    'lstm_hidden_size': 75, 
-    'num_lstm_layers': 2, 
-    'num_classes': 1, 
-    'problem_type': 'regression', 
-    'datatype': 'residues', 
-    'optimizer_name': 'SGD', 
-    'learn_rate': 0.02395817120927791, 
-    'num_linear_layers': 1, 
-    'use_dropout': False, 
-    'momentum': 0.9982945868161136,
-    'batch_size': 256,
-    'used_lightning': True,
-    'last_epoch': 30,
-    'disorder_threshold': 0.5,
-    'info': "pLDDT-based disorder predictor Jeff made. 2 Layer version.", 
-    'type': 'disorder'
-}
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+#=-=-=-=-=-= ADD USER-FACING STUFF HERE -=-=-=-=-=#
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
 
 # dict to hold the networks that are user-facing.
 metapredict_networks = {
@@ -195,18 +140,11 @@ metapredict_networks = {
           'parameters': meta_predict_disorder_100e_v1},
     'V2':{'weights':'metameta_2_7_22_nl2_hs20_b32_V3.pt',
           'parameters': metameta_2_7_22_nl2_hs20_b32_V3},
-    #'V3':{'weights':'epoch-49-step-42600.ckpt',
-    #      'parameters': epoch_49_step_42600_ckpt},
-     'V3':{'weights':'epoch029_val_loss791.84.ckpt',
-       'parameters': pLDDT_disorder_2_layer},
-    'PAE':{'weights':'non_bin_PAE_hs40_nl2.pt',
-          'parameters': pae},
-    'PLDDT_1L':{'weights':'epoch029_val_loss959.58.ckpt',
-          'parameters': pLDDT_disorder_1_layer},
-    'PLDDT_2L':{'weights':'epoch029_val_loss791.84.ckpt',
-          'parameters': pLDDT_disorder_2_layer}  
+    'V3':{'weights':'epoch099_val_loss1107.08.ckpt',
+          'parameters': smoothed_v3}
 }
 
+# dict to hold pLDDT score prediction networks that are user-facing
 pplddt_networks = {
     'V1': {'weights':'alpha_fold_networkV7_hs100_nL2_200e_all_prot.pt',
         'parameters':alpha_fold_networkV7_hs100_nL2_200e_all_prot},
@@ -219,6 +157,10 @@ pplddt_networks = {
 # ................................. UNUSED NETWORKS! .................................
 # ....................................................................................
 
+''' 
+A bunch of networks that ... we aren't currently using. Not throwing them away, kind
+of like a strain in a -80°C that will never again see the light of day.
+'''
 
 
 # Unpublished V1 network. Probably the least accurate network I ever made but was used for 
@@ -236,7 +178,6 @@ metaDisorder = {
     'epochs': 100,
     'used_lightning': False,
     'disorder_threshold':0.5,
-    'info': "Trained on same data as original metapredict network. Didn't try to change any hyperparameters or increase training length, so it's not great."    ,
     'type': 'disorder'
 }
 
@@ -295,6 +236,147 @@ epoch023_val_loss1529_48_ckpt={
     'used_lightning': True,
     'disorder_threshold':0.5,
     'info': "Network given to me by Jeff to start testing out Lightning implementations into metapredict.",
+    'type': 'disorder'
+}
+
+# V2 training data used but with a Pytorch-lightning implementation .
+epoch_49_step_42600_ckpt={
+    'public_name': 'V2_lightning',
+    'pytorch-lightning_version': '2.0.4', 
+    'input_size': 20, 
+    'lstm_hidden_size': 45, 
+    'num_lstm_layers': 2, 
+    'num_classes': 1, 
+    'problem_type': 'regression', 
+    'datatype': 'residues', 
+    'optimizer_name': 'SGD', 
+    'learn_rate': 0.009927612390810909, 
+    'num_linear_layers': 4, 
+    'linear_hidden_size': 376, 
+    'use_dropout': False, 
+    'dropout': 0.0,
+    'momentum': 0.9924023043863971,
+    'batch_size': 256,
+    'used_lightning': True,
+    'last_epoch': 62,
+    'disorder_threshold': METAPREDICT_V3_THRESHOLD,
+    'info': "Network given to me by Jeff to start testing out Lightning implementations into metapredict. Trained on dataset similar to V2.",
+    'type': 'disorder'
+}
+
+# given to me by Jeff on Apr 15, was based on a 1-pLDDT score smoothed values
+alphadisorder_movingavg = {
+    'network_name': 'epoch029_val_loss791.84.ckpt',
+    'public_name': 'alpha',
+    'pytorch-lightning_version': '2.1.3',
+    'input_size': 20,
+    'lstm_hidden_size': 66,
+    'num_lstm_layers': 2,
+    'num_classes': 1,
+    'problem_type': 'regression',
+    'datatype': 'residues',
+    'optimizer_name': 'AdamW',
+    'learn_rate': 0.03497941828975909,
+    'num_linear_layers': 2,
+    'use_dropout': False,
+    'batch_size': 256,
+    'used_lightning': True,
+    'last_epoch': 97,
+    'disorder_threshold': 0.58,
+    'info': 'A disorder protocol moving avg 1-plddt',
+    'type': 'disorder'
+}
+
+
+# Same as above (alphadisorder_movingavg) but 1 Layer version. April 11 2024
+pLDDT_disorder_1_layer = {
+    'network_name': 'epoch029_val_loss959.58.ckpt',
+    'public_name': 'plddt_disorder_1_layer',
+    'pytorch-lightning_version': '2.0.4', 
+    'input_size': 20, 
+    'lstm_hidden_size': 61, 
+    'num_lstm_layers': 1, 
+    'num_classes': 1, 
+    'problem_type': 'regression', 
+    'datatype': 'residues', 
+    'optimizer_name': 'SGD', 
+    'learn_rate': 0.028282345952988428, 
+    'num_linear_layers': 1, 
+    'use_dropout': False, 
+    'momentum': 0.9978645519597096,
+    'batch_size': 256,
+    'used_lightning': True,
+    'last_epoch': 30,
+    'disorder_threshold': 0.58,
+    'info': "pLDDT-based disorder predictor Jeff made. 1 Layer version.", 
+    'type': 'disorder'
+}
+
+
+# V3 scores not smoothed but using an AdamW optimizer instead of SGD
+admaw = {
+    'network_name': 'epoch096_val_loss1584.14.ckpt',
+    'public_name': 'apr15_adamW',
+    'pytorch-lightning_version': '2.1.3',
+    'input_size': 20,
+    'lstm_hidden_size': 66,
+    'num_lstm_layers': 2,
+    'num_classes': 1,
+    'problem_type': 'regression',
+    'datatype': 'residues',
+    'optimizer_name': 'AdamW',
+    'learn_rate': 0.03497941828975909,
+    'num_linear_layers': 2,
+    'linear_hidden_size':  144,
+    'use_dropout': False,
+    'batch_size': 256,
+    'beta1':   0.9096370466379254,
+    'beta2':   0.9890895717487497,
+    'eps': 0.011417699888815918,
+    'weight_decay':    0.002036277656062938,
+    'used_lightning': True,
+    'last_epoch': 97,
+    'disorder_threshold': 0.5,
+    'info': 'V3 scores using AdamW optimizer',
+    'type': 'disorder'
+}
+
+# my curiousity to see if my network using old-school PARROT and my tried and true hyperparameters
+# could beat Jeff's fancy approach using Pytorch-LIGHTNING. It could not. 
+smoothed_v3_re={
+    'network_name' : 'smoothed_v3_real_plddt_re.pt',
+    'public_name': 'v3_re_beta',
+    'input_size': 20, 
+    'hidden_size': 40, 
+    'num_layers': 2, 
+    'num_classes': 1, 
+    'problem_type': 'regression', 
+    'datatype': 'residues', 
+    'learn_rate': 0.001, 
+    'batch_size': 256,
+    'used_lightning': False,
+    'disorder_threshold': 0.5,
+    'info': "Real pLDDT scores and OG metapredict, smoothed over after with a window of 25.",
+    'type': 'disorder'
+}
+
+
+# Network I made that used PAE matrices that were pre-processed to pull out disorder information. 
+# ended up not being the most accuurate network. 
+pae={
+    'network_name' : 'non_bin_PAE_hs30_nl2.pt',
+    'public_name': 'v3_beta',
+    'input_size': 20, 
+    'hidden_size': 40, 
+    'num_layers': 2, 
+    'num_classes': 1, 
+    'problem_type': 'regression', 
+    'datatype': 'residues', 
+    'learn_rate': 0.0009, 
+    'batch_size': 128,
+    'used_lightning': False,
+    'disorder_threshold': 0.5,
+    'info': "Network that used PAE scores to predict disorder. Not optimized. Ended up not being much more accurate than v2.",
     'type': 'disorder'
 }
 

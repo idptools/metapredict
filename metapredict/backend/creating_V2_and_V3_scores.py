@@ -2,20 +2,22 @@
 BELOW IS CODE THAT SHOULD BE KEPT GOING FORWARD FOR REPRODUCIBILITY!
 
 The code below was basically used to make the scores used to make
-the V2 network. A version of this code will be used to make scores
-to make the final V3 network.
-
-This code was originally for the V1 metapredict predictor. It was based 
-partly on code from Dan Griffith's IDP-Parrot from the Holehouse lab
-(specifically the test_unlabeled_data function in train_network.py). However,
-the code was modified, so if there's anything that's not great looking code,
-you can probably assume it was Ryan's and not Dan's.
+the V2 network and the v3 network
 
 The metapredict V2 network was created by training on what we 
-call 'meta-hybrid scores'. These cores used predicted pLDDT scores and
-legacy metapredict (V1) disorder scores as the input values. This 
-module should be kept going forward so we can reproduce how the V2 and 
-V3 networks were trained.
+call 'meta-hybrid scores'. These scores used predicted pLDDT scores and
+legacy metapredict (V1) disorder scores as the input values for training the final v2 
+network. It's important to note that the predictor used for pLDDT predictions was
+trained on the original set of AF2 structures available. They are now at 'V4',
+I'm not sure if that actually chages pLDDT values but it's important to note.
+The V3 predictor used the *actual* v4 values. 
+
+Similar to V2, V3 used a combination of pLDDT scores and legacy metapredict.
+However, for V3 we used real pLDDT scores (not predicted) to make the 
+final scores that were used for training the V3 network. In addition,
+we also used a moving average to smooth the scores as a final data 
+processing step. Finally, the actual data was all sequences from swissprot
+that were not duplicated in the dataset.
 """
 
 # import local modules
@@ -151,12 +153,17 @@ def moving_average(scores, window_size):
     """
     Smooths an array of scores over a user-specified sliding window size.
 
-    Parameters:
-        scores (array-like): Array of scores to be smoothed.
-        window_size (int): Size of the sliding window for smoothing.
+    Parameters
+    ----------
+    scores : array
+        Array of scores to be smoothed.
+    window_size : int
+        Size of the sliding window for smoothing.
 
-    Returns:
-        smoothed_scores (ndarray): Smoothed scores with the same length as the input array.
+    Returns
+    -------
+    smoothed_scores : ndarray 
+        Smoothed scores with the same length as the input array.
     """
     if window_size % 2 == 0:
         raise ValueError("Window size must be an odd number.")
@@ -170,9 +177,11 @@ def moving_average(scores, window_size):
 
 
 def meta_predict_hybrid_v3(inputs, metapredict_version='v1', vmax_cutoff=0.5,
-    base=0.35, top=0.95, windowed_averaging=None):
+    base=0.35, top=0.95, windowed_averaging=25):
     """
     Code used to generate the scores used to train metapredict V3. 
+    All default values in the function are as used to make V3 scores.
+    Real pLDDT scores (not predicted) were used to make V3. 
 
     Parameters
     ------------
@@ -196,7 +205,8 @@ def meta_predict_hybrid_v3(inputs, metapredict_version='v1', vmax_cutoff=0.5,
         Default = 0.95
 
     windowed_averaging : Int
-        Whether to smooth scores. Default is None. Tested value that works well is 25. 
+        Whether to smooth scores. Default is 25. 
+        Value to make V3 scores for training was 25. 
 
     Returns
     ----------
@@ -267,7 +277,7 @@ def meta_predict_hybrid_v3(inputs, metapredict_version='v1', vmax_cutoff=0.5,
 
 
 
-def generate_parrot_file(path_to_plddt_data, path_to_save_file, windowed_averaging=None):
+def generate_parrot_file(path_to_plddt_data, path_to_save_file, windowed_averaging=25):
     '''
     function taht will read in a TSV of plddt data and sequences 
     and save out a file that will be PARROT formatted with a sequence
@@ -280,6 +290,10 @@ def generate_parrot_file(path_to_plddt_data, path_to_save_file, windowed_averagi
 
     path_to_save_file : str
         where to save the final file. 
+
+    windowed_averaging : Int
+        Whether to smooth scores. Default is 25. 
+        Value to make V3 scores for training was 25. 
 
     Returns
     -------

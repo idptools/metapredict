@@ -6,13 +6,10 @@
 import os
 import sys
 import argparse
-
-#import csv
 import csv
-#import protfasta
+
 import protfasta
 
-#from metapredict import meta
 from metapredict import meta
 from metapredict.parameters import DEFAULT_NETWORK
 

@@ -7,19 +7,17 @@ The current recommended and default version of metapredict is metapredict V3 (ve
 
 For context, V3 provides major improvements to V2. Metapredict V3 uses a **new network to predict disorder** that in our benchmarks is the most accurate version of metapredict to date. In addition, *metapredict V3 is backwards compatible with V2* and can be used as a drop-in replacement for V2. Although the Python API has been improved to massively simplify how you can use metapredict, we have **for the time being** updated it such that all previously created functions *should still work*. If they do not, please raise an issue and we will fix the problem ASAP!
   
-### What are the major changes for V3?
+## What are the major changes for V3?
 
-* Metapredict V3 uses a new (more accurate) network for disorder prediction. V1 and V2 are still available!
+1. **A new disorder prediction network**: Metapredict V3 uses a new (more accurate) network for disorder prediction. V1 and V2 are still available!
+2. **A new pLDDT prediction network**: metapredict used to rely on an external package called [alphaPredict](https://github.com/ryanemenecker/alphaPredict) for pLDDT prediction. This same network is still available in metapredict when using ``meta.predict_pLDDT()`` by setting ``version='V1'``. However, the default V2 network is by all metrics better for pLDDT prediction, so we recommend using the default!
+3. **Easier batch predictions**: V2 previously required you to use ``predict_disorder_batch()`` to take advantage of the 10-100x improvement in prediction speed on CPUs and GPUs. However, you can now use a single function - ``predict_disorder()`` - on individual sequences, lists of sequences, and dictionaries of sequences, and metapredict will automatically take care of the rest for you while automatically doing batch predictions if more than 1 sequence is present. 
+4. **Easier access to DisorderObject**. You can now return the ``DisorderObject`` by setting ``return_domains=True`` when using ``predict_disorder()``.
+5. **Batch prediction for all**: Previously, batch predictions were only available for the V2 disorder prediction network of metapredict. Now, you can do batch predictions using all of the disorder prediction networks - v1 (previously called legacy), v2, and v3!
+6. **Batch pLDDT predictions**: Batch predictions (and therefore the massive increases in prediction speed) are now available for pLDDT predictions using the `predict_pLDDT()` function. 
+7. **More robust device selection**: Newer versions of Torch (>2.0) support MacOS GPU utilization through the Metal Performance Shaders (MPS) framework, so you can now choose to use *mps* on MacOS. In addition, if you try to specify using a CUDA-enabled GPU and it does not work, metapredict will not automatically fall back to CPU. 
+8. We updated metapredict-uniprot to work with the new version of [getSequence](https://github.com/ryanemenecker/getSequence). This allows for getting different protein isoforms if specified.
 
-* You can now do batch prediction on CPU, GPU (CUDA-enabled), or Mac GPU (MPS) using *any of the metapredict networks*: V1 (previously called ``legacy``), V2, and V3. We recommend using V3 but wanted to leave other networks available for those that need them. 
-
-* When setting the version of metapredict to use, you can specify it by specifying ``version='V#'`` instead of ``legacy=True``.
-
-* Major update to the ``meta.predict_disorder()`` function. This function can now take in individual sequences, lists of sequences, and dictionaries of sequences. Further, you can also return the ``DisorderObject`` using this function by setting ``return_domains=True``. This means you do not need to use the ``meta.predict_disorder_batch`` function to predict disorder quickly for many sequences!
-
-* Major update to the ``meta.predict_pLDDT()`` function. You can now run pLDDT predictions in batch! In addition, we now have a *more accurate pLDDT prediction network* that is used by default. You can still use the previous network that is still available from [alphaPredict](https://github.com/ryanemenecker/alphaPredict) by setting ``version='V1'``.
-
-* We updated metapredict-uniprot to work with the new version of [getSequence](https://github.com/ryanemenecker/getSequence). This allows for getting different protein isoforms if specified. 
 
 ## Installation
 Metapredict is a software package written in Python. It can be installed from [PyPI](https://pypi.org/project/metapredict/) (the Python Package Index) using the tool `pip`. We always recommend managing your Python environment with conda. If these ideas are foreign to you, we recommend reading up a bit on Python package management and [conda](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) before continuing.
@@ -102,7 +100,9 @@ If you use metapredict for your work, please cite the metapredict paper:
  
 Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure. Biophys. J. 120, 4312–4319 (2021).
 
-Note that in addition to the original paper, there's a V2 preprint; HOWEVER, we ask you only cite the original paper and describe the version being used (V1, V2 or V2-FF).
+Note that in addition to the original paper, there's a V2 preprint; HOWEVER, we ask you only cite the original paper and describe the version being used (V1, V2, V2-FF, or V3).
+
+We are hoping to get a paper out for V3 in the near future (if we already have, then we just forgot to delete this sentence)...
 
 Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict V2: An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure. bioRxiv 2022.06.06.494887 (2022). doi:10.1101/2022.06.06.494887
 

@@ -349,9 +349,32 @@ def predict(inputs,
     ## FIGURE OUT WHAT NETWORK WE ARE USING
     ##
     ## ....................................................................................
+    # make it easy to select the version.
+    # make sure the version is a string
+    version=str(version)
+
+    # now convert over to what we need version to be. 
+    if version=='legacy':
+        version='V1'
+    
+    # if len version is 1, it is likely the user just input 1, 2, or 3. Try to
+    # add a 'v' before it so we don't have to worry about that. Not explicitly
+    # checking version because then it will be easier to add more in the future. 
+    if len(version)==1:
+        version=f'V{version}'
+
+    # make version uppercase
     version=version.upper()
+
+    # make list of possible network inputs
+    possible_networks=['legacy']
+    for cur_net in metapredict_networks.keys():
+        possible_networks.append(cur_net)
+        possible_networks.append(cur_net[-1])  
+
+    # make sure version is in the metapredict networks. 
     if version not in metapredict_networks:
-        raise MetapredictError(f'Network {version} not available. Available networks are {metapredict_networks.keys()}')
+        raise MetapredictError(f'Network {version} not available. Valid inputs to choose a network are {possible_networks}')
     else:
         net = metapredict_networks[version]
 
@@ -791,7 +814,6 @@ def predict_pLDDT(inputs,
             normalized=True,
             round_values=True,
             return_numpy=True,
-            use_slow = False,
             print_performance=False,
             show_progress_bar = False,
             force_disable_batch=False,
@@ -816,8 +838,9 @@ def predict_pLDDT(inputs,
     version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,
         which is defined at the top of /parameters.
-        Options currently include V2. V1 hasn't been added yet (or I 
-        haven't updated this part of the docs yet...).
+        Options currently include V1 or V2. V1 is the version used
+        to make legacy metapredict and is from 'alphaPredict'. V2 
+        is a new network made much more recently. 
 
     return_decimals : bool
         Originally trained to get values from 0 to 1. If set to True, you will get 
@@ -853,12 +876,6 @@ def predict_pLDDT(inputs,
     return_numpy : bool
         Whether to return a numpy array or a list for single predictions. 
         Default : True    
-
-    use_slow : bool
-        Flag which, if passed, means we force a Python 
-        implementation of our domain decomposition algorithm 
-        instead of the MUCH faster Cython/C implementation. 
-        Useful for debugging. Default = False
                 
     print_performance : bool
         Flag which means the function prints the time taken 
@@ -924,9 +941,33 @@ def predict_pLDDT(inputs,
     ## FIGURE OUT WHAT NETWORK WE ARE USING
     ##
     ## ....................................................................................
+    # make it easy to select the version.
+    # make sure the version is a string
+    version=str(version)
+
+    # now convert over to what we need version to be.
+    # i don't expect people to call the plddt one legacy, but you never know.  
+    if version=='legacy':
+        version='V1'
+    
+    # if len version is 1, it is likely the user just input 1, 2, or 3. Try to
+    # add a 'v' before it so we don't have to worry about that. Not explicitly
+    # checking version because then it will be easier to add more in the future. 
+    if len(version)==1:
+        version=f'V{version}'
+
+    # make version uppercase
     version=version.upper()
+
+    # make list of possible network inputs
+    possible_networks=[]
+    for cur_net in pplddt_networks.keys():
+        possible_networks.append(cur_net)
+        possible_networks.append(cur_net[-1])
+
+    # make sure version in the known plddt networks
     if version not in pplddt_networks:
-        raise MetapredictError(f'Network {version} not available. Available networks are {pplddt_networks.keys()}')
+        raise MetapredictError(f'Network {version} not available. Valid inputs to choose a network are {possible_networks}')
     else:
         net = pplddt_networks[version]
 

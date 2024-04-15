@@ -4,9 +4,19 @@ This section is a log of recent changes with metapredict. My hope is that as I c
 #### V3.0 (November 2024)
 Changes:
 
-* Started implementation of code for V3.
+* Made the default pLDDT prediction network V2
 
-* Overhaul of backend to accomadate lightning architecture
+* Removed alphaPredict as a dependency
+
+* Made the default disorder prediction network V3
+
+* Updated user-facing pLDDT predictions to allow specification of pLDDT network
+
+* Added compatibility for doing batch predictions of pLDDT
+
+* Added new pLDDT prediction network (V2)
+
+* Overhaul of backend to accomadate pytorch-lightning architecture
 
 * Massive change to how predictor is implemented. You can now do batch prediction on CPU, GPU (CUDA), or Mac GPU (MPS) for V1 (legacy), V2, and V3. 
 
@@ -14,9 +24,9 @@ Changes:
 
 * Update to metapredict-uniprot to work with new version of getSequence. Allows for getting different protein isoforms if specified. 
 
-* Update to how versions of metapredict are tracked. Now everything needs to be added to /backend/network_parameters.py to maintain compatibility between old and future networks. 
+* Update to how networks used in metapredict are tracked. Now everything needs to be added to /backend/network_parameters.py to maintain compatibility between old and future networks. 
 
-* Reimplementation of batch predict. Due to larger batch size in V3 network, it will likely be more useful to have fewer batches by using packing and padding instead of size collection under some scenarios. 
+* Reimplementation of pack-n-pad. Due to larger batch size in V3 network, it will likely be more useful to have fewer batches by using packing and padding instead of size collection under some scenarios. 
 
 #### V2.65 (October 2024)
 Changes:

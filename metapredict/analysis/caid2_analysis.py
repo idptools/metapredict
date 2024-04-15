@@ -1,5 +1,18 @@
 # code to carry out the caid2 analsis for Disorder PDB dataset. 
 
+'''
+Some code to test accuracy of new networks. Only the PDB disorder
+dataset from CAID. Can do CAID1, CAID2, or CAID 1 and 2. This isn't the
+best code because it's really for testing purposes and isn't supposed to be user
+facing.
+'''
+
+
+"""
+#  This is commented out because it requires sklearn. Given that none of the stuff
+#  in the analysis part of metapredict is necessary for users, I'm leaving
+#  stuff back here commenting out to avoid addint sklearn as another dependency. 
+
 import os
 import numpy as np
 from metapredict.backend.predictor import predict, predict_pLDDT
@@ -39,7 +52,7 @@ def read_caid2_seq_disorder(caid_file='caid2_disorder_pdb.fasta'):
     
 
 def moving_average(scores, window_size):
-    """
+    '''
     Smooths an array of scores over a user-specified sliding window size.
 
     Parameters:
@@ -48,7 +61,7 @@ def moving_average(scores, window_size):
 
     Returns:
         smoothed_scores (ndarray): Smoothed scores with the same length as the input array.
-    """
+    '''
     if window_size % 2 == 0:
         raise ValueError("Window size must be an odd number.")
 
@@ -195,8 +208,9 @@ def calc_mcc(metapredict_scores, caid_scores):
     mcc_value = numerator / denomenator
     return mcc_value
 
-def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=False):
-    """
+def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=False,
+    evaluation_fasta='caid2_disorder_pdb.fasta'):
+    '''
     Calculate the AUC, APS, and F1 max
 
     Parameters
@@ -212,13 +226,20 @@ def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=Fa
         window over which to smoooth scores.
         default is to not smooth
 
+    stretch_scores : bool
+        Whether to stretch the scores to increase the dynamic range closer to 0 to 1
+
+    evaluation_fasta : str
+        the fasta file to use for evaluation. 
+        Default is the caid2_disorder_pdb.fasta
+
     whether to stretch the scores
 
     Returns
     -------
     auc:  float
         Area Under the ROC Curve
-    """
+    '''
     # set version to version.upper()
     version=version.upper()
     # get cutoff
@@ -226,7 +247,7 @@ def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=Fa
         cutoff = metapredict_networks[version]['parameters']['disorder_threshold']
 
     # get caid dict. 
-    caid_vals = read_caid2_seq_disorder()
+    caid_vals = read_caid2_seq_disorder(caid_file=evaluation_fasta)
     # do metapredict prediction
     metapredict_vals = get_metapredict_scores(caid_vals, version, cutoff=cutoff, smoothing=smoothing, stretch_scores=stretch_scores)
     # get linear values for metapredict and caid
@@ -260,35 +281,59 @@ def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=Fa
 
     return {'AUC':round(auc, 5), 'APS':round(aps, 5), 'MCC':round(mcc,5)}
 
-def get_individual_accuracy(version, cutoff=None, plddt=False):
-    # set version to version.upper()
-    version=version.upper()
-    # get cutoff
-    if cutoff==None:
-        if plddt==False:
-            cutoff = metapredict_networks[version]['parameters']['disorder_threshold']
-        else:
-            cutoff=0.5
 
-    # get caid dict. 
-    caid_vals = read_caid2_seq_disorder()
-    # do metapredict prediction
-    metapredict_vals = get_metapredict_scores(caid_vals, version, cutoff=cutoff, plddt=plddt)
-    # get linear values for metapredict and caid
-    metapredict_linear_error={}
-    metapredict_binarized_error={}
-    # iterate through the names so we do everything in the correct order. 
-    for name in caid_vals:
-        caid_linear = str(caid_vals[name]['scores'])
-        cur_sequence = metapredict_vals[name]['sequence']
-        metapredict_scores=metapredict_vals[name]['scores']
-        metapredict_binarized=metapredict_vals[name]['binary']
-        error=0
-        tot_scores=0
-        for i in range(0, len(caid_linear)):
-            if caid_linear[i] != '-':
-                tot_scores+=1
-                if caid_linear[i] != str(metapredict_binarized[i]):
-                    error+=1
-        metapredict_binarized_error[error/tot_scores]=cur_sequence
-    return metapredict_binarized_error
+
+
+def print_current_network_accuracy(evaluation='all', additional_networks=None):
+    '''
+    Function to print out the current network accuracies. Just a nice
+    one-liner to have sitting around. 
+
+    Parameters
+    -----------
+    evaluation : str
+        the evaluation set to use. Default is 'caid2'
+        Options included 'caid1', 'caid2', and 'all'
+
+    additional_networks : list
+        additional networks to test. Must be in the 
+        metapredict_networks dictionary in network_parameters.py
+    '''
+    # list of current networks
+    nets=['V1', 'V2', 'V3']
+
+    # if we want to test additional networks in the future, do that here. 
+    if additional_networks!=None:
+        nets.extend(additional_networks)
+
+    # set string for what analysis we are doing
+    if evaluation.lower() == 'all':
+        evaluation_str='CAID1 and CAID2'
+        fasta_used = 'caid1_and_2_disorder_pdb.fasta'
+    elif evaluation.lower() == 'caid1':
+        evaluation_str='CAID1'
+        fasta_used = 'caid1_disorder_pdb.fasta'
+    elif evaluation.lower() == 'caid2':
+        evaluation_str='CAID2'
+        fasta_used = 'caid2_disorder_pdb.fasta'
+    else:
+        raise Exception(f"evaluation must be 'all', 'caid1', or 'caid2'. You entered {evaluation}")
+
+    # start building string to print
+    eval_string = f'{evaluation_str}\n'
+    for i in range(0, len(evaluation_str)):
+        eval_string = eval_string + '='
+    eval_string = eval_string + '\n'
+
+    # add the results for each network 
+    for net in nets:
+        results = calculate_stats(version=net)
+        temp=''
+        for result in results:
+            temp = temp + f'{result} = {results[result]}, '
+        eval_string = eval_string + (f'{net}: {temp[:len(temp)-2]}\n')    
+
+    # print the results
+    print(eval_string)
+
+"""

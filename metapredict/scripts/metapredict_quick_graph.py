@@ -7,7 +7,6 @@ import argparse
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK
 
-VALID_AA = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y']
 
 def main():
     # Parse command line arguments.
