@@ -487,7 +487,7 @@ def predict(inputs,
 
         # get output values from the seq_vector based on the network (brnn_network)
         with torch.no_grad():
-            outputs = model(seq_vector.float()).detach().numpy()[0]
+            outputs = model(seq_vector.float()).detach().cpu().numpy()[0]
 
         # Take care of rounding and normalization
         if normalized == True and round_values==True:
@@ -576,7 +576,7 @@ def predict(inputs,
 
                 # get output values from the seq_vector based on the network (brnn_network)
                 with torch.no_grad():
-                    outputs = model(seq_vector.float()).detach().numpy()[0].flatten()
+                    outputs = model(seq_vector.float()).detach().cpu().numpy()[0].flatten()
 
                 # Take care of rounding and normalization
                 if normalized == True and round_values==True:
@@ -1091,11 +1091,12 @@ def predict_pLDDT(inputs,
         
         # encode the sequence
         seq_vector = encode_sequence.one_hot(inputs)
+        seq_vector = seq_vector.to(device)
         seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
         # get output values from the seq_vector based on the network (brnn_network)
         with torch.no_grad():
-            outputs = model(seq_vector.float()).detach().numpy()[0]*multiplier
+            outputs = model(seq_vector.float()).detach().cpu().numpy()[0]*multiplier
 
         # convert to disorder score if needed. 
         if return_as_disorder_score==True:
@@ -1179,11 +1180,12 @@ def predict_pLDDT(inputs,
             for cur_seq_num, seq in enumerate(sequence_list):
                 # encode the sequence
                 seq_vector = encode_sequence.one_hot(seq)
+                seq_vector = seq_vector.to(device)
                 seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
                 # get output values from the seq_vector based on the network (brnn_network)
                 with torch.no_grad():
-                    outputs = model(seq_vector.float()).detach().numpy()[0].flatten()*multiplier
+                    outputs = model(seq_vector.float()).detach().cpu().numpy()[0].flatten()*multiplier
 
                 # convert to disorder score if needed. 
                 if return_as_disorder_score==True:
