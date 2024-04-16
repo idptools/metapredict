@@ -11,6 +11,7 @@ import metapredict as meta
 import protfasta
 import os
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
+import numpy as np
 
 
 # get some sequences to test out

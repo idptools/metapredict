@@ -460,7 +460,7 @@ def predict(inputs,
     else:
         # if it's a pytorch-lightning, we can just use load_from_checkpoint
         model=architectures.BRNN_MtM_lightning
-        model = model.load_from_checkpoint(predictor_path)
+        model = model.load_from_checkpoint(predictor_path, map_location=device)
 
     # set to eval mode
     model.eval()
@@ -482,6 +482,7 @@ def predict(inputs,
         
         # encode the sequence
         seq_vector = encode_sequence.one_hot(inputs)
+        seq_vector = seq_vector.to(device)
         seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
         # get output values from the seq_vector based on the network (brnn_network)
@@ -570,6 +571,7 @@ def predict(inputs,
             for cur_seq_num, seq in enumerate(sequence_list):
                 # encode the sequence
                 seq_vector = encode_sequence.one_hot(seq)
+                seq_vector = seq_vector.to(device)
                 seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
                 # get output values from the seq_vector based on the network (brnn_network)
@@ -1067,7 +1069,7 @@ def predict_pLDDT(inputs,
     else:
         # if it's a pytorch-lightning, we can just use load_from_checkpoint
         model=architectures.BRNN_MtM_lightning
-        model = model.load_from_checkpoint(predictor_path)
+        model = model.load_from_checkpoint(predictor_path, map_location=device)
 
     # set to eval mode
     model.eval()
