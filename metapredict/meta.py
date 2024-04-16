@@ -264,6 +264,9 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
     # sanity check
     _meta_tools.raise_exception_on_zero_length(inputs)
 
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
+
     # if legacy, make sure version is v1. 
     if legacy==True:
         version='V1'
@@ -552,6 +555,9 @@ def predict_disorder_domains(sequence,
     # sanity check
     _meta_tools.raise_exception_on_zero_length(sequence)
 
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
+
     # get disorder threshold
     if disorder_threshold == None:
         disorder_threshold = metapredict_networks[version]['parameters']['disorder_threshold']
@@ -803,6 +809,8 @@ def predict_disorder_batch(input_sequences,
         object that corresponds to the input dictionary sequence.
 
     """
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
 
     return _predict(input_sequences,
                         version=version,
@@ -906,6 +914,10 @@ def graph_disorder(sequence,
 
     # sanity check
     _meta_tools.raise_exception_on_zero_length(sequence)
+
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # get disorder threshold
     if disorder_threshold == None:
@@ -1034,6 +1046,9 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
     # sanity check
     _meta_tools.raise_exception_on_zero_length(inputs)
 
+    # check version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')    
+
     # return predicted values of disorder for sequence
     return  _predict_pLDDT(inputs,
             version=pLDDT_version, return_decimals=return_decimals,
@@ -1122,6 +1137,9 @@ def graph_pLDDT(sequence,
     # check that a valid set of shaded regions was passed
     _meta_tools.valid_shaded_region(shaded_regions, len(sequence))
 
+    # check version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
+
     # call the graph function
     _graph(sequence, title = title, pLDDT_scores = True,
         disorder_scores=disorder_scores, shaded_regions = shaded_regions,
@@ -1192,6 +1210,9 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold',
     mode = mode.lower()
     if mode not in ['threshold', 'disorder_domains']:
         raise MetapredictError(f"Mode must be one of 'threshold' or 'disorder_domains', but '{mode}' was passed instead")
+
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
 
     # make all residues upper case 
     sequence = sequence.upper()
@@ -1296,6 +1317,10 @@ def predict_disorder_fasta(filepath,
     # Test to see if the data_file exists
     test_data_file = os.path.abspath(filepath)
 
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
+
+    # check path
     if not os.path.isfile(test_data_file):
         raise FileNotFoundError(f'Datafile [{filepath}] does not exist.')
 
@@ -1371,7 +1396,10 @@ def predict_pLDDT_fasta(filepath,
     if not os.path.isfile(test_data_file):
         raise FileNotFoundError(f'Datafile does not exist.')
 
-    protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action, return_list = True)
+    protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action)
+
+    # check version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # new predict_pLDDT function can handle string, list, or dict. 
     confidence_dict = _predict_pLDDT(protfasta_seqs, version=pLDDT_version, return_numpy=False)
@@ -1468,12 +1496,15 @@ def graph_disorder_fasta(filepath,
         No return object, but, the graph is saved to disk or displayed locally.
 
     """
-    version=version.upper()
-    if version not in list(metapredict_networks.keys()):
-        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
 
+    # see if we need to set the disorder threshold
     if disorder_threshold == None:
         disorder_threshold = metapredict_networks[version]['parameters']['disorder_threshold']
+
+    # check pLDDT version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # check that a valid range was passed for disorder_threshold
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -1511,7 +1542,6 @@ def graph_disorder_fasta(filepath,
             # and matplotlib deals with this appropriately. This should be a POSIX-compliant way to do cross-platform
             # file writing
             if indexed_filenames:
-                print(type(idx_counter))
                 filename = output_dir + os.sep + f"{idx_counter:d}_" + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
             else:
                 filename = output_dir + os.sep + _meta_tools.sanitize_filename(idx)[0:14] + f".{output_filetype:s}"
@@ -1521,14 +1551,16 @@ def graph_disorder_fasta(filepath,
 
             # plot!        
             graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, 
-                DPI=DPI, output_file=filename, version=version, pLDDT_version=pLDDT_version)
+                DPI=DPI, output_file=filename, version=version, 
+                pLDDT_version=pLDDT_version, disorder_threshold=disorder_threshold)
 
         # if no output_dir specified just graph the seq        
         else:
             # define title (including bad chars)
             title = idx[0:14]            
             graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, 
-                version=version, pLDDT_version=pLDDT_version)
+                version=version, pLDDT_version=pLDDT_version,
+                disorder_threshold=disorder_threshold)
 
 
 # ..........................................................................................
@@ -1607,9 +1639,12 @@ def graph_pLDDT_fasta(filepath,
         if not os.path.isdir(output_dir):
             raise FileNotFoundError(f'Proposed output directory could not be found')
 
+    # check version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # use protfasta to read in fasta file
     sequences =  _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action)
+
 
     # now for each sequence...
     idx_counter = 0
@@ -1674,10 +1709,8 @@ def predict_disorder_uniprot(uniprot_id, normalized=True, version=DEFAULT_NETWOR
         No return object, but, the graph is saved to disk or displayed locally.
     
     """
-    # check version
-    version=version.upper()
-    if version not in list(metapredict_networks.keys()):
-        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
 
     # fetch sequence from Uniprot
     sequence = _getseq(uniprot_id)[1]
@@ -1713,6 +1746,9 @@ def predict_pLDDT_uniprot(uniprot_id, pLDDT_version=DEFAULT_NETWORK_PLDDT):
     """
     # fetch sequence from Uniprot
     sequence = _getseq(uniprot_id)[1]
+
+    # check version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
         
     # return predicted values of disorder for sequence
     return _predict_pLDDT(sequence, version=pLDDT_version)
@@ -1795,14 +1831,14 @@ def graph_disorder_uniprot(uniprot_id,
         No return object, but, the graph is saved to disk or displayed locally.
     
     """
-
-    # check version
-    version=version.upper()
-    if version not in list(metapredict_networks.keys()):
-        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
 
     if disorder_threshold==None:
         disorder_threshold=metapredict_networks[version]['parameters']['disorder_threshold']
+
+    # check version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # check that a valid range was passed for 
     _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -1877,6 +1913,9 @@ def graph_pLDDT_uniprot(uniprot_id,
 
     # grab uniprot sequence
     sequence = _getseq(uniprot_id)[1]
+
+    # check version and make sure it is an uppercase string
+    pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # graph sequence
     _graph(sequence, title=title, disorder_scores=False, pLDDT_scores=True, 
@@ -1977,10 +2016,8 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
     """
 
-    # check version
-    version=version.upper()
-    if version not in list(metapredict_networks.keys()):
-        raise MetapredictError(f'Version {version} is not a valid version. Use V1, V2, or V3.')
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
 
     if disorder_threshold==None:
         disorder_threshold=metapredict_networks[version]['parameters']['disorder_threshold']
@@ -2024,6 +2061,9 @@ def predict_disorder_caid(input_fasta, output_file, version=DEFAULT_NETWORK):
         Does not return anything, saves a file to the destination output file
 
     '''
+
+    # check version and make sure it is an uppercase string
+    version = _meta_tools.valid_version(version, 'disorder')
 
     # read in the ids and seqs as a list of lists where each list has a first element that corresponds
     # to the ID and the second corresponds to the sequence. Convert invalid amino acids if needed.

@@ -133,9 +133,6 @@ def graph(sequence,
     #set n_res to lenght of seq
     n_res = len(sequence)
 
-    # make network uppercase
-    version=version.upper()
-
     # set yValues equal to the predicted disorder from the sequence (normalized)
     if disorder_scores == True:
         yValues = predict(sequence, version=version, return_numpy=False)
@@ -258,11 +255,8 @@ def graph(sequence,
 
     elif pLDDT_scores == True and disorder_scores == False:
 
-        # import alpha predict
-        from alphaPredict import alpha
-
         # get confidence scores
-        pLDDT_scores = alpha.predict(sequence)
+        pLDDT_scores = predict_pLDDT(sequence, version=pLDDT_version)
 
         # plot the confidence scores
         axes.plot(xValues, pLDDT_scores, color=confidence_line_color, linewidth='1.6', label = 'Disorder Scores')    

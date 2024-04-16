@@ -80,7 +80,7 @@ smoothed_v3 = {
     'used_lightning': True,
     'momentum':    0.9968434498981696,
     'last_epoch': 100,
-    'disorder_threshold': 0.5,
+    'disorder_threshold': METAPREDICT_V3_THRESHOLD,
     'info': 'Similar to v2 metapredict as far as training data except real pLDDT scores pLDDT scores were based on AF2 V4 structures. Values were smoothed over a 25 residue sliding window post processing. Our current putative V3 network.',
     'type': 'disorder'
 }
@@ -380,3 +380,27 @@ pae={
     'type': 'disorder'
 }
 
+# possibly overfit ... decided against using. 
+smoothed_v3_2={
+    'network_name': 'epoch096_val_loss1584.14.ckpt',
+    'public_name': 'V3_2',
+    'pytorch-lightning_version': '2.1.3',
+    'input_size': 20,
+    'lstm_hidden_size': 52,
+    'num_lstm_layers': 2,
+    'num_classes': 1,
+    'problem_type': 'regression',
+    'datatype': 'residues',
+    'optimizer_name': 'SGD',
+    'learn_rate': 0.014268372321431562,
+    'num_linear_layers': 1,
+    'gradient_clip_val':   1,
+    'use_dropout': False,
+    'momentum': 0.9968434498981696,
+    'last_epoch': 180,
+    'batch_size': 256,
+    'used_lightning': True,
+    'disorder_threshold': 0.5,
+    'info': 'like V3 but trained longer',
+    'type': 'disorder'
+}
