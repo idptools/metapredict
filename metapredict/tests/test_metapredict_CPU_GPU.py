@@ -210,33 +210,58 @@ def test_disorder_v1_cpu_vs_gpu(sequences=sequences):
     print(f'Running metapredict version {version}, comparing CPU vs GPU scores.\n')
     cpu_scores=meta.predict_disorder(sequences, version=version, device='cpu', round_values=False)
     gpu_scores=meta.predict_disorder(sequences, version=version, device='cuda', round_values=False)
-    assert(np.round(cpu_scores, 3)==np.round(gpu_scores, 3)).all()
+    # test each score
+    for seq_name in cpu_scores:
+        cur_cpu_scores = cpu_scores[seq_name][1]
+        cur_gpu_scores = gpu_scores[seq_name][1]
+        for i in range(len(cur_cpu_scores)):
+            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
 
 def test_disorder_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
     print(f'Running metapredict version {version}, comparing CPU vs GPU scores.\n')
     cpu_scores=meta.predict_disorder(sequences, version=version, device='cpu', round_values=False)
     gpu_scores=meta.predict_disorder(sequences, version=version, device='cuda', round_values=False)
-    assert(np.round(cpu_scores, 3)==np.round(gpu_scores, 3)).all()
+    # test each score
+    for seq_name in cpu_scores:
+        cur_cpu_scores = cpu_scores[seq_name][1]
+        cur_gpu_scores = gpu_scores[seq_name][1]
+        for i in range(len(cur_cpu_scores)):
+            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
 
 def test_disorder_v3_cpu_vs_gpu(sequences=sequences):
     version='v3'
     print(f'Running metapredict version {version}, comparing CPU vs GPU scores.\n')
     cpu_scores=meta.predict_disorder(sequences, version=version, device='cpu', round_values=False)
     gpu_scores=meta.predict_disorder(sequences, version=version, device='cuda', round_values=False)
-    assert(np.round(cpu_scores, 3)==np.round(gpu_scores, 3)).all()
+    # test each score
+    for seq_name in cpu_scores:
+        cur_cpu_scores = cpu_scores[seq_name][1]
+        cur_gpu_scores = gpu_scores[seq_name][1]
+        for i in range(len(cur_cpu_scores)):
+            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
 
 def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
     version='v1'
     print(f'Running pLDDT prediction version {version}, comparing CPU vs GPU scores.\n')
     cpu_scores=meta.predict_pLDDT(sequences, pLDDT_version=version, device='cpu', round_values=False)
     gpu_scores=meta.predict_pLDDT(sequences, pLDDT_version=version, device='cuda', round_values=False)
-    assert(np.round(cpu_scores, 3)==np.round(gpu_scores, 3)).all()
+    # test each score
+    for seq_name in cpu_scores:
+        cur_cpu_scores = cpu_scores[seq_name][1]
+        cur_gpu_scores = gpu_scores[seq_name][1]
+        for i in range(len(cur_cpu_scores)):
+            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
 
 def test_pLDDT_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
     print(f'Running pLDDT prediction version {version}, comparing CPU vs GPU scores.\n')
     cpu_scores=meta.predict_pLDDT(sequences, pLDDT_version=version, device='cpu', round_values=False)
     gpu_scores=meta.predict_pLDDT(sequences, pLDDT_version=version, device='cuda', round_values=False)
-    assert(np.round(cpu_scores, 3)==np.round(gpu_scores, 3)).all()
+    # test each score
+    for seq_name in cpu_scores:
+        cur_cpu_scores = cpu_scores[seq_name][1]
+        cur_gpu_scores = gpu_scores[seq_name][1]
+        for i in range(len(cur_cpu_scores)):
+            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
 
