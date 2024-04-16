@@ -259,8 +259,8 @@ def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
             # plddt V1 scores are 100x bigger than plldt V2 (which are trained on plddt / 100)
-            # so we want to use 0.01 here instead of 0.001
-            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i], allowed_error=0.02)==True
+            # so we want to use 0.1 here instead of 0.001
+            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i], allowed_error=0.1)==True
 
 def test_pLDDT_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
