@@ -204,6 +204,13 @@ def test_disable_pack_n_pad_pLDDT_v2_gpu(sequences=sequences):
     print(f'Running pLDDT prediction version {version} on {device}, no pack-n-pad\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device, disable_pack_n_pad=True)
 
+def close_enough(val1, val2, allowed_error=0.001):
+    # function to see if val1 and val2 are within some allowed error amount
+    # values are occassionally 0.001 off, so going to allow up to that. 
+    if abs(val1-val2)<=allowed_error:
+        return True
+    else:
+        return False
 
 def test_disorder_v1_cpu_vs_gpu(sequences=sequences):
     version='v1'
@@ -215,7 +222,7 @@ def test_disorder_v1_cpu_vs_gpu(sequences=sequences):
         cur_cpu_scores = cpu_scores[seq_name][1]
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
-            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
+            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
 def test_disorder_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
@@ -227,7 +234,7 @@ def test_disorder_v2_cpu_vs_gpu(sequences=sequences):
         cur_cpu_scores = cpu_scores[seq_name][1]
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
-            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
+            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
 def test_disorder_v3_cpu_vs_gpu(sequences=sequences):
     version='v3'
@@ -239,7 +246,7 @@ def test_disorder_v3_cpu_vs_gpu(sequences=sequences):
         cur_cpu_scores = cpu_scores[seq_name][1]
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
-            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
+            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
 def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
     version='v1'
@@ -251,7 +258,7 @@ def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
         cur_cpu_scores = cpu_scores[seq_name][1]
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
-            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
+            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
 def test_pLDDT_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
@@ -263,5 +270,5 @@ def test_pLDDT_v2_cpu_vs_gpu(sequences=sequences):
         cur_cpu_scores = cpu_scores[seq_name][1]
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
-            assert np.round(cur_cpu_scores[i], 3)==np.round(cur_gpu_scores[i], 3)
+            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
