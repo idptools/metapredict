@@ -11,6 +11,7 @@ import csv
 import protfasta
 
 from metapredict import meta
+from metapredict.parameters import DEFAULT_NETWORK_PLDDT
 
 
 def main():
@@ -30,6 +31,7 @@ def main():
 
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert'", default='convert')
 
+    parser.add_argument('-v', '--pLDDT-version', default=DEFAULT_NETWORK_PLDDT, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
 
 
     args = parser.parse_args()
@@ -53,7 +55,8 @@ def main():
                               DPI=args.dpi,
                               output_dir=outdir,
                               output_filetype=args.filetype,
-                              indexed_filenames=args.indexed_filenames)
+                              indexed_filenames=args.indexed_filenames,
+                              pLDDT_version=args.pLDDT_version)
                               
                               
                               

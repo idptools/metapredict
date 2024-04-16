@@ -32,7 +32,8 @@ def main():
 
     parser.add_argument('--indexed-filenames', help='Flag which, if set to true, means files will be indexed with a leading unique integer start at 1.', action='store_true')
 
-    parser.add_argument('--disorder-threshold', help='Defines the value plotted as a theshold line on the graph', default=0.3, type=float)
+    parser.add_argument('--disorder-threshold', help='Defines the value plotted as a theshold line on the graph', default=None)
+    
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert'", default='convert')
 
 
@@ -56,6 +57,7 @@ def main():
         outdir = 'disorder_out'
     else:
         outdir = args.output_directory
+
 
     # run graph_disorder_fasta. For more info, see the graph_disorder_fasta function in meta.py.
     meta.graph_disorder_fasta(filepath=args.data_file, 

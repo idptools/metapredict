@@ -1,7 +1,13 @@
-import protfasta
+# various tools for checks and formatting
+
 import re
-from metapredict.metapredict_exceptions import MetapredictError
+
 import numpy as np
+import protfasta
+
+# local imports
+from metapredict.metapredict_exceptions import MetapredictError
+from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
 
 
 def valid_range(inval, minval, maxval):
@@ -362,3 +368,58 @@ def raise_exception_on_zero_length(s):
         else:
             raise MetapredictError('Error: Passed iterable type is length 0')
 
+
+def valid_version(version_specified, prediction_type):
+    '''
+    Function to handle version specified by the user. 
+    To make things less annoying, you can input the version
+    as v1, v2, v3, or just 1, 2, 3. This function will
+    return the version as a string.
+
+    Parameters
+    ----------
+    version_specified : str or int
+        Version specified by the user
+
+    prediction_type : str
+        The type of prediction being made
+        options are 'disorder' or 'pLDDT'    
+
+    Returns
+    -------
+    str
+        Returns the version as a string
+
+    '''
+    # make sure we are checking a valid network. Make lowercase because pLDDT is annoying. 
+    if prediction_type.lower() == 'disorder':
+        valid_networks = list(metapredict_networks.keys())
+    elif prediction_type.lower() == 'plddt':
+        valid_networks = list(pplddt_networks.keys())
+    else:
+        raise MetapredictError('Invalid prediction type specified. Options are disorder or pLDDT.')
+
+    # make sure that you only get an int or a string as the input for version_specified.
+    if isinstance(version_specified, int):
+        # if is an int, convert to string
+        version = str(version_specified)
+    elif isinstance(version_specified, str):
+        # if is a string, leave it as is
+        version = version_specified
+    else:
+        # if not either, raise exception
+        raise MetapredictError('Version must be an integer or a string')
+
+    # now we can take care of formatting. We have a string that could be 'v1', 'V1', or '1' (for example)
+    if len(version)==1:
+        # if the length is 1, then we need to add a 'v' to the start
+        version = 'V'+version
+
+    # now make sure is uppercase.
+    version = version.upper()
+
+    # now see if it's in the valid networks. 
+    if version not in valid_networks:
+        raise MetapredictError(f'Invalid network specified. Options are {valid_networks}')
+    else:
+        return version

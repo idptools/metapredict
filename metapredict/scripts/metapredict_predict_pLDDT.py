@@ -7,6 +7,7 @@ import os
 import argparse
 
 import metapredict as meta
+from metapredict.parameters import DEFAULT_NETWORK_PLDDT
 
 
 def main():
@@ -20,6 +21,8 @@ def main():
 
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert' ", default='convert')
 
+    parser.add_argument('-v', '--pLDDT-version', default=DEFAULT_NETWORK_PLDDT, help='Optional. Use this flag to specify the version of metapredict. Options are V1, or V2')                            
+
     args = parser.parse_args()
 
     
@@ -30,4 +33,5 @@ def main():
     # run predict disorder fasta
     meta.predict_pLDDT_fasta(filepath=args.data_file, 
                                 output_file = args.output_file,
-                                invalid_sequence_action=args.invalid_sequence_action)
+                                invalid_sequence_action=args.invalid_sequence_action,
+                                pLDDT_version=args.pLDDT_version)

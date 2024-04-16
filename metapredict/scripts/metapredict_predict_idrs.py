@@ -7,8 +7,7 @@ import os
 import argparse
 import protfasta
 
-
-from metapredict.parameters import DEFAULT_NETWORK, METAPREDICT_LEGACY_THRESHOLD, METAPREDICT_V2_THRESHOLD, METAPREDICT_V3_THRESHOLD
+from metapredict.parameters import DEFAULT_NETWORK
 import metapredict as meta
 
 def main():
@@ -43,14 +42,6 @@ def main():
 
     else:
         outfile_name = args.output_file
-    
-    if args.threshold == None:
-        if args.version.upper()=='V1':
-            threshold_val = METAPREDICT_LEGACY_THRESHOLD
-        if args.version.upper()=='V2':
-            threshold_val = METAPREDICT_V2_THRESHOLD
-        if args.version.upper()=='V3':
-            threshold_val = METAPREDICT_V3_THRESHOLD
 
     
     if not os.path.isfile(args.data_file):
@@ -63,7 +54,7 @@ def main():
 
 
     # if using non-legacy then we use batch mode and request return_domains
-    idrs = meta.predict_disorder_batch(sequences, return_domains=True, disorder_threshold=threshold_val, version=args.version)
+    idrs = meta.predict_disorder(sequences, return_domains=True, disorder_threshold=args.threshold, version=args.version)
 
     # if the return type is a FASTA file we want to write 
     if args.mode == 'fasta':
