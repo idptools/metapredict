@@ -207,7 +207,7 @@ def test_disable_pack_n_pad_pLDDT_v2_gpu(sequences=sequences):
 def close_enough(val1, val2, allowed_error=0.001):
     # function to see if val1 and val2 are within some allowed error amount
     # values are occassionally 0.001 off, so going to allow up to that. 
-    if abs(val1-val2)<=allowed_error:
+    if abs(val1-val2)<allowed_error:
         return True
     else:
         return False
@@ -258,7 +258,9 @@ def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
         cur_cpu_scores = cpu_scores[seq_name][1]
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
-            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
+            # plddt V1 scores are 100x bigger than plldt V2 (which are trained on plddt / 100)
+            # so we want to use 0.01 here instead of 0.001
+            assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i], allowed_error=0.01)==True
 
 def test_pLDDT_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
