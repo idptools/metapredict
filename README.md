@@ -15,13 +15,223 @@ The current recommended and default version of metapredict is metapredict V3 (ve
 
 ## Installation
 
-**Note** metapredict V3 cannot currently be installed using Pip. Please go ton the **V3 installation** section to install metapredict v3!
+**Note -** metapredict V3 cannot currently be installed using Pip. Please see the **V3 installation** section below install metapredict v3!
 
 ### V3 installation
 
+To install metapredict V3, you will need to first install numpy and cython and then install the V3 branch of metapredict. First run:
+
+	pip install numpy cython
+
+after numpy and cython install, run:
+
+	pip install git+https://github.com/idptools/metapredict@v3
 
 
-### Installing metapredict V2 
+**V3 is currently not the version of metapredict on readthedocs, so documentation for V3 will be below. There are some important changes to V3:**
+  
+*Changes in metapredict V3:*
+* When using metapredict V3 from python, you can choose the version of metapredict by specifying ``version``
+* For all predictions (single sequences, lists of sequences, and dictionaries of sequences), whe using Python, use the ``meta.predict_disorder()`` function. 
+* For CAID, we have a custom Python function and a command-line script. They both take in a .fasta formatted file of sequences as the input and output a a 'CAID compliant' formatted file per sequence in the .fasta file that will save to a specified output directory. In Python, this function is called ``meta.predict_disorder_caid()``. From the command-line, you can use ``metapredict-caid``. Documetation is below. If you don't want to use those specific functions, we also have documentation for predicting disorder from Python or from the command-line below. CAID documentation is after the sections on using metapredict V3 in Python or from the command-line. 
+
+#### V3 Python usage examples -
+
+First, import metapredict:
+
+```python: 
+import metapredict as meta
+```
+
+Disorder prediction:
+
+**Single sequence predictions using ``meta.predict_disorder()``**  
+
+```python: 
+meta.predict_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR")
+```
+
+```python: 
+array([0.8173, 0.8311, 0.8276, 0.8193, 0.8036, 0.7832, 0.7485, 0.708 ,0.6778, 0.64, 0.5948, 0.5439, 0.5062, 0.47, 0.448 , 0.4356, 0.412 , 0.3687, 0.3294, 0.2986, 0.2724, 0.2543, 0.238, 0.227, 0.2185, 0.2084, 0.1846, 0.1665, 0.1559, 0.1373, 0.124 , 0.1133, 0.0958, 0.0738], dtype=float32)
+```
+
+**Predicting lists of sequences using ``meta.predict_disorder()``**  
+
+```python: 
+sequences=['GSGSGSGSSGSGSGS', 'DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR']
+meta.predict_disorder(sequences)
+```
+
+```python: 
+[['GSGSGSGSSGSGSGS', array([0.8916, 0.9393, 0.9505, 0.9596, 0.9618, 0.9639, 0.9623, 0.9589, 0.9517, 0.9371, 0.917, 0.8955, 0.8827, 0.8773, 0.8686],dtype=float32)], ['DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR', array([0.8173, 0.8311, 0.8276, 0.8193, 0.8036, 0.7832, 0.7485, 0.708, 0.6778, 0.64, 0.5948, 0.5439, 0.5062, 0.47, 0.448, 0.4356, 0.412, 0.3687, 0.3294, 0.2986, 0.2724, 0.2543, 0.238, 0.227, 0.2185, 0.2084, 0.1846, 0.1665, 0.1559, 0.1373, 0.124, 0.1133, 0.0958, 0.0738], dtype=float32)]]
+```
+
+**Predicting dictionaries of sequences using meta.predict_disorder()**  
+
+```python: 
+sequences={'seq1':'GSGSGSGSSGSGSGS', 'seq2':'DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR'}
+meta.predict_disorder(sequences)
+```
+
+```python: 
+{'seq1': ['GSGSGSGSSGSGSGS', array([0.8916, 0.9393, 0.9505, 0.9596, 0.9618, 0.9639, 0.9623, 0.9589, 0.9517, 0.9371, 0.917, 0.8955, 0.8827, 0.8773, 0.8686], dtype=float32)], 'seq2': ['DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR', array([0.8173, 0.8311, 0.8276, 0.8193, 0.8036, 0.7832, 0.7485, 0.708, 0.6778, 0.64, 0.5948, 0.5439, 0.5062, 0.47, 0.448, 0.4356, 0.412, 0.3687, 0.3294, 0.2986, 0.2724, 0.2543, 0.238, 0.227, 0.2185, 0.2084, 0.1846, 0.1665, 0.1559, 0.1373, 0.124, 0.1133, 0.0958, 0.0738], dtype=float32)]}
+```
+
+**Choosing a specific version of metapredict using meta.predict_disorder()**  
+
+To choose a specific version of metapredict, simply specify ``version``.
+
+**V1, AKA metapredict legacy**
+  
+```python: 
+meta.predict_disorder("DSSPEAPAEPPKDVP", version='v1')
+```
+  
+**V2**
+  
+```python: 
+meta.predict_disorder("DSSPEAPAEPPKDVP", version='v2')
+```
+  
+**V3, (new default, do not need to specify)**
+  
+```python: 
+meta.predict_disorder("DSSPEAPAEPPKDVP", version='v3')
+```
+
+#### V3 command-line usage examples - 
+
+Metapredict can predict disorder for sequences from a .fasta formatted file using ``metapredict-predict-disrder``  the command-line.
+
+Once metapredict is installed, you can run ``metapredict-predict-disorder`` from the command line:
+
+```bash: 
+metapredict-predict-disorder <Path to .fasta file> 
+```
+**Example:** 
+
+```bash:
+metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
+```
+
+Note that as of metapredict V3, all three networks can be submitted in batch for massive increases in prediction speed. Further, metapredict will automatically use a CUDA GPU if available. A progress bar will also be generated in the terminal.
+
+**Additional Usage:**
+
+**Specifying where to save the output -** 
+
+If you would like to specify where to save the output, simply use the ``-o`` or ``--output-file`` flag and then specify the file path and file name. By default this command will save the output file as disorder_scores.csv to your current working directory. However, you can specify the file name in the output path.
+
+**Example:** 
+
+```bash:
+metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
+```
+
+**Using the other versions of metapredict -**
+
+To use legacy (V1) or V2 of metapredict, simply use the ``-v`` or ``--version`` flag.
+
+**Example:** 
+
+```bash:
+metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv -v v2
+```
+
+#### CAID formatted predictions from the command-line
+
+To get CAID formatted predictions per sequence from the command-line, use ``metapredict-caid``. There are 3 required arguments:
+ 1. `data_file` - the path to the .fasta file
+ 2. `output_path` - the path of where to save each CAID formatted prediction file. This should be a directory. Each sequence in the .fasta file will generate a file in this directory where the name of the file will be the sequence header and the file extension will be .caid.
+ 3. `version` - the version of metapredict to use.
+
+The files generated are in .caid format where each sequence header is the first line then the following lines for that sequence are tab separated and contain:
+ 1. The amino acid number
+ 2. The amino acid letter
+ 3. The metapredict disorder score
+ 4. The binarized metapredict score where 1=disordered and 0=not disordered.
+  
+
+**Examples**
+
+**V1, AKA metapredict legacy**
+ 
+```bash
+metapredict-caid /Users/thisUser/Desktop/myCaidSeqs.fasta /Users/thisUser/Desktop/CaidPredictions/metapredictV1 v1
+```
+  
+  
+**V2:**
+ 
+```bash
+metapredict-caid /Users/thisUser/Desktop/myCaidSeqs.fasta /Users/thisUser/Desktop/CaidPredictions/metapredictV2 v2
+```
+  
+
+**V3**
+ 
+```bash
+metapredict-caid /Users/thisUser/Desktop/myCaidSeqs.fasta /Users/thisUser/Desktop/CaidPredictions/metapredictV3 v3
+```
+
+
+#### CAID formatted predictions from Python
+
+To get CAID formatted predictions in Python, use the `predict_disorder_caid()` function. This function takes in the path to a .fasta formatted file of sequences and returns a 'CAID compliant' formatted file per sequence that is in the fasta file. The files generated are in .caid format where each sequence header is a line then the following lines for that sequence are tab separated and contain:
+ 1. The amino acid number
+ 2. The amino acid letter
+ 3. The metapredict disorder score
+ 4. The binarized metapredict score where 1=disordered and 0=not disordered.
+  
+
+To use this function, first import metapredict
+
+```python:
+import metapredict as meta
+```
+
+The function takes in three arguments: 
+ 1. `input_fasta` - the path to the .fasta file
+ 2. `output_path` - the path of where to save each CAID formatted prediction file. This should be a directory. Each sequence in the .fasta file will generate a file in this directory where the name of the file will be the sequence header and the file extension will be .caid.
+ 3. `version` - the version of metapredict to use.
+
+The disorder cutoff values are handled automatically (0.42 for V1 and 0.5 for V2/V3).
+
+**Examples**
+
+**V1, AKA metapredict legacy**
+ 
+```python: 
+path_to_fasta='/Users/thisUser/Desktop/myCaidSeqs.fasta'
+``` 
+
+```python: 
+meta.predict_disorder_caid(path_to_fasta, '/Users/thisUser/Desktop/CaidPredictions/metapredictV1, version='v1')
+```
+  
+**V2**
+  
+ 
+```python: 
+path_to_fasta='/Users/thisUser/Desktop/myCaidSeqs.fasta'
+``` 
+
+```python: 
+meta.predict_disorder_caid(path_to_fasta, '/Users/thisUser/Desktop/CaidPredictions/metapredictV2, version='v2')
+```
+  
+**V3, (new default, do not need to specify)**
+  
+ 
+```python: 
+path_to_fasta='/Users/thisUser/Desktop/myCaidSeqs.fasta'
+``` 
+
+```python: 
+meta.predict_disorder_caid(path_to_fasta, '/Users/thisUser/Desktop/CaidPredictions/metapredictV3, version='v3')
+```
+
+### Installing metapredict V2 (not needed if you install V3)
 
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
 
@@ -45,7 +255,7 @@ Note you will need the -e flag to ensure the `cython` code compiles correctly, b
 This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with `pip`.
 
 ## Documentation
-Documentation for metapredict automatically builds from the `/doc` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
+Documentation for metapredict V2 automatically builds from the `/doc` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
 
 In brief, metapredict provides both command-line tools and a set of user-face functions from the metapredict python module. Both sets of tools are fully documented online.
 

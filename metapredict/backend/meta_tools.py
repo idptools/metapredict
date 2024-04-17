@@ -1,7 +1,7 @@
 # various tools for checks and formatting
 
 import re
-
+import os
 import numpy as np
 import protfasta
 
@@ -171,74 +171,13 @@ def get_binary_prediction(confidence_value, cutoff_value):
         Returns a binary prediction
 
     '''
-    if confidence_value > cutoff_value:
+    if confidence_value >= cutoff_value:
         return 1
     else:
         return 0
 
 
-def write_caid_format(input_dict, output_file):
-    '''
-    Function that takes in a dictionary and outputs a file in the format as 
-    specified by IDPcentrail Critical Assessment of Intrinsic protein Disorder
-    (CAID). Format is as follows - 
-        ouptut is a plain text output where the
-        prediction has an entry header >entry_id header, similar to the beginning
-        of a .fasta file
-        Every line following the entry_id contains tab separated columns with columns
-        ordered as follows - 1) residue number, 2) residue name, 3) confidence score,
-        4) binary classification where 1 = disordered and 0 = not disordered.
 
-    Example (from idpcentral.org/caid):
-        >P04637
-        1    M    0.892    1
-        2    E    0.813    1
-
-    Parameters
-    ----------
-    input_dict : dict
-        input dictionary of disorder scores. The Key should be the
-        entry_id as as string and the associated value should be a list where the
-        first element of the list is the corresponding sequence as a string and the
-        second item of the list is the corresponding predictions as float values.
-
-    Returns
-    -------
-    None
-        Does not return anything to the user. Writes a file saved to either
-        the current directory or to a specified file path.
-
-    '''
-
-    # first make a list of all of the keys in the dict
-    entry_ids = []
-
-    for entry_id in input_dict.keys():
-        entry_ids.append(entry_id)
-
-    # attempt to write to output file, raise MetapredictError if unable to
-    try:
-        current_output = open(output_file, 'w') 
-    except Exception:
-        raise MetapredictError(f'Unable to write to {output_file}')
-
-    # now iterate through the dict and append the necessary values per line
-    for ids in entry_ids:
-        cur_id = ids
-        cur_sequence = input_dict[cur_id][0][0]
-        cur_scores = input_dict[cur_id][1]
-        # write entry id
-        current_output.write(f'{cur_id}\n')
-
-        # for each residue write the position, residue, score, and classification
-        for res_and_score_index in range(0, len(cur_sequence)):
-            cur_residue = cur_sequence[res_and_score_index]
-            cur_score = cur_scores[res_and_score_index]
-            cur_binary = get_binary_prediction(cur_score, cutoff_value=0.5)
-            # write as tsv the caid formatted info
-            current_output.write(f'{res_and_score_index+1}\t{cur_residue}\t{cur_score}\t{cur_binary}\n')
-    
-    current_output.close()
 
 
 def split_fasta(fasta_list, number_splits):
@@ -423,3 +362,98 @@ def valid_version(version_specified, prediction_type):
         raise MetapredictError(f'Invalid network specified. Options are {valid_networks}')
     else:
         return version
+
+
+
+def write_caid_format(input_dict, output_path, version):
+    '''
+    Function that takes in a dictionary and outputs a file in the format as 
+    specified by IDPcentrail Critical Assessment of Intrinsic protein Disorder
+    (CAID). Format is as follows - 
+        ouptut is a plain text output where the
+        prediction has an entry header >entry_id header, similar to the beginning
+        of a .fasta file
+        Every line following the entry_id contains tab separated columns with columns
+        ordered as follows - 1) residue number, 2) residue name, 3) confidence score,
+        4) binary classification where 1 = disordered and 0 = not disordered.
+
+    Example (from idpcentral.org/caid):
+        >P04637
+        1    M    0.892    1
+        2    E    0.813    1
+
+    Parameters
+    ----------
+    input_dict : dict
+        input dictionary of disorder scores. The Key should be the
+        entry_id as as string and the associated value should be a list where the
+        first element of the list is the corresponding sequence as a string and the
+        second item of the list is the corresponding predictions as float values.
+
+    output_path : str
+        the path where to save each generated file. The function will save a file
+        for each entry in the input_dict. The file will be saved in the format
+        entry_id.caid
+
+    version : str
+        The version of the network used to make the predictions. Options are 'v1', 'v2', 'v3'
+
+    Returns
+    -------
+    None
+        Does not return anything to the user. Writes a file saved to either
+        the current directory or to a specified file path.
+
+    '''
+
+    # first make a list of all of the keys in the dict
+    entry_ids = []
+
+    for entry_id in input_dict.keys():
+        entry_ids.append(entry_id)
+
+    # make sure output_path is a dir
+    if os.path.isdir(output_path)==False:
+        raise MetapredictError(f'Please specify output_path as a directory to save generated files. {output_path} is not a valid directory.')
+
+    version=valid_version(version, prediction_type='disorder')
+
+    if version.upper()=='V3':
+        cutoff_value=0.5
+    elif version.upper()=='V2':
+        cutoff_value=0.5
+    elif version.upper()=='V1':
+        cutoff_value=0.42
+    else:
+        raise Exception('invalid version detected!')
+
+    # now iterate through the dict and write one file per sequence. 
+    for ids in entry_ids:
+        cur_id = ids
+        if cur_id[0] != '>':
+            write_cur_id_header = '>'+cur_id
+        else:
+            write_cur_id_header = cur_id
+        cur_sequence = input_dict[cur_id][0]
+        cur_scores = input_dict[cur_id][1]
+        
+        # open the file to write to
+        with open(f'{output_path}/{cur_id}.caid', 'w') as current_output:
+
+            # write entry id
+            current_output.write(f'{write_cur_id_header}\n')
+
+            # for each residue write the position, residue, score, and classification
+            for res_and_score_index in range(0, len(cur_sequence)):
+                cur_residue = cur_sequence[res_and_score_index]
+                cur_score = cur_scores[res_and_score_index]
+                cur_binary = get_binary_prediction(cur_score, cutoff_value=cutoff_value)
+                write_score=str(round(float(cur_score),3))
+                if len(write_score) < 5:
+                    for i in range(0, 5-len(write_score)):
+                        write_score=write_score+'0'
+
+                # write as tsv the caid formatted info
+                current_output.write(f'{res_and_score_index+1}\t{cur_residue}\t{write_score}\t{cur_binary}\n')
+        
+        current_output.close()
