@@ -24,20 +24,21 @@ Metapredict is a software package written in Python. It can be installed from [P
 
 #### TL/DR: Recommended install commands are:
 In most situations, the following two commands will ensure all the necessary dependencies are installed and work correctly:
+```bash
+# ensure dependencies are from the same ecosystem (conda)
+conda install -c conda-forge -c pytorch python=3.11 numpy pytorch scipy cython matplotlib
 
-	# ensure dependencies are from the same ecosystem (conda)
-	conda install -c conda-forge -c pytorch python=3.11 numpy pytorch scipy cython matplotlib
-	
-	
-	# install from PyPI
-	pip install metapredict
+
+# install from PyPI
+pip install metapredict
+```
 
 To check the installation has worked run:
-
-	metapredict-predict-disorder --help
-	
+```bash
+	metapredict-predict-disorder --help	
+```
 from the command line; this should yield help info on the `metapredict-predict-disorder` command.
-	
+
 #### WARNING: Segfault when mixing `conda` and `pip` installs (March 2024)
 As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities between `pip` and `conda` versions of PyTorch and numpy. Therefore, it is essential your numpy and PyTorch installs are from the same package manager. metapredict will - by default - pull dependencies from PyPI. However, other packages installed from conda may require conda-dependent numpy installations, which can "brick" a previously-working installation.
 
@@ -59,7 +60,18 @@ Which should return information about your GPU, NVIDIA driver version, and your 
 Please see the [PyTorch install instructions](https://pytorch.org/get-started/locally/) for more info. 
   
 
-#### Extended installation info
+### Extended installation info
+=======
+To install metapredict V3, you will need to first install numpy and cython and then install the V3 branch of metapredict. First run:
+```bash
+pip install numpy cython
+```
+after numpy and cython install, run:
+```bash
+pip install git+https://github.com/idptools/metapredict@v3
+```
+
+#### Installing metapredict V3
 
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
 
@@ -82,7 +94,7 @@ Note you will need the -e flag to ensure the `cython` code compiles correctly, b
 This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with `pip`.
 
 ## Documentation
-Documentation for metapredict automatically builds from the `/doc` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
+Documentation for metapredict V2 automatically builds from the `/doc` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
 
 In brief, metapredict provides both command-line tools and a set of user-face functions from the metapredict python module. Both sets of tools are fully documented online.
 
@@ -125,6 +137,86 @@ In addition to using Dan Griffith's tool for creating metapredict, the original 
 We would like to thank the **DeepMind** team for developing AlphaFold2 and EBI/UniProt for making these data so readily available.
 
 We would also like to thank the team at MobiDB for creating the database that was used to train metapredict V1. Check out their awesome stuff at [https://mobidb.bio.unipd.it](https://mobidb.bio.unipd.it)
+
+### Running metapredict for CAID competition predictions
+  
+We include the ability to easily run predictions of .fasta formatted files and returns a 'CAID compliant' formatted file per sequence that is in the fasta file.
+
+#### CAID formatted predictions from Python
+
+To get CAID formatted predictions in Python, use the `predict_disorder_caid()` function. This function takes in the path to a .fasta formatted file of sequences and returns a 'CAID compliant' formatted file per sequence that is in the fasta file. The files generated are in .caid format where each sequence header is a line then the following lines for that sequence are tab separated and contain:
+ 1. The amino acid number
+ 2. The amino acid letter
+ 3. The metapredict disorder score
+ 4. The binarized metapredict score where 1=disordered and 0=not disordered.
+  
+
+To use this function, first import metapredict
+
+```python:
+import metapredict as meta
+```
+
+The function takes in three arguments: 
+ 1. `input_fasta` - the path to the .fasta file
+ 2. `output_path` - the path of where to save each CAID formatted prediction file. This should be a directory. Each sequence in the .fasta file will generate a file in this directory where the name of the file will be the sequence header and the file extension will be .caid.
+ 3. `version` - the version of metapredict to use.
+
+The disorder cutoff values are handled automatically (0.42 for V1 and 0.5 for V2/V3).
+
+**Examples**
+
+**V1, AKA metapredict legacy**
+ 
+```python: 
+path_to_fasta='/Users/thisUser/Desktop/myCaidSeqs.fasta'
+``` 
+
+```python: 
+meta.predict_disorder_caid(path_to_fasta, '/Users/thisUser/Desktop/CaidPredictions/metapredictV1', version='v1')
+```
+  
+**V2**
+  
+```python: 
+path_to_fasta='/Users/thisUser/Desktop/myCaidSeqs.fasta'
+``` 
+
+```python: 
+meta.predict_disorder_caid(path_to_fasta, '/Users/thisUser/Desktop/CaidPredictions/metapredictV2, 'version='v2')
+```
+  
+**V3, (new default, do not need to specify)**
+  
+```python: 
+path_to_fasta='/Users/thisUser/Desktop/myCaidSeqs.fasta'
+``` 
+
+```python: 
+meta.predict_disorder_caid(path_to_fasta, '/Users/thisUser/Desktop/CaidPredictions/metapredictV3, 'version='v3')
+```
+
+#### CAID formatted predictions from the command-line
+  
+To run metapredict for the CAID competition and get CAID-formatted files out, see the following examples:
+  
+ 
+```bash
+metapredict-caid /Users/thisUser/Desktop/myCaidSeqs.fasta /Users/thisUser/Desktop/CaidPredictions/metapredictV1 v1
+```
+  
+**V2:**
+ 
+```bash
+metapredict-caid /Users/thisUser/Desktop/myCaidSeqs.fasta /Users/thisUser/Desktop/CaidPredictions/metapredictV2 v2
+```
+  
+**V3**
+ 
+```bash
+metapredict-caid /Users/thisUser/Desktop/myCaidSeqs.fasta /Users/thisUser/Desktop/CaidPredictions/metapredictV3 v3
+```
+
 
 ## Copyright
 Copyright (c) 2020-2024, Holehouse Lab - Washington University School of Medicine

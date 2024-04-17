@@ -2037,7 +2037,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
 # ..........................................................................................
 #
-def predict_disorder_caid(input_fasta, output_file, version=DEFAULT_NETWORK):
+def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK):
     '''
     executing script for generating a caid-compliant output file for disorder
     predictions using a .fasta file as the input.
@@ -2048,9 +2048,8 @@ def predict_disorder_caid(input_fasta, output_file, version=DEFAULT_NETWORK):
         the input file as a string that includes the file path preceeding
         the file name if the file is not in the curdir
 
-    output_file : str
-        the output file name as a string. This can include a file path to a specific
-        save location or by default saves to the curdir
+    output_path : str
+        the path where to save the output files.
 
     version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,
@@ -2075,6 +2074,6 @@ def predict_disorder_caid(input_fasta, output_file, version=DEFAULT_NETWORK):
     predictions = _predict(entry_id_and_seqs, version=version, return_numpy=False)
 
     # write the output file
-    _meta_tools.write_caid_format(output_dict, output_file)
+    _meta_tools.write_caid_format(predictions, output_path, version=version)
 
 
