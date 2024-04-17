@@ -14,13 +14,14 @@ __all__ =  ['predict_disorder', 'predict_disorder_domains', 'graph_disorder', 'p
 import os
 import sys
 import numpy as np
+from tqdm import tqdm
 
 # note - we import packages below with a leading _ which means they are ignored in the import
 
 #import protfasta to read .fasta files
 import protfasta as _protfasta
 # import getseq to get sequences from uniprot
-import getSequence as _getseq
+from getSequence import getseq as _getseq
 
 # import stuff for confidence score predictions
 from metapredict.backend.network_parameters import metapredict_networks
@@ -1328,7 +1329,8 @@ def predict_disorder_fasta(filepath,
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action)
 
     # initialize return dictionary
-    disorder_dict = _predict(protfasta_seqs, version=version, normalized=normalized, return_numpy=False)
+    disorder_dict = _predict(protfasta_seqs, version=version, normalized=normalized, return_numpy=False,
+        show_progress_bar=True)
 
     # if we did not request an output file 
     if output_file is None:
@@ -1402,7 +1404,7 @@ def predict_pLDDT_fasta(filepath,
     pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # new predict_pLDDT function can handle string, list, or dict. 
-    confidence_dict = _predict_pLDDT(protfasta_seqs, version=pLDDT_version, return_numpy=False)
+    confidence_dict = _predict_pLDDT(protfasta_seqs, version=pLDDT_version, return_numpy=False, show_progress_bar=True)
 
     # if we did not request an output file 
     if output_file is None:
@@ -1526,7 +1528,7 @@ def graph_disorder_fasta(filepath,
 
     # now for each sequence...
     idx_counter = 0
-    for idx in sequences:
+    for idx in tqdm(sequences):
         
         # increment the index counter...
         idx_counter = idx_counter + 1
@@ -1648,7 +1650,7 @@ def graph_pLDDT_fasta(filepath,
 
     # now for each sequence...
     idx_counter = 0
-    for idx in sequences:
+    for idx in tqdm(sequences):
         
         # increment the index counter...
         idx_counter = idx_counter + 1

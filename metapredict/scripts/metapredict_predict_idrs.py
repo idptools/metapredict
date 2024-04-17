@@ -54,7 +54,7 @@ def main():
 
 
     # if using non-legacy then we use batch mode and request return_domains
-    idrs = meta.predict_disorder(sequences, return_domains=True, disorder_threshold=args.threshold, version=args.version)
+    idrs = meta.predict_disorder(sequences, return_domains=True, disorder_threshold=args.threshold, version=args.version, show_progress_bar=True)
 
     # if the return type is a FASTA file we want to write 
     if args.mode == 'fasta':

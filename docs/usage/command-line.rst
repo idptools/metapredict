@@ -5,7 +5,7 @@ metapredict from the command-line
 Using the original metapredict network
 ---------------------------------------
 
-We have recently updated the network that makes predictions for metapredict to massively improve accuracy. However, if you need to use the original metapredict predictor as opposed to our new, updated predictor, you can specify the version by using the ``-v`` or ``--version`` flag and choosing V1, V2, or V3!
+Over three iterations we have updated the network behind metapredict to improve prediction accuracy. In case you were using a specific version for something or prefer one version over another, we implemented our updates such that all networks generated previously are still available. You can specify any of the metapredict disorder prediction networks by using the ``-v`` or ``--version`` flag and choosing V1, V2, or V3!
 
 
 Predicting disorder scores from fasta files
@@ -13,7 +13,7 @@ Predicting disorder scores from fasta files
 
 The ``metapredict-predict-disorder`` command from the command line takes a .fasta file as input and returns disorder scores for the sequences in the FASTA file.
 
-Once metapredict is installed, the user can run ``metapredict-predict-disorder`` from the command line:
+Once metapredict is installed, you can run ``metapredict-predict-disorder`` from the command line:
 
 .. code-block:: bash
 	
@@ -25,8 +25,8 @@ Once metapredict is installed, the user can run ``metapredict-predict-disorder``
 	
 	$ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta 
 	
-	
-Note that as of metapredict V2-FF this will automatically parallelize on a GPU or CPU if available. A progress bar will also be generated in the terminal.	
+
+Note that as of metapredict V3, all three networks can be submitted in batch for massive increases in prediction speed. Further, metapredict will automatically use a CUDA GPU if available. A progress bar will also be generated in the terminal.
 
 **Additional Usage:**
 
@@ -40,14 +40,14 @@ If you would like to specify where to save the output, simply use the ``-o`` or 
     $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv
 
 
-**Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-v`` or ``--version`` flag.
+**Using the other versions of metapredict -**
+To use legacy (V1) or V2 of metapredict, simply use the ``-v`` or ``--version`` flag.
 
 **Example:** 
 
 .. code-block:: bash
     
-    $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv -l
+    $ metapredict-predict-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_disorder_predictions.csv -v v2
 
 
 Predicting IDRs from a fasta file
@@ -65,7 +65,7 @@ The ``metapredict-predict-idrs`` command from the command line takes a .fasta fi
 	
 	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta 
 
-Note that as of metapredict V2-FF this will automatically parallelize on a GPU or CPU if available. A progress bar will also be generated in the terminal.
+As of metapredict V3, you can automatically parallelize any metapredict network on a GPU or CPU if available.
 
 **Additional Usage**
 
@@ -85,7 +85,7 @@ If you want to use an older version of metapredict, you can specify the version 
 
 .. code-block:: bash
 	
-	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta -l
+	$ metapredict-predict-idrs /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_idrs.fasta -v v2
 
 **Changing output threshold for disorder-**
 To change the cutoff value for something to be considered disordered, simply use the ``--threshold`` flag and then specify your value. For legacy, the default is 0.42. For the newer versions of metapredict, the value is 0.5. 
@@ -116,7 +116,7 @@ To use the original metapredict network, simply use the ``-v`` or ``--version`` 
 
 .. code-block:: bash
     
-    $ metapredict-quick-predict ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVA -l
+    $ metapredict-quick-predict ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVA -v v2
 
 
 Predicting AlphaFold2 confidence scores from a fasta file
@@ -146,6 +146,14 @@ If you would like to specify where to save the output, simply use the ``-o`` or 
 	$ metapredict-predict-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_pLDDT_predictions.csv
 
 
+**New: Specify which pLDDT prediction network to use-** 
+We now have multiple networks for predicting pLDDT. The original network is ``v1`` and the new network is ``v2``. ``v2`` is the default pLDDT prediction network. To specify a version, use the ``-v`` or ``--pLDDT-version`` flag. 
+
+**Example**
+
+.. code-block:: bash
+	
+	$ metapredict-predict-pLDDT /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/disorder_predictions/my_pLDDT_predictions.csv -v v1
 
 Plotting disorder profiles from a fasta file
 -----------------------------------------------
@@ -225,14 +233,14 @@ If you would like to change the disorder threshold line plotted on the graph, us
     $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --disorder-threshold 0.5
 
 
-**Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-v`` or ``--version`` flag and specify V1. You can also specify V2 or V3 here..
+**Using a different metapredict network-**
+To use the a different metapredict network, simply use the ``-v`` or ``--version`` flag and specify the netowork. You can also specify V2 here. V3 is the default network. 
 
 **Example:** 
 
 .. code-block:: bash
     
-    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --disorder-threshold 0.5 -l
+    $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ -v v1
 
 
 
@@ -260,13 +268,13 @@ Quick graphing of disorder scores
 	$ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -D 200
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply use the ``-v`` or ``--version`` flag and specify V1. You can also specify V2 or V3 here.
+To use the original metapredict network, simply use the ``-v`` or ``--version`` flag and specify V1. You can also specify V2 or V3 here. V3 is default.
 
 **Example:** 
 
 .. code-block:: bash
     
-    $ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -l
+    $ metapredict-quick-graph ISQQMQAQPAMVKSQQQQQQQQQQHQHQQQQLQQQQQLQMSQQQVQQQGIYNNGTIAVAN -v v1
 
 
 Graphing disorder scores using UniProt ID
@@ -318,7 +326,7 @@ To use the original metapredict network, simply use the ``-v`` or ``--version`` 
 
 .. code-block:: bash
     
-    $ metapredict-uniprot Q8RYC8 -l
+    $ metapredict-uniprot Q8RYC8 -v v1
 
 
 Graphing disorder using the common name of a protein
@@ -383,7 +391,7 @@ If you want to use an older version of metapredict, you can specify the version 
 
 .. code-block:: bash
     
-    $ metapredict-name p53 -l
+    $ metapredict-name p53 -v v2
 
 
 **Printing the full UniProt ID to your terminal**

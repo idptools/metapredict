@@ -60,6 +60,7 @@ Please see the [PyTorch install instructions](https://pytorch.org/get-started/lo
   
 
 #### Extended installation info
+
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
 
 To install from PyPI, run:
