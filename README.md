@@ -15,6 +15,14 @@ The current recommended and default version of metapredict is metapredict V3 (ve
 
 ## Installation
 
+**Note** metapredict V3 cannot currently be installed using Pip. Please go ton the **V3 installation** section to install metapredict v3!
+
+### V3 installation
+
+
+
+### Installing metapredict V2 
+
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
 
 To install from PyPI, run:

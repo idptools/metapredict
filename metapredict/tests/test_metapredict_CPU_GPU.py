@@ -274,3 +274,64 @@ def test_pLDDT_v2_cpu_vs_gpu(sequences=sequences):
         for i in range(len(cur_cpu_scores)):
             assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
+def test_single_sequence_disorder_v1_cpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v1'
+    device='cpu'
+    print(f'Running metapredict version {version} on {device}\n')
+    meta.predict_disorder(sequences, version=version, device=device)
+
+def test_single_sequence_disorder_v2_cpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v2'
+    device='cpu'
+    print(f'Running metapredict version {version} on {device}\n')
+    meta.predict_disorder(sequences, version=version, device=device)
+
+def test_single_sequence_disorder_v3_cpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v3'
+    device='cpu'
+    print(f'Running metapredict version {version} on {device}\n')
+    meta.predict_disorder(sequences, version=version, device=device)
+
+def test_single_sequence_disorder_v1_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v1'
+    device='cuda'
+    print(f'Running metapredict version {version} on {device}\n')
+    meta.predict_disorder(sequences, version=version, device=device)
+
+def test_single_sequence_disorder_v2_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v2'
+    device='cuda'
+    print(f'Running metapredict version {version} on {device}\n')
+    meta.predict_disorder(sequences, version=version, device=device)
+
+def test_single_sequence_disorder_v3_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v3'
+    device='cuda'
+    print(f'Running metapredict version {version} on {device}\n')
+    meta.predict_disorder(sequences, version=version, device=device)
+
+def test_single_sequence_pLDDT_v1_cpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v1'
+    device='cpu'
+    print(f'Running pLDDT prediction version {version} on {device}\n')
+    meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
+
+def test_single_sequence_pLDDT_v2_cpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v2'
+    device='cpu'
+    print(f'Running pLDDT prediction version {version} on {device}\n')
+    meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
+
+def test_single_sequence_pLDDT_v1_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v1'
+    device='cuda'
+    print(f'Running pLDDT prediction version {version} on {device}\n')
+    meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
+
+def test_single_sequence_pLDDT_v2_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
+    version='v2'
+    device='cuda'
+    print(f'Running pLDDT prediction version {version} on {device}\n')
+    meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
+
+test_single_sequence_disorder_v3_gpu()
