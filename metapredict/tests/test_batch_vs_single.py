@@ -18,7 +18,8 @@ current_filepath = os.getcwd()
 fasta_filepath = "{}/input_data/testing.fasta".format(current_filepath)
 
 onehundred_seqs = "{}/input_data/test_seqs_100.fasta".format(current_filepath)
-onehundred_scores = "{}/input_data/test_scores_100.npy".format(current_filepath)
+# updated to test_scores_100_v3.npy because V3 is now default network. 
+onehundred_scores = "{}/input_data/test_scores_100_v3.npy".format(current_filepath)
 
 
 from . import build_seq
@@ -136,6 +137,7 @@ def test_big_test_batch():
     """
     scores = np.load(onehundred_scores, allow_pickle=True).tolist()
     seqs = protfasta.read_fasta(onehundred_seqs)
+
 
 
     batch_predictions = meta.predict_disorder_batch(seqs)

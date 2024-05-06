@@ -1,11 +1,20 @@
 #!/usr/bin/env python
 """
 Functionality previously scattered across various different modules. 
-This holds all of the functionality for disorder prediction. 
+This holds all of the functionality for disorder and pLDDT prediction. 
 This includes batch and single sequence. 
 Device selection can be carried out from the predict function. 
 Output data type also from the predict function. 
 """
+
+# general imports
+import os
+from packaging import version as packaging_version
+import time
+import numpy as np
+import torch
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 # local imports
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
@@ -15,15 +24,6 @@ from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
 from metapredict.backend import encode_sequence
 from metapredict.backend import architectures
 from metapredict.metapredict_exceptions import MetapredictError
-
-# other imports
-import os
-from packaging import version as packaging_version
-import time
-import numpy as np
-import torch
-from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 # ....................................................................................
 #

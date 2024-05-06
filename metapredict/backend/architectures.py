@@ -12,7 +12,10 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as L
 
-
+'''
+USED BY V1 and V2 disorder predictors!
+USED BY V1 pLDDT predictor!
+'''
 
 class BRNN_MtM(nn.Module):
     """A PyTorch many-to-many bidirectional recurrent neural network
@@ -117,6 +120,10 @@ class BRNN_MtM(nn.Module):
         # return decoded hidden state
         return fc_out
 
+'''
+USED BY V3 disorder predictor!
+USED BY V2 pLDDT predictor!
+'''
 
 class BRNN_MtM_lightning(L.LightningModule):
     """A PyTorch many-to-many bidirectional recurrent neural network
