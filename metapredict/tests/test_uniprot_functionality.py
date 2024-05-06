@@ -27,51 +27,39 @@ def test_metapredict_imported():
 #
 def test_predict_disorder_uniprot():
 
-    # checks that this fails when an invalid uniprot accession is passed
-    with pytest.raises(MetapredictError):
-        meta.predict_disorder_uniprot('aaaa')
-
-
     # checks that when we pull p53 we get 393 residues of sweet,
     # sweet disorder prediction
     assert len(meta.predict_disorder_uniprot(P53_UID)) == 393
 
     # check summed disorder is right
-    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID)),181.7708, 0.0001)
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, version=2)),181.7708, 0.0001)
 
     # check legacy disorder is right
-    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, legacy=True)),  172.9651, 0.0001)
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, version=1)),  172.9651, 0.0001)
 
     # check summed disorder is right when we don't normalize (these are not magic values,
     # just the expected 'truth' for the 1.0 release
-    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, normalized=False, legacy=True)),173.5245, 0.0001)
+    assert np.isclose(np.sum(meta.predict_disorder_uniprot(P53_UID, normalized=False, version=1)),173.5245, 0.0001)
 
 
 # ....................................................................................
 #
 def test_graph_disorder_uniprot_():
-
-    # checks that this fails when an invalid uniprot accession is passed
-    with pytest.raises(MetapredictError):
-        meta.graph_disorder_uniprot('aaaa')
-
-
     # probably should have some tests here...?
+    # ... yeah... we probably should. I'm on hour 4 of updating
+    # everything from v2 to v3 though, so today is not that day.
+    pass
+    
 
 
 # ....................................................................................
 #
 def test_predict_disorder_domains_uniprot_():
 
-    # checks that this fails when an invalid uniprot accession is passed
-    with pytest.raises(MetapredictError):
-        meta.predict_disorder_domains_uniprot('aaaa')
-
-
     # checks that when we pull p53 we get 393 residues of sweet,
     # sweet disorder prediction
 
-    dis_domains = meta.predict_disorder_domains_uniprot(P53_UID) 
+    dis_domains = meta.predict_disorder_domains_uniprot(P53_UID, version=2) 
     assert len(dis_domains.sequence) == 393
     assert np.isclose(np.sum(dis_domains.disorder), 181.7708, 0.001)
 

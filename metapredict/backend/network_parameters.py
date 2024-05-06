@@ -1,20 +1,22 @@
 #!/usr/bin/env python
 """
-This holds all of the information on the networks we have in the /backend/networks folder.
-This includes networks that we have published and those that were tested but not published. 
+This holds all of the information on the networks we have in /backend/networks for disorder
+and /backend/ppLDDT/networks for pLDDT.
+This includes networks that we have published and those that we tested but didn't end up using. 
 Explainations for networks can be found by calling the 'info' key in the dictionary for the 
-network. Why make this? Great question. The reason is that a lot of the names for the
-networks in the networks folder are downright terrible (metaDisorder.pt is... bad). However,
+network. 
+Why make this? Great question. The reason is that a lot of the names for the
+networks in the /networks folder are downright terrible (metaDisorder.pt is... bad). However,
 I don't want to change the names of those networks at this point because it would make them
-hard to track down if anyone has kept track of the network names for whatever reason. 
-So - this is my Not So Clever Workaround™.  
+hard to track down. This is my Not So Clever Workaround™.  
 
 The other reason for this module is to hold the hyperparameters for networks we made before we
 started using Pytorch-lightning. The importance of this is Pytorch-lightning holds more easily 
 accessible hyperparameter information that you don't need to dynamically load. However, we can't 
 use this functionalty for the old networks, so the workaround is to just have
 things hardcoded here. This will also future proof us in case the Pytorch-lightning functionality
-changes for whatever reason.
+changes for whatever reason. It's also a nice place to look things up to see what parameters
+we used for each network.
 """
 
 # import the cutoff value parameters for each network from parameters.
@@ -81,7 +83,7 @@ smoothed_v3 = {
     'momentum':    0.9968434498981696,
     'last_epoch': 100,
     'disorder_threshold': METAPREDICT_V3_THRESHOLD,
-    'info': 'Similar to v2 metapredict as far as training data except real pLDDT scores pLDDT scores were based on AF2 V4 structures. Values were smoothed over a 25 residue sliding window post processing. Our current putative V3 network.',
+    'info': 'Similar to v2 metapredict as far as training data except we used real pLDDT scores based on AF2 V4 structures instead of predicted pLDDT. In addition, values were smoothed over a 25 residue sliding window before being used for training. Depending on some additional testing, this is likely to be our next released network.',
     'type': 'disorder'
 }
 
@@ -103,7 +105,7 @@ alpha_fold_networkV7_hs100_nL2_200e_all_prot={
     'epochs': 200,
     'used_lightning': False,
     'disorder_threshold': 'N/A',
-    'info': "pLDDT predictor network implemented in AlphaPredict. Original pLDDT predictor. Trained on same proteomes as metapredict V1 (legacy) pLDDT scores. Output scores from this predictor were used to make the metapredict V2 network.", 
+    'info': "pLDDT predictor network implemented in AlphaPredict. Original pLDDT predictor. Trained on same proteomes as metapredict V1 (legacy) pLDDT scores. Output scores from this predictor combined with metapredict legacy disorder scores were used to make the metapredict V2 network.", 
     'type': 'pLDDT'
 }
 
@@ -126,13 +128,23 @@ epoch019_val_loss1477_45_ckpt={
     'used_lightning': True,
     'last_epoch': 20,
     'disorder_threshold': 'N/A',
-    'info': "Network made by Jeff. Trained on pLDDT scores from swissprot  AF2 V4 PDBs. March 2024.", 
+    'info': "Network made by Jeff. Trained on pLDDT scores from swissprot AF2 V4 PDBs. March 2024.", 
     'type': 'pLDDT'
 }
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
 #=-=-=-=-=-= ADD USER-FACING STUFF HERE -=-=-=-=-=#
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+'''
+Everything user-facing needs to be added here. For a version,
+add 'V#' as a new key to the dictionary. That should then have 
+a value that is an additional key with two values: 
+'weights': the name of the file that holds the weights for the network
+'parameters': the dictionary that holds the hyperparameters for the network. 
+the dictionary specified in 'parameters' needs to be defined with the same
+key : value pairs as the dictionaries above.
+'''
+
 
 # dict to hold the networks that are user-facing.
 metapredict_networks = {
