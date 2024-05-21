@@ -12,19 +12,20 @@ from setuptools.extension import Extension
 
 try:
     from Cython.Build import cythonize
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:    
     print('########################################\n')
     print('Error: Please install cython first:\n\npip install cython\n')
     print('########################################\n')
+    print(f'Error message below:\n{e}')
     exit(1)
 
 try:
     import numpy
-except ModuleNotFoundError:
-
+except ModuleNotFoundError as e:
     print('########################################\n')
     print('Error: Please install numpy first:\n\npip install numpy\n')
     print('########################################\n')
+    print(f'Error message below:\n{e}')
     exit(1)
 
 
