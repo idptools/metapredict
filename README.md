@@ -21,7 +21,8 @@ The current recommended and default version of metapredict is metapredict V3 (ve
 
 To install metapredict V3, you will need to first install numpy and cython and then install the V3 branch of metapredict. First run:
 
-	pip install numpy cython
+	conda install -c conda-forge -c pytorch python=3.11 numpy pytorch scipy cython matplotlib
+	
 
 after numpy and cython install, run:
 
