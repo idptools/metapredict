@@ -28,7 +28,6 @@ In most situations, the following two commands will ensure all the necessary dep
 # ensure dependencies are from the same ecosystem (conda)
 conda install -c conda-forge -c pytorch python=3.11 numpy pytorch scipy cython matplotlib
 
-
 # install from PyPI
 pip install metapredict
 ```
@@ -61,17 +60,6 @@ Please see the [PyTorch install instructions](https://pytorch.org/get-started/lo
   
 
 ### Extended installation info
-=======
-To install metapredict V3, you will need to first install numpy and cython and then install the V3 branch of metapredict. First run:
-```bash
-pip install numpy cython
-```
-after numpy and cython install, run:
-```bash
-pip install git+https://github.com/idptools/metapredict@v3
-```
-
-#### Installing metapredict V3
 
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
 
