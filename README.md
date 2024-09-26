@@ -21,7 +21,8 @@ Metapredict is a software package written in Python. It can be installed from [P
 In most situations, the following two commands will ensure all the necessary dependencies are installed and work correctly:
 
 	# ensure dependencies are from the same ecosystem (conda)
-	conda install numpy pytorch scipy cython matplotlib  -c pytorch
+	conda install -c conda-forge -c pytorch python=3.11 numpy pytorch scipy cython matplotlib
+	
 	
 	# install from PyPI
 	pip install metapredict
