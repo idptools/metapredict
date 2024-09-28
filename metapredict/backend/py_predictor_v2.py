@@ -90,7 +90,7 @@ class Predictor():
         self.device_string = device_string
 
         # load using the requested device
-        loaded_model = torch.load(saved_weights, map_location=device)
+        loaded_model = torch.load(saved_weights, map_location=device, weights_only=True)
 
         # Dynamically read in correct network size:
         self.num_layers = 0

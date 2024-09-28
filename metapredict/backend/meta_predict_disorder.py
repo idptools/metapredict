@@ -126,7 +126,7 @@ saved_weights = predictor
 
 brnn_network = brnn_architecture.BRNN_MtM(input_size, hidden_size, num_layers, num_classes, device).to(device)
 # if you want to use the V3 network, uncomment line below and comment out line above.
-brnn_network.load_state_dict(torch.load(saved_weights, map_location=torch.device(device)))
+brnn_network.load_state_dict(torch.load(saved_weights, map_location=torch.device(device), weights_only=True))
 # set to eval mode
 brnn_network.eval()
 ###############################################################################
