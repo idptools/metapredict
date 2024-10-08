@@ -146,3 +146,6 @@ def print_metapredict_network_version():
     """
 
     return get_metapredict_network_version()
+
+from . import _version
+__version__ = _version.get_versions()['version']
