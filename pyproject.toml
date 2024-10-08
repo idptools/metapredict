@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "metapredict"
 version = "0.0.0"  # This placeholder will be overridden by versioneer
-description = "Metapredict package description"
+description = "A machine learning-based tool for predicting protein disorder."
 authors = [
     {name = "Ryan Emenecker", email = "remenecker@wustl.edu"}
 ]
