@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel", "cython", "numpy", "versioneer[toml]"]
+requires = ["setuptools>=61", "setuptools-scm>=8", "wheel", "cython", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,7 +10,7 @@ authors = [
     {name = "Ryan Emenecker", email = "remenecker@wustl.edu"}
 ]
 license = {text = "MIT"}
-requires-python = ">=3.5,<3.12.0"
+requires-python = ">=3.8,<3.12.0"
 
 dependencies = [
     "cython",
@@ -50,10 +50,4 @@ use_tabs = false
 [tool.flake8]
 max-line-length = 119
 
-[tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "metapredict/_version.py"
-versionfile_build = "metapredict/_version.py"
-tag_prefix = ""
-parentdir_prefix = "metapredict-"
+[tool.setuptools_scm]

@@ -2,7 +2,7 @@ from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
 import os
 import numpy
-import versioneer
+from setuptools_scm import get_version
 
 cython_file = os.path.join("metapredict", "backend", "cython", "domain_definition.pyx")
 
@@ -16,8 +16,7 @@ extensions = [
 
 setup(
     ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}),
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version=get_version(),
     packages=find_packages(),
     include_package_data=True,
 )

@@ -3,6 +3,8 @@
 ## A protein disorder predictor based on a BRNN (IDP-Parrot) trained on the consensus disorder values from 
 ## 8 disorder predictors from 12 proteomes.
 ##
+import sys
+import importlib.util
 
 # import user-facing functions
 from metapredict.meta import *
@@ -10,15 +12,16 @@ from metapredict.backend.meta_predict_disorder import get_metapredict_legacy_net
 from metapredict.backend.metameta_hybrid_predict import get_metapredict_network_version
 
 import os
-import sys
+from importlib.metadata import version, PackageNotFoundError
 
-from metapredict import _version
-__version__ = _version.get_versions()['version']
-
+try:
+    __version__ = version("metapredict")
+except PackageNotFoundError:
+    # package is not installed
+    pass
 
 # To crash on LIBOMP error set this to False
 IGNORE_LIBOMP_ERROR = True
-
 
 # ------------------------------------------------------------
 #
@@ -141,6 +144,3 @@ def print_metapredict_network_version():
 
     return get_metapredict_network_version()
 
-
-from . import _version
-__version__ = _version.get_versions()['version']
