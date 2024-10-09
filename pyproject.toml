@@ -57,4 +57,3 @@ versionfile_source = "metapredict/_version.py"
 versionfile_build = "metapredict/_version.py"
 tag_prefix = ""
 parentdir_prefix = "metapredict-"
-
