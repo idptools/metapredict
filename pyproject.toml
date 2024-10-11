@@ -39,7 +39,6 @@ metapredict-name = "scripts.metapredict_name:main"
 [tool.coverage.run]
 omit = [
     "*/tests/*",
-    "metapredict/_version.py"
 ]
 
 [tool.yapf]
