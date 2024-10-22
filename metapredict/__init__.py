@@ -14,11 +14,8 @@ from metapredict.backend.metameta_hybrid_predict import get_metapredict_network_
 import os
 from importlib.metadata import version, PackageNotFoundError
 
-try:
-    __version__ = version("metapredict")
-except PackageNotFoundError:
-    # package is not installed
-    pass
+# import current version
+from ._version import __version__
 
 # To crash on LIBOMP error set this to False
 IGNORE_LIBOMP_ERROR = True

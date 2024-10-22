@@ -8,8 +8,7 @@ import metapredict as meta
 
 VALID_AA = ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y']
 
-
-if __name__ == "__main__":
+def main():
     # Parse command line arguments.
     parser = argparse.ArgumentParser(description='Predict intrinsic disorder of amino acid sequences.')
     parser.add_argument('sequence', help='The amino acid sequence to predict disorder for.')

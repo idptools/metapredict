@@ -9,7 +9,7 @@ import argparse
 from metapredict.metapredict_exceptions import MetapredictError
 import metapredict as meta
 
-if __name__ == "__main__":
+def main():
 
     # Parse command line arguments.
     parser = argparse.ArgumentParser(description='Predict intrinsic disorder from a UniProt accession number.')

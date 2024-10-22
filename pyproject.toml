@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "setuptools-scm>=8", "wheel", "cython", "numpy"]
+requires = ["setuptools>=61", "cython", "numpy", "versioningit~=2.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,28 +25,49 @@ dependencies = [
     "getSequence >= 1.6",
 ]
 
-[project.scripts]
-metapredict-graph-disorder = "scripts.metapredict_graph_disorder:main"
-metapredict-predict-disorder = "scripts.metapredict_predict_disorder:main"
-metapredict-quick-graph = "scripts.metapredict_quick_graph:main"
-metapredict-quick-predict = "scripts.metapredict_quick_predict:main"
-metapredict-uniprot = "scripts.metapredict_uniprot:main"
-metapredict-predict-idrs = "scripts.metapredict_predict_idrs:main"
-metapredict-graph-pLDDT = "scripts.metapredict_graph_pLDDT:main"
-metapredict-predict-pLDDT = "scripts.metapredict_predict_pLDDT:main"
-metapredict-name = "scripts.metapredict_name:main"
-
-[tool.coverage.run]
-omit = [
-    "*/tests/*",
+[project.optional-dependencies]
+test = [
+  "pytest>=6.1.2",
 ]
 
-[tool.yapf]
-column_limit = 119
-indent_width = 4
-use_tabs = false
 
-[tool.flake8]
-max-line-length = 119
+[project.scripts]
+metapredict-graph-disorder = "metapredict.scripts.metapredict_graph_disorder:main"
+metapredict-predict-disorder = "metapredict.scripts.metapredict_predict_disorder:main"
+metapredict-quick-graph = "metapredict.scripts.metapredict_quick_graph:main"
+metapredict-quick-predict = "metapredict.scripts.metapredict_quick_predict:main"
+metapredict-uniprot = "metapredict.scripts.metapredict_uniprot:main"
+metapredict-predict-idrs = "metapredict.scripts.metapredict_predict_idrs:main"
+metapredict-graph-pLDDT = "metapredict.scripts.metapredict_graph_pLDDT:main"
+metapredict-predict-pLDDT = "metapredict.scripts.metapredict_predict_pLDDT:main"
+metapredict-name = "metapredict.scripts.metapredict_name:main"
 
-[tool.setuptools_scm]
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["."]
+include = ["metapredict", "metapredict.*"]  # Discover all sub-packages under metapredict
+
+[tool.setuptools.package-data]
+metapredict = ["py.typed"]
+
+[tool.versioningit]
+default-version = "1+unknown"
+
+[tool.versioningit.format]
+distance = "{base_version}+{distance}.{vcs}{rev}"
+dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
+distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
+
+[tool.versioningit.vcs]
+# The method key:
+method = "git"  # <- The method name
+# Parameters to pass to the method:
+match = ["*"]
+default-tag = "1.0.0"
+
+[tool.versioningit.write]
+file = "metapredict/_version.py"

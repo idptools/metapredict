@@ -8,13 +8,9 @@ import argparse
 import protfasta
 
 from metapredict.meta import predict_disorder_batch
-
-
-
 import metapredict as meta
 
-
-if __name__ == "__main__":
+def main():
 
     # Parse command line arguments.
     parser = argparse.ArgumentParser(description='Predict IDRs for all sequences in a FASTA file.')

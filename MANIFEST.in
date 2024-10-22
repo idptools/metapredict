@@ -2,4 +2,9 @@ include LICENSE
 include MANIFEST.in
 
 graft metapredict
+graft metapredict/scripts
 global-exclude *.py[cod] __pycache__ *.so
+
+#recursive-include metapredict/backend/networks *
+#recursive-exclude metapredict/backend/tests *
+

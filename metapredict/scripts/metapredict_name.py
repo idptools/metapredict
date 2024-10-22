@@ -11,7 +11,7 @@ import metapredict as meta
 from metapredict.backend.uniprot_predictions import seq_from_name
 from getSequence import getseq
 
-if __name__ == "__main__":
+def main():
 
     # Parse command line arguments.
     parser = argparse.ArgumentParser(description='Predict intrinsic disorder from a protein name.')

@@ -85,6 +85,11 @@ Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict V2: An update to m
 
 For changes see the `changelog.md` file in this directory.
 
+## Running tests
+Note that to run tests you must compile the cython code in place. We suggest doing this by running the following set of commands:
+
+pip uninstall metapredict; rm -rf build dist *.egg-info; python -m build; pip install .
+
 ## Acknowledgements
 
 PARROT, created by Dan Griffith, was used to generate the network used for metapredict. See [https://pypi.org/project/idptools-parrot/](https://pypi.org/project/idptools-parrot/) for some very cool machine learning stuff.
