@@ -11,6 +11,8 @@ __pycache__/
 metapredict/tests/test_cli/output/*
 !metapredict/tests/test_cli/output/readme.txt
 
+metapredict/_version.py
+
 
 # cython-specific stuff
 metapredict/backend/cython/domain_definition.c
