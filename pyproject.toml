@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61", "setuptools-scm>=8", "wheel", "cython", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metapredict"
+dynamic = ["version"]
+description = "A machine learning-based tool for predicting protein disorder."
+authors = [
+    {name = "Ryan Emenecker", email = "remenecker@wustl.edu"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.8,<3.12.0"
+
+dependencies = [
+    "cython",
+    "torch",
+    "numpy",
+    "matplotlib",
+    "protfasta",
+    "scipy",
+    "urllib3",
+    "tqdm",
+    "alphaPredict==1.0",
+    "getSequence >= 1.6",
+]
+
+[project.scripts]
+metapredict-graph-disorder = "scripts.metapredict_graph_disorder:main"
+metapredict-predict-disorder = "scripts.metapredict_predict_disorder:main"
+metapredict-quick-graph = "scripts.metapredict_quick_graph:main"
+metapredict-quick-predict = "scripts.metapredict_quick_predict:main"
+metapredict-uniprot = "scripts.metapredict_uniprot:main"
+metapredict-predict-idrs = "scripts.metapredict_predict_idrs:main"
+metapredict-graph-pLDDT = "scripts.metapredict_graph_pLDDT:main"
+metapredict-predict-pLDDT = "scripts.metapredict_predict_pLDDT:main"
+metapredict-name = "scripts.metapredict_name:main"
+
+[tool.coverage.run]
+omit = [
+    "*/tests/*",
+]
+
+[tool.yapf]
+column_limit = 119
+indent_width = 4
+use_tabs = false
+
+[tool.flake8]
+max-line-length = 119
+
+[tool.setuptools_scm]
