@@ -1,6 +1,13 @@
 ## Changelog
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
+#### V2.64 (October 2024)
+Changes:
+
+* Changed over to use pyproject.toml
+* Removed max Python version of 3.12
+* Changed alphaPredict to use 1.2 to get rid of Torch warning
+
 #### V2.63 (November 2023)
 Changes:
 

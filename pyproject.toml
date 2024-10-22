@@ -21,7 +21,7 @@ dependencies = [
     "scipy",
     "urllib3",
     "tqdm",
-    "alphaPredict==1.0",
+    "alphaPredict==1.2",
     "getSequence >= 1.6",
 ]
 
