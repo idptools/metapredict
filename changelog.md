@@ -1,6 +1,11 @@
 ## Changelog
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
+#### V2.65 (October 2024)
+Changes:
+
+* Changed tag to 2.65. Yep, that's it. Necessary to get a clean build up to Pypi.
+
 #### V2.64 (October 2024)
 Changes:
 
