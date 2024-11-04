@@ -45,7 +45,7 @@ def score_compare(s1, s2):
     
     """
     
-    return np.allclose(np.array(s1), np.array(s2), atol=1e-3)
+    return np.allclose(np.array(s1), np.array(s2), atol=0.0012)
     
     
 

@@ -34,7 +34,7 @@ pip install metapredict
 
 To check the installation has worked run:
 ```bash
-	metapredict-predict-disorder --help	
+metapredict-predict-disorder --help	
 ```
 from the command line; this should yield help info on the `metapredict-predict-disorder` command.
 
@@ -47,7 +47,7 @@ As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities betwee
 If you are on an older version of CUDA, a torch version that *does not have the correct CUDA version* will be installed. This can cause a segfault when running metapredict. To fix this, you need to install torch for your specific CUDA version. For example, to install PyTorch on Linux using pip with a CUDA version of 12.1, you would run:
 
 ```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install torch --index-url https://download.pytorch.org/whl/cu121
 ```
   
 To figure out which version of CUDA you currently have (assuming you have a CUDA-enabled GPU that is set up correctly), you need to run:
@@ -64,19 +64,20 @@ Please see the [PyTorch install instructions](https://pytorch.org/get-started/lo
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
 
 To install from PyPI, run:
-
-	pip install metapredict
+```bash
+pip install metapredict
+```
 
 You can also install the current development version from
-
-	pip install git+https://git@github.com/idptools/metapredict
-
+```bash
+pip install git+https://git@github.com/idptools/metapredict
+```
 To clone the GitHub repository and gain the ability to modify a local copy of the code, run
-
-	git clone https://github.com/idptools/metapredict.git
-	cd metapredict
-	pip install -e .
-	
+```bash
+git clone https://github.com/idptools/metapredict.git
+cd metapredict
+pip install -e .
+```
 Note you will need the -e flag to ensure the `cython` code compiles correctly, but this also means the installed version is linked to the local version of the code.	
 
 This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with `pip`.
