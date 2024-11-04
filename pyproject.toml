@@ -23,7 +23,7 @@ dependencies = [
     "scipy",
     "urllib3",
     "tqdm",
-    "alphaPredict >= 1.3.0",
+    "pytorch_lightning",
     "getSequence >= 2.2.1",
 ]
 
@@ -43,6 +43,7 @@ metapredict-predict-idrs = "metapredict.scripts.metapredict_predict_idrs:main"
 metapredict-graph-pLDDT = "metapredict.scripts.metapredict_graph_pLDDT:main"
 metapredict-predict-pLDDT = "metapredict.scripts.metapredict_predict_pLDDT:main"
 metapredict-name = "metapredict.scripts.metapredict_name:main"
+metapredict-caid = "metapredict.scripts.metapredict_caid:main"
 
 [tool.setuptools]
 zip-safe = false

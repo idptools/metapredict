@@ -9,7 +9,7 @@ import metapredict as meta
 
 
 
-if __name__ == "__main__":
+def main():
 
     # Parse command line arguments.
     parser = argparse.ArgumentParser(description='Generate disorder scores for all sequences in a FASTA file.')
