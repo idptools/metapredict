@@ -27,7 +27,7 @@ def graph(sequence,
           confidence_threshold_color = 'black',
           DPI=150,
           output_file=None,
-          network=DEFAULT_NETWORK):
+          version=DEFAULT_NETWORK):
     """
     Function for graphing predicted  disorder. By default, this function will show a graph.
     However, you can specify output_file as the
@@ -97,11 +97,7 @@ def graph(sequence,
         ``matplotlib.pyplot.savefig()`` function as the ``fname`` parameter. 
         Default = None.
 
-    legacy_metapredict : bool
-        Whether or not to use the original version of metapredict for
-        predicting disorder values.
-
-    network : string
+    version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3.         
@@ -132,11 +128,11 @@ def graph(sequence,
     n_res = len(sequence)
 
     # make network uppercase
-    network=network.upper()
+    version=version.upper()
 
     # set yValues equal to the predicted disorder from the sequence (normalized)
     if disorder_scores == True:
-        yValues = predict(sequence, network=network, return_numpy=False)
+        yValues = predict(sequence, version=version, return_numpy=False)
         
     # if a name is set, the figure will hold that name as the identifier
     if pLDDT_scores == True and disorder_scores==True:
@@ -152,7 +148,7 @@ def graph(sequence,
 
     # set disorder threshold
     if disorder_threshold==None:
-        disorder_threshold = metapredict_networks[network.upper()]['parameters']['disorder_threshold']
+        disorder_threshold = metapredict_networks[version]['parameters']['disorder_threshold']
 
     # if default title is used
     if title == 'Predicted protein disorder':

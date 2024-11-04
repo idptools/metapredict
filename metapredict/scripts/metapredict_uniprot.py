@@ -8,6 +8,8 @@ import argparse
 
 from metapredict.metapredict_exceptions import MetapredictError
 import metapredict as meta
+from getSequence import getseq
+from metapredict.parameters import DEFAULT_NETWORK
 
 def main():
 
@@ -27,7 +29,7 @@ def main():
 
     parser.add_argument('-t', '--title', help='Title to put on graph')
 
-    parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')
+    parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
 
     args = parser.parse_args()
 
@@ -36,11 +38,6 @@ def main():
         pLDDT_scores = True
     else:
         pLDDT_scores = False
-    
-    if args.legacy:
-        use_legacy=True
-    else:
-        use_legacy=False
 
 
     # set title
@@ -49,11 +46,13 @@ def main():
     else:
         graph_title = f'Disorder for {args.uniprot:s}'
 
+    # get sequence
+    name_and_seq = getseq(args.uniprot, uniprot_id=True)
 
     # if we don't want to save...
     if args.output_file is None:
         try:
-            meta.graph_disorder_uniprot(args.uniprot, title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, legacy=use_legacy)
+            meta.graph_disorder(name_and_seq[1], title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, version=args.version)
         except MetapredictError as e:
             print(e)
             exit(1)
@@ -66,4 +65,5 @@ def main():
         else:
             outname = args.output_file
 
-        meta.graph_disorder_uniprot(args.uniprot, title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, output_file=outname, legacy=use_legacy)
+        meta.graph_disorder(name_and_seq[1], title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, output_file=outname, version=args.version)
+

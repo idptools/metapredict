@@ -6,8 +6,8 @@ Explainations for networks can be found by calling the 'info' key in the diction
 network. Why make this? Great question. The reason is that a lot of the names for the
 networks in the networks folder are downright terrible (metaDisorder.pt is... bad). However,
 I don't want to change the names of those networks at this point because it would make them
-hard to track down on the orignial computer where we trained them if we needed to look into 
-them for any reason. So - this is the not so clever workaround.  
+hard to track down if anyone has kept track of the network names for whatever reason. 
+So - this is my Not So Clever Workaround™.  
 
 The other reason for this module is to hold the hyperparameters for networks we made before we
 started using Pytorch-lightning. The importance of this is Pytorch-lightning holds more easily 
@@ -16,7 +16,9 @@ use this functionalty for the old networks, so the workaround is to just have
 things hardcoded here. This will also future proof us in case the Pytorch-lightning functionality
 changes for whatever reason.
 """
-from metapredict.parameters import METAPREDICT_LEGACY_THRESHOLD, METAPREDICT_V2_THRESHOLD,METAPREDICT_V3_THRESHOLD
+
+# import the cutoff value parameters for each network from parameters.
+from metapredict.parameters import METAPREDICT_LEGACY_THRESHOLD, METAPREDICT_V2_THRESHOLD, METAPREDICT_V3_THRESHOLD
 
 #V1 AKA metapredict legacy
 meta_predict_disorder_100e_v1 = {
@@ -52,7 +54,7 @@ metameta_2_7_22_nl2_hs20_b32_V3 = {
     'info': "This network is the network known as metapredict V2 or V2-FF. From 'Metapredict V2: An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure' - Biorixv, doi: https://doi.org/10.1101/2022.06.06.494887"    
 }
 
-# V3
+# V3 *unofficial*
 epoch_49_step_42600_ckpt={
     'public_name': 'V3',
     'pytorch-lightning_version': '2.0.4', 
@@ -77,7 +79,6 @@ epoch_49_step_42600_ckpt={
 }
 
 
-
 # dict to hold the networks that are user-facing.
 metapredict_networks = {
     'V1':{'weights':'meta_predict_disorder_100e_v1.pt',
@@ -85,13 +86,30 @@ metapredict_networks = {
     'V2':{'weights':'metameta_2_7_22_nl2_hs20_b32_V3.pt',
           'parameters': metameta_2_7_22_nl2_hs20_b32_V3},
     'V3':{'weights':'epoch-49-step-42600.ckpt',
-          'parameters': epoch_49_step_42600_ckpt},
+          'parameters': epoch_49_step_42600_ckpt}
 }
 
 
 # ....................................................................................
 # ................................. UNUSED NETWORKS! .................................
 # ....................................................................................
+
+#PAE
+pae={
+    'network_name' : 'non_bin_PAE_hs30_nl2.pt',
+    'public_name': 'v3_beta',
+    'input_size': 20, 
+    'hidden_size': 40, 
+    'num_layers': 2, 
+    'num_classes': 1, 
+    'problem_type': 'regression', 
+    'datatype': 'residues', 
+    'learn_rate': 0.0009, 
+    'batch_size': 128,
+    'used_lightning': False,
+    'disorder_threshold': 0.5,
+    'info': "Network that used PAE scores to predict disorder. Not optimized. Ended up not being much more accurate than v2."
+}
 
 # Unpublished V1 network. Probably the least accurate network I ever made but was used for 
 # some of the originaly early days development of the metapredict python package.

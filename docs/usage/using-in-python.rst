@@ -35,7 +35,7 @@ This functionality is described in detail in the function documentation under th
 
 Update to metapredict V2 (Feb 2022)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-As of February 15, 2022 we have updated metapredict to V2. V2 provides a major improvement in accuracy and interpretability and works by incorporating in predictions made from AlphaFold2  to provide a new underlying prediction network. The original metapredict network is still available using the ``legacy=True`` flag. For more information, please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the ``predict_disorder_domains()`` function, so please read the documentation on that function if you were using it previously! 
+As of February 15, 2022 we have updated metapredict to V2. V2 provides a major improvement in accuracy and interpretability and works by incorporating in predictions made from AlphaFold2  to provide a new underlying prediction network. The original metapredict network is still available using the ``version='v1'`` flag. For more information, please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the ``predict_disorder_domains()`` function, so please read the documentation on that function if you were using it previously! 
 
 We released a `preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ documenting all these changes and more!
 
@@ -66,13 +66,13 @@ By default, output prediction values are normalized between 0 and 1. However, so
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version=v1``.
 
 **Example:** 
 
 .. code-block:: python
     
-    meta.predict_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", legacy=True)
+    meta.predict_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", version='V1')
 
 
 Predicting AlphaFold2 Confidence Scores
@@ -216,7 +216,7 @@ Where each element in the list is a specific folded region identified in the seq
 **Additional Usage**
 
 **Altering the disorder theshhold -**
-To alter the disorder threshold, simply set ``disorder_threshold=my_value`` where ``my_value`` is a float. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.5 (V2) and 0.42 (legacy).
+To alter the disorder threshold, simply set ``disorder_threshold=my_value`` where ``my_value`` is a float. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.5 (V2) and 0.42 (legacy / V1).
 
 **Example**
 
@@ -253,13 +253,13 @@ The gap closure defines the largest gap that would be closed. Gaps here refer to
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='V1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-    predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", legacy=True)
+    predict_disorder_domains("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", version='V1')
 
 
 Calculating Percent Disorder:
@@ -281,9 +281,9 @@ would output -
 
 ``Percent_disorder()`` has two modes defined by the ``mode`` keyword: ``threshold`` and ``disorder_domains``. 
 
-The default usage is with the ``threshold`` mode. In this case, each residue is evaluated against a threshold value, where disorder scores above that threshold count towards disordered residues. This mode uses a threshold value of 0.5 (for V2) or 0.3 (for legacy), although the threshold can be changed (see below).
+The default usage is with the ``threshold`` mode. In this case, each residue is evaluated against a threshold value, where disorder scores above that threshold count towards disordered residues. This mode uses a threshold value of 0.5 (for V2) or 0.3 (for legacy / V1), although the threshold can be changed (see below).
 
-The alternative mode, ``disorder_domains``, makes use of metapredict's ``predict_disorder_domains()`` functionality. Now, the sequence is divided up into IDRs and folded domains, and then the percentage disordered is based on what fraction of residues fall into IDRs. The underlying disorder domain prediction uses the default disorder thresholds as per the  ``predict_disorder_domains()` function, but this can be over-ridden if a ``disorder_threshold`` keyword is passed. For example:
+The alternative mode, ``disorder_domains``, makes use of metapredict's ``predict_disorder_domains()`` functionality. Now, the sequence is divided up into IDRs and folded domains, and then the percentage disordered is based on what fraction of residues fall into IDRs. The underlying disorder domain prediction uses the default disorder thresholds as per the  ``predict_disorder_domains()`` function, but this can be over-ridden if a ``disorder_threshold`` keyword is passed. For example:
 
 .. code-block:: python
 
@@ -317,13 +317,13 @@ would output
 The higher the cutoff value, the higher the value any given predicted residue must be greater than or equal to in order to be considered disordered when calculating the final percent disorder for the input sequence.
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='V1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-    meta.percent_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", disorder_threshold= 0.8, legacy=True)
+    meta.percent_disorder("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", disorder_threshold= 0.8, version='V1')
 
 
 would output
@@ -423,13 +423,13 @@ In addition, you can specify the color of the shaded regions by specifying ``sha
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='v1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-    meta.graph_disorder("DAPPTSQEHTQAEDKER", legacy=True)
+    meta.graph_disorder("DAPPTSQEHTQAEDKER", version='v1')
 
 
 Graphing AlphaFold2 Confidence Scores
@@ -494,13 +494,13 @@ By default, this function will output prediction values that are normalized betw
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='v1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-    meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", legacy=True)
+    meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", version='v1')
 
 
 Predicting AlphaFold2 confidence scores From a .fasta File
@@ -528,13 +528,13 @@ By using the ``predict_disorder_uniprot()`` function, you can return predicted c
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='v1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-     meta.predict_disorder_uniprot("Q8N6T3", legacy=True)
+     meta.predict_disorder_uniprot("Q8N6T3", version='v1')
 
 
 Predicting AlphaFold2 Confidence Scores Using Uniprot ID
@@ -615,13 +615,13 @@ If you would like to index the file names with a leading unique integer starting
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='v1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", legacy=True)
+    meta.graph_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", output_dir="/Users/thisUser/Desktop/folderForGraphs", version='v1')
 
 
 Generating AlphaFold2 Confidence Score Graphs from fasta files
@@ -665,13 +665,13 @@ To add predicted AlphaFold2 pLDDT confidence scores, simply specify ``pLDDT_scor
     meta.graph_disorder_uniprot("Q8N6T3", pLDDT_scores=True)
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='v1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-    meta.graph_disorder_uniprot("Q8N6T3", legacy=True)
+    meta.graph_disorder_uniprot("Q8N6T3", version='v1')
 
 Generating AlphaFold2 Confidence Score Graphs Using UniProt ID
 --------------------------------------------------------------
@@ -723,13 +723,13 @@ In addition to inputting a sequence, you can predict disorder domains by inputti
 
 
 **Using the original metapredict network-**
-To use the original metapredict network, simply set ``legacy=True``.
+To use the original metapredict network, simply set ``version='v1'``.
 
 **Example:** 
 
 .. code-block:: python
     
-    meta.predict_disorder_domains_uniprot('Q8N6T3' legacy=True)
+    meta.predict_disorder_domains_uniprot('Q8N6T3' version='v1')
 
 
 

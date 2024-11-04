@@ -7,8 +7,8 @@ import os
 import argparse
 
 from metapredict.metapredict_exceptions import MetapredictError
+from metapredict.parameters import DEFAULT_NETWORK
 import metapredict as meta
-from metapredict.backend.uniprot_predictions import seq_from_name
 from getSequence import getseq
 
 def main():
@@ -25,9 +25,7 @@ def main():
 
     parser.add_argument('-t', '--title', help='Title to put on graph')
 
-    parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')
-
-    parser.add_argument('-v', '--verbose', action='store_true', help='Optional. Use this flag to print the full uniprot ID to the terminal.')
+    parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
 
     parser.add_argument('-s', '--silent', action='store_true', help='Optional. Use this flag to stop any printed text to the terminal.')
 
@@ -67,15 +65,9 @@ def main():
     else:
         pLDDT_scores = False
     
-    # see if using the new metapredict or metapredict-legacy
-    if args.legacy:
-        use_legacy=True
-    else:
-        use_legacy=False
 
     # set the title to contain the input name, the organism that was found (if possible)
     final_title = final_name
-
 
     # set title
     if args.title:
@@ -87,7 +79,7 @@ def main():
         print(f'Graphing disorder for {full_uniprot_id}')
 
     # graph it
-    meta.graph_disorder(sequence, title=final_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, legacy=use_legacy)
+    meta.graph_disorder(sequence, title=final_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, version=args.version)
     
 
 

@@ -18,11 +18,11 @@ from metapredict.metapredict_exceptions import MetapredictError
 
 # other imports
 import os
+from packaging import version as packaging_version
 import time
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from torch.nn.utils.rnn import pad_sequence
 from tqdm import tqdm
 
 # ....................................................................................
@@ -149,7 +149,7 @@ def size_filter(inseqs):
 # ....................................................................................
 
 def predict(inputs,
-            network=DEFAULT_NETWORK,
+            version=DEFAULT_NETWORK,
             use_device=None,
             normalized=True,
             round_values=True,
@@ -162,8 +162,10 @@ def predict(inputs,
             override_folded_domain_minsize=False,
             use_slow = False,
             print_performance=False,
-            show_progress_bar = True,
-            force_disable_batch=False):
+            show_progress_bar = False,
+            force_disable_batch=False,
+            disable_pack_n_pad = False,
+            silence_warnings = False):
     """
     Batch mode predictor which takes advantage of PyTorch
     parallelization such that whether it's on a GPU or a 
@@ -177,7 +179,7 @@ def predict(inputs,
         that are presented either as a list of sequences or 
         a dictionary of key-value pairs where values are sequences.
 
-    network : string
+    version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3. 
@@ -298,6 +300,16 @@ def predict(inputs,
         sequences individually.
         Default = False
 
+    disable_pack_n_pad : bool
+        Whether to disable the use of pack_n_pad in the prediction
+        algorithm. This is useful for debugging and profiling. Also gives
+        us a way for people to use older versions of torch. 
+        Default = False
+
+    silence_warnings : bool
+        whether to silence warnings such as the one about compatibility
+        to use pack-n-pad due to torch version restrictions. 
+
     Returns
     -------------
     DisorderDomain object str dict or list
@@ -337,11 +349,11 @@ def predict(inputs,
     ## FIGURE OUT WHAT NETWORK WE ARE USING
     ##
     ## ....................................................................................
-    network=network.upper()
-    if network not in metapredict_networks:
-        raise MetapredictError(f'Network {network} not available. Available networks are {metapredict_networks.keys()}')
+    version=version.upper()
+    if version not in metapredict_networks:
+        raise MetapredictError(f'Network {version} not available. Available networks are {metapredict_networks.keys()}')
     else:
-        net = metapredict_networks[network]
+        net = metapredict_networks[version]
 
     # figure out some stuff.
     if disorder_threshold is None:
@@ -398,6 +410,15 @@ def predict(inputs,
     
     # set device
     device=torch.device(device_string)
+
+    # see if we need to mess with packing / padding
+    if disable_pack_n_pad==False:
+        if packaging_version.parse(torch.__version__) < packaging_version.parse("1.11.0"):
+            disable_pack_n_pad=True
+            # only warn if user hasn't turned off warning. 
+            if silence_warnings==False:
+                print('Pytorch version is <= 1.11.0. Disabling pack-n-pad functionality. This might slow down predictions.')
+
 
     ##
     ## LOAD IN THE NETWORK
@@ -514,15 +535,23 @@ def predict(inputs,
         # check if we are disabling batch predictions. If we are, we need to
         # do all predictions individually
         if force_disable_batch==True:
+            tot_num_seqs=len(sequence_list)
+            # see if a progress bar is wanted
+            if show_progress_bar:
+                pbar = tqdm(total=len(sequence_list))
+                # set pbar update amount
+                pbar_update_amount=int(0.1*tot_num_seqs)
+                if pbar_update_amount==0:
+                    pbar_update_amount=1
             # iterate through sequence list
-            for seq in sequence_list:
+            for cur_seq_num, seq in enumerate(sequence_list):
                 # encode the sequence
-                seq_vector = encode_sequence.one_hot(inputs)
+                seq_vector = encode_sequence.one_hot(seq)
                 seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
                 # get output values from the seq_vector based on the network (brnn_network)
                 with torch.no_grad():
-                    outputs = model(seq_vector.float()).detach().numpy()[0]
+                    outputs = model(seq_vector.float()).detach().numpy()[0].flatten()
 
                 # Take care of rounding and normalization
                 if normalized == True and round_values==True:
@@ -545,66 +574,151 @@ def predict(inputs,
 
                 # add to dict
                 pred_dict[seq]=outputs
+                # update progress bar
+                if show_progress_bar:
+                    if cur_seq_num % (pbar_update_amount)==0:
+                        pbar.update(pbar_update_amount)
 
         else:         
-            # Here, we systematically subdivide the sequences into groups 
-            # where they're all the same length in a given batch, meaning we don't
-            # need to pad. 
+            # if we are disabling pack-n-pad functionalitity...
+            if disable_pack_n_pad==True:
+                # build a dictionary where keys are sequence length
+                # and values is a list of sequences of that exact length
+                size_filtered =  size_filter(sequence_list)
+                
+                # set progress bar info
+                if show_progress_bar:
+                    pbar = tqdm(total=len(size_filtered))
 
-            # build a dictionary where keys are sequence length
-            # and values is a list of sequences of that exact length
-            size_filtered =  size_filter(sequence_list)
+                # iterate through local size
+                for local_size in size_filtered:
+                    local_seqs = size_filtered[local_size]
+                    # load the data
+                    seq_loader = DataLoader(local_seqs, batch_size=params['batch_size'], shuffle=False)
 
-            # set progress bar info
-            loop_range = tqdm(size_filtered) if show_progress_bar else size_filtered
+                    # iterate through batches in seq_loader
+                    for batch in seq_loader:
+                        # Pad the sequence vector to have the same length as the longest sequence in the batch
+                        seqs_padded = torch.nn.utils.rnn.pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)
+                        seqs_padded = seqs_padded.to(device)
 
-            # iterate through local size
-            for local_size in loop_range:
-                local_seqs = size_filtered[local_size]
-                # load the data
-                seq_loader = DataLoader(local_seqs, batch_size=params['batch_size'], shuffle=False)
+                        # Forward pass, then send to CPU for numpy rounding / normalization
+                        with torch.no_grad():
+                            outputs = model.forward(seqs_padded).detach().cpu().numpy()
+                        
+                        # Save predictions
+                        for j, seq in enumerate(batch):
+                            if normalized==True and round_values==True:
+                                prediction=np.squeeze(np.round(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1),4))
+                            elif normalized==True and round_values==False:
+                                prediction=np.squeeze(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1))
+                            elif normalized==False and round_values==True:
+                                prediction=np.squeeze(np.round(outputs[j][0:len(seq)]))
+                            else:
+                                prediction=np.squeeze(outputs[j][0:len(seq)])
 
-                # iterate through batches in seq_loader
+                            # make list if user wants a list instead of a np.array
+                            if return_numpy==False:
+                                if round_values==True:
+                                    # need to round again because the np.round doesn't 
+                                    # keep the rounded values when we convert to list. 
+                                    prediction = [round(x, 4) for x in prediction.flatten()]
+                                else:
+                                    # otherwise just return the flattened array as a list. 
+                                    prediction=prediction.flatten().tolist()
+
+                            # see if we need to make prediction a list
+                            pred_dict[seq] = prediction
+                    
+                    # update the progress bar
+                    if show_progress_bar:
+                        pbar.update(1)
+            else:
+                # sort the seqs by length, makes pack-n-pad stuff more efficient
+                sequence_list.sort(key=len, reverse=True)
+                # we will be using pack-n-pad.
+                # load seqs into DataLoader
+                seq_loader = DataLoader(sequence_list, batch_size=params['batch_size'], shuffle=False) 
+                num_batches=len(seq_loader)
+                
+                # set progress bar info if we are going to display it. 
+                # have to do this differently because you can't iterate over DataLoader
+                # and get tqdm to update. 
+                if show_progress_bar:
+                    pbar = tqdm(total=num_batches)
+
+                # iterate through each batch
                 for batch in seq_loader:
                     # Pad the sequence vector to have the same length as the longest sequence in the batch
-                    seqs_padded = pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)
+                    seqs_padded = torch.nn.utils.rnn.pad_sequence([encode_sequence.one_hot(seq).float() for seq in batch], batch_first=True)
+                    lengths = [len(seq) for seq in batch]
 
-                    # Move padded sequences to device
-                    seqs_padded = seqs_padded.to(device)
-
-                    # Forward pass, then send to CPU for numpy rounding / normalization
-                    with torch.no_grad():
-                        outputs = model.forward(seqs_padded).detach().cpu().numpy()
+                    # pack padded sequences
+                    packed_seqs = torch.nn.utils.rnn.pack_padded_sequence(seqs_padded, lengths, batch_first=True, enforce_sorted=True)
                     
-                    # Save predictions
-                    for j, seq in enumerate(batch):
-                        if normalized==True and round_values==True:
-                            prediction=np.squeeze(np.round(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1),4))
-                        elif normalized==True and round_values==False:
-                            prediction=np.squeeze(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1))
-                        elif normalized==False and round_values==True:
-                            prediction=np.squeeze(np.round(outputs[j][0:len(seq)]))
-                        else:
-                            prediction=np.squeeze(outputs[j][0:len(seq)])
+                    # move packed seqs to device. 
+                    packed_seqs.to(device)
 
+                    # lstm forward pass.
+                    with torch.no_grad():
+                        outputs, (ht,ct) = model.lstm(packed_seqs)
+
+                    # unpack the packed sequence
+                    outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
+
+                    # get final outputs by calling fc.
+                    if params['used_lightning']==False:
+                        outputs = model.fc(outputs)
+                    else:
+                        outputs = model.layer_norm(outputs)
+                        for layer in model.linear_layers:
+                            outputs = layer(outputs)
+                    
+                    # move to cpu
+                    outputs = outputs.detach().cpu().numpy()
+
+                    # clean up / normalize
+                    if normalized == True and round_values==True:
+                        outputs=np.round(np.clip(outputs, a_min=0, a_max=1),4)
+                    elif normalized==True and round_values==False:
+                        outputs=np.clip(outputs, a_min=0, a_max=1)
+                    elif normalized==False and round_values==True:
+                        outputs=np.round(outputs, 4)                
+                    
+                    # get individual seqs ignoring padded parts. 
+                    for seq_num, length in enumerate(lengths):
+                        curoutput=outputs[seq_num][0:length].flatten()
+                        seq = batch[seq_num]
+                    
                         # make list if user wants a list instead of a np.array
                         if return_numpy==False:
                             if round_values==True:
                                 # need to round again because the np.round doesn't 
                                 # keep the rounded values when we convert to list. 
-                                prediction = [round(x, 4) for x in prediction.flatten()]
+                                curoutput = [round(x, 4) for x in curoutput.flatten()]
                             else:
                                 # otherwise just return the flattened array as a list. 
-                                prediction=prediction.flatten().tolist()
+                                curoutput=curoutput.flatten().tolist()
 
-                        # see if we need to make prediction a list
-                        pred_dict[seq] = prediction
+                        # add to dict
+                        pred_dict[seq]=curoutput
 
+                    # update progress bar
+                    if show_progress_bar:
+                        pbar.update(1)
+
+        # close pbar
+        if show_progress_bar:
+            pbar.close()
 
         # if printing performance
         if print_performance:
             end_time = time.time()
-            print(f"Time taken for predictions on {device}: {end_time - start_time} seconds")        
+            print(f"\nTime taken for predictions on {device}: {end_time - start_time} seconds") 
+        
+
+    
+
 
         ##
         ## PREDICTION DONE
@@ -670,5 +784,3 @@ def predict(inputs,
                 raise Exception('How did we get here? What did we do wrong? Is this the darkest timeline? Definitely')
 
 
-
-predict('GSGSGSGSGSGGSGS')

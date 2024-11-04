@@ -102,14 +102,14 @@ class BRNN_MtM(nn.Module):
 
         # Set initial states
         # h0 and c0 dimensions: [num_layers*2 X batch_size X hidden_size]
-        h0 = torch.zeros(self.num_layers*2,     # *2 for bidirection
-                         x.size(0), self.hidden_size).to(self.device)
-        c0 = torch.zeros(self.num_layers*2,
-                         x.size(0), self.hidden_size).to(self.device)
+        #h0 = torch.zeros(self.num_layers*2,     # *2 for bidirection
+        #                 x.size(0), self.hidden_size).to(self.device)
+        #c0 = torch.zeros(self.num_layers*2,
+        #                 x.size(0), self.hidden_size).to(self.device)
 
         # Forward propagate LSTM
         # out: tensor of shape: [batch_size, seq_length, hidden_size*2]
-        out, (h_n, c_n) = self.lstm(x, (h0, c0))
+        out, (h_n, c_n) = self.lstm(x)
 
         # Decode the hidden state for each time step    
         fc_out = self.fc(out)

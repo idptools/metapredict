@@ -7,7 +7,8 @@ import os
 import argparse
 import protfasta
 
-from metapredict.meta import predict_disorder_batch
+
+from metapredict.parameters import DEFAULT_NETWORK, METAPREDICT_LEGACY_THRESHOLD, METAPREDICT_V2_THRESHOLD, METAPREDICT_V3_THRESHOLD
 import metapredict as meta
 
 def main():
@@ -19,13 +20,14 @@ def main():
 
     parser.add_argument('-o', '--output-file', help='Filename for where to save the outputfile. Defaults = idrs.fasta (if mode=fasta) and shephard_idrs.tsv otherwise')
 
-    parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')
+    parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
 
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert' ", default='convert')
 
     parser.add_argument('--mode', help='Defines the mode in which IDRs are reported. Options are currently: "fasta", "shephard-domains", "shephard-domains-uniprot". By default this generates a FASTA file with header format that matches the input file with an additional set of fields that are "IDR_START=$START  IDR_END=$END" where $START and $END are the starting and ending IDRs (indexing from 0, as in Python slice notation). If mode is set to shephard-domains than a SHEPHAD-compliant domains file is generated (where indexing starts at 1 to match protein numbering). If shephard-domains-uniprot the uniprot ID is extracted from the header assuming standard uniprot formatting (where indexing starts at 1 to match protein numbering). Default = fasta', default='fasta')
 
-    parser.add_argument('--threshold', help='Defines the threshold used to define a region as disordered or not. Default=0.42 which is recommended.', default=0.42, type=float)
+    parser.add_argument('--threshold', help='Defines the threshold used to define a region as disordered or not. Default=0.42 for v1, 0.5 for v2.', default=None)
+    
     parser.add_argument('--verbose', help='If included then prints out status updates', action='store_true')
 
     args = parser.parse_args()
@@ -42,21 +44,14 @@ def main():
     else:
         outfile_name = args.output_file
     
-    if args.legacy:
-        use_legacy = True
-        threshold_val = args.threshold
+    if args.threshold == None:
+        if args.version.upper()=='V1':
+            threshold_val = METAPREDICT_LEGACY_THRESHOLD
+        if args.version.upper()=='V2':
+            threshold_val = METAPREDICT_V2_THRESHOLD
+        if args.version.upper()=='V3':
+            threshold_val = METAPREDICT_V3_THRESHOLD
 
-
-    else:
-        use_legacy=False
-        
-        # if not using legacy and the default legacy value is still being used, adjust it to 0.5.
-        if args.threshold == 0.42:
-            threshold_val = 0.5
-
-        # if the user sets their own threshold value that isn't 0.42, keep it.
-        else:
-            threshold_val = args.threshold
     
     if not os.path.isfile(args.data_file):
         print(f'Error: Could not find passed fasta file [{args.data_file:s}]')
@@ -66,24 +61,9 @@ def main():
     if args.verbose:
         print('Read in FASTA file')
 
-    idrs = {}
 
-    if use_legacy is True:
-        
-        c = 0
-        n_seqs = len(sequences)
-        for s in sequences:
-            c = c + 1
-            idrs[s] = meta.predict_disorder_domains(sequences[s], disorder_threshold=threshold_val, legacy=use_legacy)
-
-            if n_seqs > 500:
-                if args.verbose:
-                    if c % 500 == 0:
-                        print(f'On {c:d} of {n_seqs:d}')
-
-    else:
-        # if using non-legacy then we use batch mode and request return_domains
-        idrs = predict_disorder_batch(sequences, return_domains=True, disorder_threshold=threshold_val)
+    # if using non-legacy then we use batch mode and request return_domains
+    idrs = meta.predict_disorder_batch(sequences, return_domains=True, disorder_threshold=threshold_val, version=args.version)
 
     # if the return type is a FASTA file we want to write 
     if args.mode == 'fasta':

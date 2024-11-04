@@ -1,6 +1,23 @@
 ## Changelog
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
+#### V3.0 (November 2024)
+Changes:
+
+* Started implementation of code for V3.
+
+* Overhaul of backend to accomadate lightning architecture
+
+* Massive change to how predictor is implemented. You can now do batch prediction on CPU, GPU (CUDA), or Mac GPU (MPS) for V1 (legacy), V2, and V3. 
+
+* Update to user-facing docs to make changes of setting 'legacy=True' to specifying "version='V#'" when using different version of metapredict.
+
+* Update to metapredict-uniprot to work with new version of getSequence. Allows for getting different protein isoforms if specified. 
+
+* Update to how versions of metapredict are tracked. Now everything needs to be added to /backend/network_parameters.py to maintain compatibility between old and future networks. 
+
+* Reimplementation of batch predict. Due to larger batch size in V3 network, it will likely be more useful to have fewer batches by using packing and padding instead of size collection under some scenarios. 
+
 #### V2.65 (October 2024)
 Changes:
 

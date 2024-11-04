@@ -1,18 +1,25 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
-### Last updated October 2024
 
-## Current version: metapredict V2-FF (V2.6)
-The current recommended and default version of metapredict is metapredict V2-FF (version 2.6). Small increments (2.6.x) may be made as bug fixes or feature enhancements.
+### Last updated November 2024
 
-For context, V2-FF provides identical predictions to metapredict V2, but via `predict_disorder_batch()` provides 10-100x improvement in performance on CPUs and GPUs. 
+## Current version: metapredict V3
+The current recommended and default version of metapredict is metapredict V3 (version 3.0). Small increments (3.0.x) may be made as bug fixes or feature enhancements.
 
-To quantify this yourself, run:
+For context, V3 provides major improvements to V2. Metapredict V3 uses a **new network to predict disorder** that in our benchmarks is the most accurate version of metapredict to date. In addition, *metapredict V3 is backwards compatible with V2* and can be used as a drop-in replacement for V2. Although the Python API has been improved to massively simplify how you can use metapredict, we have **for the time being** updated it such that all previously created functions *should still work*. If they do not, please raise an issue and we will fix the problem ASAP!
+  
+### What are the major changes for V3?
 
-	import metapredict
-	metapredict.print_performance(batch=True)
-	metapredict.print_performance(batch=False)
-	
-To compare the number of residues-per-second metapredict V2-FF predicts in batch mode vs. non-batch mode. For CPUs this is typically a 10-20x improvement. If GPUs are available this value can be substantially higher.	
+* Metapredict V3 uses a new (more accurate) network for disorder prediction. V1 and V2 are still available!
+
+* You can now do batch prediction on CPU, GPU (CUDA-enabled), or Mac GPU (MPS) using *any of the metapredict networks*: V1 (previously called ``legacy``), V2, and V3. We recommend using V3 but wanted to leave other networks available for those that need them. 
+
+* When setting the version of metapredict to use, you can specify it by specifying ``version='V#'`` instead of ``legacy=True``.
+
+* Major update to the ``meta.predict_disorder()`` function. This function can now take in individual sequences, lists of sequences, and dictionaries of sequences. Further, you can also return the ``DisorderObject`` using this function by setting ``return_domains=True``. This means you do not need to use the ``meta.predict_disorder_batch`` function to predict disorder quickly for many sequences!
+
+* Major update to the ``meta.predict_pLDDT()`` function. You can now run pLDDT predictions in batch! In addition, we now have a *more accurate pLDDT prediction network* that is used by default. You can still use the previous network that is still available from [alphaPredict](https://github.com/ryanemenecker/alphaPredict) by setting ``version='V1'``.
+
+* We updated metapredict-uniprot to work with the new version of [getSequence](https://github.com/ryanemenecker/getSequence). This allows for getting different protein isoforms if specified. 
 
 ## Installation
 Metapredict is a software package written in Python. It can be installed from [PyPI](https://pypi.org/project/metapredict/) (the Python Package Index) using the tool `pip`. We always recommend managing your Python environment with conda. If these ideas are foreign to you, we recommend reading up a bit on Python package management and [conda](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) before continuing.
@@ -35,6 +42,24 @@ from the command line; this should yield help info on the `metapredict-predict-d
 	
 #### WARNING: Segfault when mixing `conda` and `pip` installs (March 2024)
 As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities between `pip` and `conda` versions of PyTorch and numpy. Therefore, it is essential your numpy and PyTorch installs are from the same package manager. metapredict will - by default - pull dependencies from PyPI. However, other packages installed from conda may require conda-dependent numpy installations, which can "brick" a previously-working installation.
+
+#### WARNING: Problems with installing Torch with propert CUDA version (November 2024).
+**This is only relevent if you are trying to run metapredict on a CUDA-enabled GPU!**
+
+If you are on an older version of CUDA, a torch version that *does not have the correct CUDA version* will be installed. This can cause a segfault when running metapredict. To fix this, you need to install torch for your specific CUDA version. For example, to install PyTorch on Linux using pip with a CUDA version of 12.1, you would run:
+
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+  
+To figure out which version of CUDA you currently have (assuming you have a CUDA-enabled GPU that is set up correctly), you need to run:
+```bash
+nvidia-smi
+```
+Which should return information about your GPU, NVIDIA driver version, and your CUDA version at the top.
+
+Please see the [PyTorch install instructions](https://pytorch.org/get-started/locally/) for more info. 
+  
 
 #### Extended installation info
 The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
@@ -88,17 +113,17 @@ For changes see the `changelog.md` file in this directory.
 ## Running tests
 Note that to run tests you must compile the cython code in place. We suggest doing this by running the following set of commands:
 
-pip uninstall metapredict; rm -rf build dist *.egg-info; python -m build; pip install .
+pip uninstall metapredict; rm -rf build dist *.egg-info; python -m build; pip install .*
 
 ## Acknowledgements
 
 PARROT, created by Dan Griffith, was used to generate the network used for metapredict. See [https://pypi.org/project/idptools-parrot/](https://pypi.org/project/idptools-parrot/) for some very cool machine learning stuff.
 
-In addition to using Dan Griffith's tool for creating metapredict, the original code for `brnn_architecture.py` and `encode_sequence.py` was written by Dan.
+In addition to using Dan Griffith's tool for creating metapredict, the original code for `encode_sequence.py` was written by Dan.
 
-We would like to thank the **DeepMind** team for developing AlphaFold and EBI/UniProt for making these data so readily available.
+We would like to thank the **DeepMind** team for developing AlphaFold2 and EBI/UniProt for making these data so readily available.
 
-We would also like to thank the team at MobiDB for creating the database that was used to train this predictor. Check out their awesome stuff at [https://mobidb.bio.unipd.it](https://mobidb.bio.unipd.it)
+We would also like to thank the team at MobiDB for creating the database that was used to train metapredict V1. Check out their awesome stuff at [https://mobidb.bio.unipd.it](https://mobidb.bio.unipd.it)
 
 ## Copyright
 Copyright (c) 2020-2024, Holehouse Lab - Washington University School of Medicine

@@ -14,7 +14,7 @@ import protfasta
 
 #from metapredict import meta
 from metapredict import meta
-
+from metapredict.parameters import DEFAULT_NETWORK
 
 def main():
 
@@ -27,7 +27,7 @@ def main():
 
     parser.add_argument('-p', '--pLDDT', action='store_true', help='Optional. Use this flag to include AlphaFold2 pLDDT scores in the graph.')                        
 
-    parser.add_argument('-l', '--legacy', action='store_true', help='Optional. Use this flag to use the original legacy version of metapredict.')                            
+    parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
 
     parser.add_argument('--filetype', default='png', help='Define the possible output filetype. Valid options are png, pdf, jpg. Default is png')
                         
@@ -46,12 +46,7 @@ def main():
         pLDDT_scores = True
     else:
         pLDDT_scores = False
-    
 
-    if args.legacy:
-        use_legacy=True
-    else:
-        use_legacy=False
 
     if args.output_directory is None:
         try:
@@ -73,7 +68,7 @@ def main():
                               output_dir=outdir,
                               output_filetype=args.filetype,
                               indexed_filenames=args.indexed_filenames,
-                              legacy = use_legacy)
+                              version = args.version)
                               
                               
                               

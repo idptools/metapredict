@@ -333,14 +333,14 @@ def predict_disorder_domains(sequence,
     # if not returning list, we can do everything using the predict function
     if return_list==False:
         # get the disorder obj and return it. 
-        DomObj = _predict(sequence, network=version, normalized=normalized,
+        DomObj = _predict(sequence, version=version, normalized=normalized,
             return_numpy=return_numpy, return_domains=True,
             disorder_threshold=disorder_threshold, minimum_IDR_size=minimum_IDR_size, 
             minimum_folded_domain=minimum_folded_domain, gap_closure=gap_closure)
         return DomObj
     else:
         # get disorder
-        disorder = _predict(sequence, network=version, normalized=normalized,
+        disorder = _predict(sequence, version=version, normalized=normalized,
             return_numpy=return_numpy)
         
         # extract out disordered 
@@ -399,10 +399,11 @@ def predict_disorder(sequence, normalized=True, return_numpy=False, round_values
     _meta_tools.raise_exception_on_zero_length(sequence)
 
     # make all residues upper case 
-    sequence = sequence.upper()
+    if isinstance(sequence, str):
+        sequence = sequence.upper()
 
     # get disorder
-    return _predict(sequence, network=version, normalized=normalized,
+    return _predict(sequence, version=version, normalized=normalized,
         return_numpy=return_numpy, round_values=round_values)
 
 
@@ -439,9 +440,9 @@ def predict_all(sequence):
     sequence = sequence.upper()
 
     # compute pLDDT and metapredict disorder
-    v1 = _predict(sequence, network='V1')
-    v2 = _predict(sequence, network='V2')
-    v3 = _predict(sequence, network='V3')
+    v1 = _predict(sequence, version='V1')
+    v2 = _predict(sequence, version='V2')
+    v3 = _predict(sequence, version='V3')
     ppLDDT = predict_pLDDT(sequence, return_numpy=True, normalized=True)
     
     return (ppLDDT, V1, V2, V3)
@@ -629,7 +630,7 @@ def predict_disorder_batch(input_sequences,
     """
 
     return _predict(input_sequences,
-                        network=version,
+                        version=version,
                         use_device=device,
                         round_values=round_values,
                         return_numpy=return_numpy,
@@ -748,7 +749,7 @@ def graph_disorder(sequence,
     _graph(sequence, title = title, disorder_threshold = disorder_threshold, 
         pLDDT_scores = pLDDT_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
-        DPI=DPI, output_file = output_file, network=version) 
+        DPI=DPI, output_file = output_file, version=version) 
 
 
 # ..........................................................................................
@@ -895,7 +896,7 @@ def graph_pLDDT(sequence,
     _graph(sequence, title = title, pLDDT_scores = True,
         disorder_scores=disorder_scores, shaded_regions = shaded_regions,
         shaded_region_color = shaded_region_color, 
-        DPI=DPI, output_file = output_file, network=version) 
+        DPI=DPI, output_file = output_file, version=version) 
 
 
 # ..........................................................................................
@@ -979,7 +980,7 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold',
     if mode == 'threshold':
 
         # get disorder
-        dis = _predict(sequence, network=version, return_numpy=True)
+        dis = _predict(sequence, version=version, return_numpy=True)
         
         # check threshold is valid
         _meta_tools.valid_range(disorder_threshold, 0.0, 1.0)
@@ -1079,7 +1080,7 @@ def predict_disorder_fasta(filepath,
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action)
 
     # initialize return dictionary
-    disorder_dict = _predict(protfasta_seqs, network=version, normalized=normalized, return_numpy=False)
+    disorder_dict = _predict(protfasta_seqs, version=version, normalized=normalized, return_numpy=False)
 
     # if we did not request an output file 
     if output_file is None:
@@ -1301,13 +1302,13 @@ def graph_disorder_fasta(filepath,
             title = idx[0:14]
 
             # plot!        
-            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, output_file=filename, network=version)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, output_file=filename, version=version)
 
         # if no output_dir specified just graph the seq        
         else:
             # define title (including bad chars)
             title = idx[0:14]            
-            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, network=version)
+            graph_disorder(local_sequence, title=title, pLDDT_scores=pLDDT_scores, DPI=DPI, version=version)
 
 
 # ..........................................................................................
@@ -1457,7 +1458,7 @@ def predict_disorder_uniprot(uniprot_id, normalized=True, version=DEFAULT_NETWOR
     sequence = _getseq(uniprot_id)[1]
         
     # return predicted values of disorder for sequence
-    return _predict(sequence, normalized=normalized, network=version)
+    return _predict(sequence, normalized=normalized, version=version)
 
 
 # ..........................................................................................
@@ -1575,7 +1576,7 @@ def graph_disorder_uniprot(uniprot_id,
 
     # graph sequence
     _graph(sequence, title=title, pLDDT_scores=pLDDT_scores, disorder_threshold=disorder_threshold, shaded_regions=shaded_regions, 
-        shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file, network=version) 
+        shaded_region_color=shaded_region_color, DPI=DPI, output_file = output_file, version=version) 
     
 
 # ..........................................................................................
@@ -1741,7 +1742,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
     sequence = _getseq(uniprot_id)[1]
 
-    DisObj = _predict(sequence, normalized=normalized, network=version, return_domains=True,
+    DisObj = _predict(sequence, normalized=normalized, version=version, return_domains=True,
                                 disorder_threshold=disorder_threshold, minimum_IDR_size=minimum_IDR_size,
                                 minimum_folded_domain=minimum_folded_domain,return_numpy=return_numpy,
                                 gap_closure=gap_closure)
@@ -1788,7 +1789,7 @@ def predict_disorder_caid(input_fasta, output_file, version=DEFAULT_NETWORK):
     entry_id_and_seqs = _protfasta.read_fasta(input_fasta, return_list=False, invalid_sequence_action = 'convert')
 
     # predict
-    predictions = _predict(entry_id_and_seqs, network=version, return_numpy=False)
+    predictions = _predict(entry_id_and_seqs, version=version, return_numpy=False)
 
     # write the output file
     _meta_tools.write_caid_format(output_dict, output_file)
