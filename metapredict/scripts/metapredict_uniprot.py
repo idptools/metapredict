@@ -48,6 +48,15 @@ def main():
 
     # get sequence
     name_and_seq = getseq(args.uniprot, uniprot_id=True)
+    # if Uniprot API returns Error messages, raise an exception with the error messages.
+    if name_and_seq[0]=='Error messages':
+        # if the problem was an invalid accession, try pointing person to use metapredict-name command
+        if name_and_seq[1]=="The 'accession' value has invalid format. It should be a valid UniProtKB accession":
+            error_message=f'\n\nThe metapredict-uniprot command requires a Uniprot ID to work.\nIt appears the Uniprot ID you input is not valud.\nIf you would like to predict disorder using a name, please use metapredict-name.'
+        else:
+            # otherwise return error messages from Uniprot API
+            error_message=f'\n{name_and_seq[0]}\n{name_and_seq[1:]}'
+        raise MetapredictError(error_message)
 
     # if we don't want to save...
     if args.output_file is None:
