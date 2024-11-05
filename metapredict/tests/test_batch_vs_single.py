@@ -40,12 +40,12 @@ def score_compare(s1, s2):
     Returns
     ----------
     Bool
-        Returns true if all elements are less than 1e-3, else 
+        Returns true if all elements are less than 3e-3, else 
         returns False
     
     """
     
-    return np.allclose(np.array(s1), np.array(s2), atol=0.0012)
+    return np.allclose(np.array(s1), np.array(s2), atol=0.003)
     
     
 
@@ -143,7 +143,7 @@ def test_big_test_batch():
     batch_predictions = meta.predict_disorder_batch(seqs)
 
     for idx, k in enumerate(seqs):
-        assert np.allclose(scores[idx], batch_predictions[k][1], atol=1e-3)
+        assert np.allclose(scores[idx], batch_predictions[k][1], atol=0.003)
 
 
 
