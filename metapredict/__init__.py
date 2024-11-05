@@ -28,7 +28,17 @@ if IGNORE_LIBOMP_ERROR:
     if sys.platform == 'darwin':
         os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
+# ------------------------------------------------------------
+# READTHEDOCS thanks to Alex Holehouse!!!!
 
+# Generate _version.py if missing and in the Read the Docs environment
+if os.getenv("READTHEDOCS") == "True" and not os.path.isfile('../metapredict/_version.py'):   
+    import versioningit            
+    __version__ = versioningit.get_version('../')
+else:
+    from ._version import __version__
+
+# ------------------------------------------------------------
 
 # Standardized function to check performance
 def print_performance(seq_len=500, num_seqs=2000, variable_length=False,
