@@ -83,7 +83,7 @@ Note you will need the -e flag to ensure the `cython` code compiles correctly, b
 This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with `pip`.
 
 ## Documentation
-Documentation for metapredict V2 automatically builds from the `/doc` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
+Documentation for metapredict V3 automatically builds from the `/doc` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
 
 In brief, metapredict provides both command-line tools and a set of user-face functions from the metapredict python module. Both sets of tools are fully documented online.
 
