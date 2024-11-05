@@ -127,7 +127,7 @@ We would like to thank the **DeepMind** team for developing AlphaFold2 and EBI/U
 
 We would also like to thank the team at MobiDB for creating the database that was used to train metapredict V1. Check out their awesome stuff at [https://mobidb.bio.unipd.it](https://mobidb.bio.unipd.it)
 
-### Running metapredict for CAID competition predictions
+## Running metapredict for CAID competition predictions
   
 We include the ability to easily run predictions of .fasta formatted files and returns a 'CAID compliant' formatted file per sequence that is in the fasta file.
 
