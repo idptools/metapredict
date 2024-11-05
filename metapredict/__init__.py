@@ -15,19 +15,6 @@ from metapredict.backend.predictor import predict
 import os
 from importlib.metadata import version, PackageNotFoundError
 
-# import current version
-from ._version import __version__
-
-# To crash on LIBOMP error set this to False
-IGNORE_LIBOMP_ERROR = True
-
-# ------------------------------------------------------------
-#
-# Handle omplib error 
-if IGNORE_LIBOMP_ERROR:
-    if sys.platform == 'darwin':
-        os.environ['KMP_DUPLICATE_LIB_OK']='True'
-
 # ------------------------------------------------------------
 # READTHEDOCS thanks to Alex Holehouse!!!!
 
@@ -39,6 +26,18 @@ else:
     from ._version import __version__
 
 # ------------------------------------------------------------
+
+
+# To crash on LIBOMP error set this to False
+IGNORE_LIBOMP_ERROR = True
+
+# ------------------------------------------------------------
+#
+# Handle omplib error 
+if IGNORE_LIBOMP_ERROR:
+    if sys.platform == 'darwin':
+        os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 
 # Standardized function to check performance
 def print_performance(seq_len=500, num_seqs=2000, variable_length=False,
