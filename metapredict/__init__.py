@@ -1,7 +1,7 @@
 ##
 ## metapredict
-## A protein disorder predictor based on a BRNN (IDP-Parrot) trained on the consensus disorder values from 
-## 8 disorder predictors from 12 proteomes.
+## A machine learning-based tool for predicting protein disorder.
+##
 ##
 import sys
 import importlib.util

@@ -28,6 +28,10 @@ def main():
     parser.add_argument('--threshold', help='Defines the threshold used to define a region as disordered or not. Default=0.42 for v1, 0.5 for v2.', default=None)
     
     parser.add_argument('--verbose', help='If included then prints out status updates', action='store_true')
+    
+    parser.add_argument('-s', '--silent', action='store_true', help='Optional. Use this flag to suppress the progress bar.')
+
+    parser.add_argument('-d', '--device', default=None, help='Optional. Use this flag to specify device to use. Options are cpu, mps, cuda, or cuda:int, or an int specifying the index of a CUDA-enabled GPU.')
 
     args = parser.parse_args()
 
@@ -48,13 +52,31 @@ def main():
         print(f'Error: Could not find passed fasta file [{args.data_file:s}]')
 
     # read in sequences
-    sequences = protfasta.read_fasta(args.data_file, invalid_sequence_action=args.invalid_sequence_action)
+    sequences = protfasta.read_fasta(args.data_file, 
+                                    invalid_sequence_action=args.invalid_sequence_action)
+    
     if args.verbose:
         print('Read in FASTA file')
 
+    if args.silent:
+        show_progress_bar=False
+    else:
+        show_progress_bar=True
+
+    if args.verbose:
+        print('Predicting disorder')
 
     # if using non-legacy then we use batch mode and request return_domains
-    idrs = meta.predict_disorder(sequences, return_domains=True, disorder_threshold=args.threshold, version=args.version, show_progress_bar=True)
+    idrs = meta.predict_disorder(sequences, 
+                                version=args.version, 
+                                device=args.device,
+                                return_domains=True, 
+                                disorder_threshold=args.threshold, 
+                                show_progress_bar=show_progress_bar)
+
+    if not args.silent:
+        print('Saving predictions to: %s'%(os.path.abspath(outfile_name)))
+
 
     # if the return type is a FASTA file we want to write 
     if args.mode == 'fasta':

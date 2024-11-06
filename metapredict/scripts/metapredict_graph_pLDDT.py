@@ -56,7 +56,8 @@ def main():
                               output_dir=outdir,
                               output_filetype=args.filetype,
                               indexed_filenames=args.indexed_filenames,
-                              pLDDT_version=args.pLDDT_version)
+                              pLDDT_version=args.pLDDT_version,
+                              invalid_sequence_action=args.invalid_sequence_action)
                               
                               
                               

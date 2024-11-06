@@ -17,4 +17,7 @@ def main():
     args = parser.parse_args()
 
     # print the sequence
-    print(str(meta.predict_disorder(inputs=args.sequence, normalized=True, version=args.version, return_numpy=False))[1:-1])
+    print(str(meta.predict_disorder(inputs=args.sequence, 
+                                    normalized=True, 
+                                    version=args.version, 
+                                    return_numpy=False))[1:-1])

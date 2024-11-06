@@ -9,6 +9,7 @@ Output data type also from the predict function.
 
 # general imports
 import os
+import re
 from packaging import version as packaging_version
 import time
 import numpy as np
@@ -145,6 +146,134 @@ def size_filter(inseqs):
 
     return retdict
 
+# ....................................................................................
+#
+
+def check_device(use_device, default_device='cuda'):
+    '''
+    Function to check the device was correctly set. 
+    
+    Parameters
+    ---------------
+    use_device : int or str 
+        Identifier for the device to be used for predictions. 
+        Possible inputs: 'cpu', 'mps', 'cuda', 'cuda:int', or an int that corresponds to
+        the index of a specific cuda-enabled GPU. If 'cuda' is specified and
+        cuda.is_available() returns False, instead of falling back to CPU, 
+        metapredict will raise an Exception so you know that you are not
+        using CUDA as you were expecting. 
+        If 'mps' is specified and mps is not available, an exception will be raised.
+
+    default_device : str
+        The default device to use if device=None.
+        If device=None and default_device != 'cpu' and default_device is
+        not available, device_string will be returned as 'cpu'.
+        I'm adding this in case we want to change the default architecture in the future. 
+        For example, we could make default device 'gpu' where it will check for 
+        cuda or mps and use either if available and then otherwise fall back to CPU. 
+
+    Returns
+    ---------------
+    device_string : str
+        returns the device string as a string. 
+    '''
+    # if use_device is None, check for cuda. 
+    if use_device==None:
+        # check if default device is available.
+        if default_device=='cpu':
+            return 'cpu'
+        elif default_device=='mps':
+            if torch.backends.mps.is_available():
+                return default_device
+            else:
+                return 'cpu'
+        elif default_device=='cuda':
+            if torch.cuda.is_available():
+                return 'cuda'
+            else:
+                return 'cpu'
+        else:
+            raise MetapredictError("Default device can only be set to 'cpu', 'mps', or 'cuda'")
+
+
+    else:  
+        # if input is an int, make it a string and then do checks. 
+        if isinstance(use_device, int)==True:
+            use_device=f'cuda:{use_device}'
+        
+        # if input is a string (it should be...)
+        if isinstance(use_device, str)==True:
+            # make use_device lowercase
+            use_device=use_device.lower()
+            # if CPU specified, use CPU    
+            if use_device=='cpu':
+                return use_device
+            elif use_device=='mps':
+                # check if mps is available. 
+                if torch.backends.mps.is_available():
+                    return use_device
+                else:
+                    raise MetapredictError('mps was specified, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
+            elif 'cuda' in use_device:
+                # make sure cuda is available.
+                if torch.cuda.is_available()==False:
+                    error_message = f'{use_device} was specified as the device, but torch.cuda.is_available() returned False.'
+                    raise MetapredictError(error_message) 
+                if use_device == 'cuda':
+                    return use_device
+                elif ':' in use_device:
+                    # make sure a positive integer is specified 
+                    pattern = r"^cuda(:\d+)?$"
+                    # if the pattern doesn't match, raise an exception. 
+                    if re.match(pattern, str(use_device))==None:
+                        error_message = f'{use_device} was specified as the device, but it does not match the pattern of cuda:int where int is a positive integer.'
+                        raise MetapredictError(error_message)
+                    else:
+                        # make sure there are enough devices such that it is possible that the specified device index works. 
+                        device_index = int(use_device.split(":")[1])
+                        num_devices = torch.cuda.device_count()
+                        if device_index >= num_devices:
+                            error_message = f'{use_device} was specified as the device, but there are only {num_devices} cuda-enabled GPUs available.\nRemember, GPU indices are 0-indexed, so cuda:0 is for the first GPU and so on.\nThe max device index you can use based on torch.cuda.device_count() is {num_devices-1}.'
+                            raise MetapredictError(error_message)
+                        return use_device
+        else:
+            raise MetapredictError("Device can only be set to: None, a string equal to 'cpu', 'mps', 'cuda', 'cuda:int' where int is some positive integer, or an int that is equal to the index of a specific CUDA-enabled GPU")
+
+    # if we made it here, raise error
+    raise MetapredictError("There is a problem with the check_device function in metapredict/backend/predictor.py.\nPlease raise an issue because you shouldn't be able to see this message.")
+
+def take_care_of_version(version_input):
+    '''
+    Function to take care of the version to use when specifying
+    the network.
+
+    Parameters
+    ---------------
+    version_input : int or str
+        The version of the network to use.
+
+    Returns
+    ---------------
+    version : str
+        The version of the network to use.
+    '''
+    # make sure the version is a string
+    version_input=str(version_input)
+
+    # now convert over to what we need version to be. 
+    if version_input=='legacy':
+        version_input='V1'
+    
+    # if len version is 1, add a 'V' to the front. 
+    if len(version_input)==1:
+        version_input=f'V{version_input}'
+
+    # make version uppercase
+    version_input=version_input.upper()
+
+    return version_input
+
+
 
 # ....................................................................................
 
@@ -165,7 +294,8 @@ def predict(inputs,
             show_progress_bar = False,
             force_disable_batch=False,
             disable_pack_n_pad = False,
-            silence_warnings = False):
+            silence_warnings = False,
+            default_to_device = 'cuda'):
     """
     Batch mode predictor which takes advantage of PyTorch
     parallelization such that whether it's on a GPU or a 
@@ -310,6 +440,14 @@ def predict(inputs,
         whether to silence warnings such as the one about compatibility
         to use pack-n-pad due to torch version restrictions. 
 
+    default_to_device : str
+        The default device to use if device=None.
+        If device=None and default_device != 'cpu' and default_device is
+        not available, device_string will be returned as 'cpu'.
+        I'm adding this in case we want to change the default architecture in the future. 
+        For example, we could make default device 'gpu' where it will check for 
+        cuda or mps and use either if available and then otherwise fall back to CPU.
+
     Returns
     -------------
     DisorderDomain object str dict or list
@@ -349,22 +487,9 @@ def predict(inputs,
     ## FIGURE OUT WHAT NETWORK WE ARE USING
     ##
     ## ....................................................................................
-    # make it easy to select the version.
-    # make sure the version is a string
-    version=str(version)
 
-    # now convert over to what we need version to be. 
-    if version=='legacy':
-        version='V1'
-    
-    # if len version is 1, it is likely the user just input 1, 2, or 3. Try to
-    # add a 'v' before it so we don't have to worry about that. Not explicitly
-    # checking version because then it will be easier to add more in the future. 
-    if len(version)==1:
-        version=f'V{version}'
-
-    # make version uppercase
-    version=version.upper()
+    # normalize such that user can input v#, V#, or # to specify the version
+    version = take_care_of_version(version)
 
     # make list of possible network inputs
     possible_networks=['legacy']
@@ -393,44 +518,12 @@ def predict(inputs,
     ##
     ## ....................................................................................    
 
-    # by default, don't check if cuda is available.
-    check_cuda=False
-
     # if a single sequence, just use cpu. Using GPU for a single sequence would be silly.
     if isinstance(inputs, str)==True:
         device_string='cpu'
     else:
-        # If a batch of sequences, figure out what device to use or if a device was specified. 
-        if use_device==None:
-            # if not specified, use a cuda enabled GPU if one is available. Otherwise fall back to CPU. 
-            if torch.cuda.is_available():
-                device_string=f'cuda'
-            else:
-                device_string = 'cpu'  
-        else:      
-            if str(use_device).lower()=='cpu':
-                device_string='cpu'
-            elif str(use_device).lower()=='mps':
-                # check if mps is available. 
-                if torch.backends.mps.is_available():
-                    device_string='mps'
-                else:
-                    raise MetapredictError('use_device was specified as mps, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
-            elif str(use_device).lower()=='cuda':
-                device_string=f'cuda' 
-                check_cuda=True   
-            elif isinstance(use_device, int)==True:
-                device_string=f'cuda:{use_device}'
-                check_cuda=True
-            else:
-                raise MetapredictError('The variable use_device can only be set to: None, cpu, mps, cuda, or an integer value specifying the index of a cuda GPU')
-    
-    # if user manually set either an GPU index or 'cuda', make sure cuda is available. 
-    # this will help us avoid falling back to CPU unintentionally.   
-    if check_cuda==True:
-        if torch.cuda.is_available()==False:
-            raise MetapredictError('cuda was specified as use_device, but torch.cuda.is_available() returned False.') 
-    
+        device_string = check_device(use_device, default_device=default_to_device)
+
     # set device
     device=torch.device(device_string)
 
@@ -441,7 +534,6 @@ def predict(inputs,
             # only warn if user hasn't turned off warning. 
             if silence_warnings==False:
                 print('Pytorch version is <= 1.11.0. Disabling pack-n-pad functionality. This might slow down predictions.')
-
 
     ##
     ## LOAD IN THE NETWORK
@@ -823,7 +915,8 @@ def predict_pLDDT(inputs,
             silence_warnings = False,
             return_as_disorder_score=False,
             plddt_base=0.35,
-            plddt_top=0.95):
+            plddt_top=0.95,
+            default_to_device = 'cuda'):
     """
     Batch mode predictor which takes advantage of PyTorch
     parallelization such that whether it's on a GPU or a 
@@ -917,6 +1010,14 @@ def predict_pLDDT(inputs,
         the highest value plddt can be when converting it to a disorder score
         Default=0.95
 
+    default_to_device : str
+        The default device to use if device=None.
+        If device=None and default_device != 'cpu' and default_device is
+        not available, device_string will be returned as 'cpu'.
+        I'm adding this in case we want to change the default architecture in the future. 
+        For example, we could make default device 'gpu' where it will check for 
+        cuda or mps and use either if available and then otherwise fall back to CPU.
+
     Returns
     -------------
     dict or list
@@ -943,23 +1044,8 @@ def predict_pLDDT(inputs,
     ## FIGURE OUT WHAT NETWORK WE ARE USING
     ##
     ## ....................................................................................
-    # make it easy to select the version.
-    # make sure the version is a string
-    version=str(version)
-
-    # now convert over to what we need version to be.
-    # i don't expect people to call the plddt one legacy, but you never know.  
-    if version=='legacy':
-        version='V1'
-    
-    # if len version is 1, it is likely the user just input 1, 2, or 3. Try to
-    # add a 'v' before it so we don't have to worry about that. Not explicitly
-    # checking version because then it will be easier to add more in the future. 
-    if len(version)==1:
-        version=f'V{version}'
-
-    # make version uppercase
-    version=version.upper()
+    # normalize such that user can input v#, V#, or # to specify the version
+    version = take_care_of_version(version)
 
     # make list of possible network inputs
     possible_networks=[]
@@ -1002,43 +1088,11 @@ def predict_pLDDT(inputs,
     ##
     ## ....................................................................................    
 
-    # by default, don't check if cuda is available.
-    check_cuda=False
-
     # if a single sequence, just use cpu. Using GPU for a single sequence would be silly.
     if isinstance(inputs, str)==True:
         device_string='cpu'
     else:
-        # If a batch of sequences, figure out what device to use or if a device was specified. 
-        if use_device==None:
-            # if not specified, use a cuda enabled GPU if one is available. Otherwise fall back to CPU. 
-            if torch.cuda.is_available():
-                device_string=f'cuda'
-            else:
-                device_string = 'cpu'  
-        else:      
-            if str(use_device).lower()=='cpu':
-                device_string='cpu'
-            elif str(use_device).lower()=='mps':
-                # check if mps is available. 
-                if torch.backends.mps.is_available():
-                    device_string='mps'
-                else:
-                    raise MetapredictError('use_device was specified as mps, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
-            elif str(use_device).lower()=='cuda':
-                device_string=f'cuda' 
-                check_cuda=True   
-            elif isinstance(use_device, int)==True:
-                device_string=f'cuda:{use_device}'
-                check_cuda=True
-            else:
-                raise MetapredictError('The variable use_device can only be set to: None, cpu, mps, cuda, or an integer value specifying the index of a cuda GPU')
-    
-    # if user manually set either an GPU index or 'cuda', make sure cuda is available. 
-    # this will help us avoid falling back to CPU unintentionally.   
-    if check_cuda==True:
-        if torch.cuda.is_available()==False:
-            raise MetapredictError('cuda was specified as use_device, but torch.cuda.is_available() returned False.') 
+        device_string = check_device(use_device, default_device=default_to_device)
     
     # set device
     device=torch.device(device_string)

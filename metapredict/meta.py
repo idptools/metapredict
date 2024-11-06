@@ -1263,7 +1263,9 @@ def predict_disorder_fasta(filepath,
                            output_file = None,
                            normalized=True,
                            invalid_sequence_action='convert',
-                           version=DEFAULT_NETWORK):
+                           version=DEFAULT_NETWORK,
+                           device=None,
+                           show_progress_bar=True):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of disorder values where the key is the 
@@ -1299,6 +1301,21 @@ def predict_disorder_fasta(filepath,
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3. 
 
+    device : string
+        the device to use for prediction. Default is None, which means
+        the function will try to use a GPU if one is available. 
+        Options include 'cpu', 'cuda', 'mps', or an int that corresponds
+        to the index of a specific cuda-enabled GPU. To specify by index, 
+        use 'cuda:int' where int is the index of the GPU you want to use.
+        For example, 'cuda:0' would use the first GPU. If 'cuda' is specified
+        and cuda.is_available() returns False, instead of falling back to
+        CPU, metapredict will raise an Exception so you know that you are
+        not using CUDA as you were expecting.
+
+    show_progress_bar : bool
+        Flag which, if set to True, means a progress bar is printed as 
+        predictions are made, while if False no progress bar is printed.
+
     Returns
     --------
 
@@ -1329,8 +1346,10 @@ def predict_disorder_fasta(filepath,
     protfasta_seqs = _protfasta.read_fasta(filepath, invalid_sequence_action = invalid_sequence_action)
 
     # initialize return dictionary
-    disorder_dict = _predict(protfasta_seqs, version=version, normalized=normalized, return_numpy=False,
-        show_progress_bar=True)
+    disorder_dict = _predict(protfasta_seqs, version=version, 
+                            normalized=normalized, return_numpy=False,
+                            show_progress_bar=show_progress_bar, 
+                            use_device=device)
 
     # if we did not request an output file 
     if output_file is None:
@@ -1347,7 +1366,9 @@ def predict_disorder_fasta(filepath,
 def predict_pLDDT_fasta(filepath, 
                         output_file = None,
                         invalid_sequence_action='convert',
-                        pLDDT_version=DEFAULT_NETWORK_PLDDT):
+                        pLDDT_version=DEFAULT_NETWORK_PLDDT,
+                        device=None,
+                        show_progress_bar=True):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of pLDDT values where the key is the 
@@ -1378,6 +1399,21 @@ def predict_pLDDT_fasta(filepath,
         which is defined at the top of /parameters.
         Options currently include V1 or V2 
 
+    device : string
+        the device to use for prediction. Default is None, which means
+        the function will try to use a GPU if one is available. 
+        Options include 'cpu', 'cuda', 'mps', or an int that corresponds
+        to the index of a specific cuda-enabled GPU. To specify by index, 
+        use 'cuda:int' where int is the index of the GPU you want to use.
+        For example, 'cuda:0' would use the first GPU. If 'cuda' is specified
+        and cuda.is_available() returns False, instead of falling back to
+        CPU, metapredict will raise an Exception so you know that you are
+        not using CUDA as you were expecting.
+
+    show_progress_bar : bool
+        Flag which, if set to True, means a progress bar is printed as 
+        predictions are made, while if False no progress bar is printed.
+
     Returns
     --------
 
@@ -1404,7 +1440,11 @@ def predict_pLDDT_fasta(filepath,
     pLDDT_version = _meta_tools.valid_version(pLDDT_version, 'pLDDT')
 
     # new predict_pLDDT function can handle string, list, or dict. 
-    confidence_dict = _predict_pLDDT(protfasta_seqs, version=pLDDT_version, return_numpy=False, show_progress_bar=True)
+    confidence_dict = _predict_pLDDT(protfasta_seqs, 
+                                    version=pLDDT_version, 
+                                    return_numpy=False, 
+                                    show_progress_bar=show_progress_bar, 
+                                    use_device=device)
 
     # if we did not request an output file 
     if output_file is None:

@@ -7,7 +7,7 @@ import os
 import argparse
 
 from metapredict.metapredict_exceptions import MetapredictError
-from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
 import metapredict as meta
 from getSequence import getseq
 
@@ -26,6 +26,8 @@ def main():
     parser.add_argument('-t', '--title', help='Title to put on graph')
 
     parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
+
+    parser.add_argument('-pv', '--pLDDT_version', default=DEFAULT_NETWORK_PLDDT, help='Optional. Use this flag to specify the version of pLDDT predictor. Options are 1 or 2.')                            
 
     parser.add_argument('-s', '--silent', action='store_true', help='Optional. Use this flag to stop any printed text to the terminal.')
 
@@ -79,7 +81,12 @@ def main():
         print(f'Graphing disorder for {full_uniprot_id}')
 
     # graph it
-    meta.graph_disorder(sequence, title=final_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, version=args.version)
+    meta.graph_disorder(sequence, 
+                        version=args.version,
+                        pLDDT_version=args.pLDDT_version,
+                        title=final_title, 
+                        pLDDT_scores=pLDDT_scores, 
+                        DPI=args.dpi)
     
 
 

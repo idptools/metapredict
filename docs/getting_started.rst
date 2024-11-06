@@ -11,93 +11,134 @@ Our goal in building **metapredict** was to develop a robust, accurate, and high
 metapredict is ALSO available via a `webserver for single sequence prediction <http://https://metapredict.net>`__ and `a Google Colab notebook for batch prediction <https://colab.research.google.com/github/idptools/metapredict/blob/master/colab/metapredict_colab.ipynb>`__. However, this documentation here focuses on the Python package which provides both a set of Python library functions and a set of command-line tools.
 
 
-metapredict updates and news
-===============================
+Recent metapredict updates and news
+====================================
 
-April 2024: Update to default version (metapredict V3)
+November 2024: Update to default version (metapredict V3)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As of April 2024, we have pushed our improved version metapredict V3. metapredict V3 has new networks for both disorder and pLDDT score predictions. In addition, V3 implements various performance and usability improvements. 
+In November 2024, we changed the default version of metapredict from V2 to V3. Small increments (3.0.x) may be made as bug fixes or feature enhancements.
 
-May 2023: Update to default version (metapredict V2-FF)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+For context, V3 provides major improvements to V2. Metapredict V3 uses a **new network to predict disorder** that in our benchmarks is the most accurate version to date. In addition, *V3 is backwards compatible with V2* and can be used as a drop-in replacement for V2. Although the Python API has been improved to massively simplify how you can use metapredict, we have **for the time being** updated it such that all previously created functions *should still work*. If they do not, please raise an issue and we will fix the problem ASAP!
 
-As of May 2023, we have pushed our improved version metapredict V2-FF. metapredict V2-FF does not change any of the predictions, but does implement substantial performance improvements. Notably these are realized by using the :code:`predict_disorder_batch()` function. 
 
-February 2022: Update to default version (metapredict V2)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What are the major changes for metapredict V3?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As of February 15, 2022 we have updated metapredict to V2. This comes with important changes that improve the accuracy of metapredict. Please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the *predict_disorder_domains()* function, so please read the documentation on that function if you were using it previously. 
-
-These changes are detailed in a `permanent preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ that lives on bioRxiv. We ask you still cite the original metapredict article rather than this preprint.
-
-July 2021: Initial version (metapredict v1)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The initial version of metapredict was released in July 2021 with the corresponding paper published shortly thereafter in Biophysical Journal:
-
-Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure. Biophys. J. 120, 4312–4319 (2021).
-
+#. **A new disorder prediction network**\ : Metapredict V3 uses a new (more accurate) network for disorder prediction. V1 and V2 are still available!
+#. **A new pLDDT prediction network**\ : metapredict used to rely on an external package called `alphaPredict <https://github.com/ryanemenecker/alphaPredict>`_ for pLDDT prediction. This same network is still available in metapredict when using ``meta.predict_pLDDT()`` by setting ``pLDDT_version=1``. However, the default V2 network is by all metrics better for pLDDT prediction, so we recommend using V2!
+#. **Easier batch predictions**\ : V2 previously required you to use ``predict_disorder_batch()`` to take advantage of the 10-100x improvement in prediction speed on CPUs and GPUs. However, you can now use a single function - ``predict_disorder()`` - on individual sequences, lists of sequences, and dictionaries of sequences, and metapredict will automatically take care of the rest for you including running batch predictions if you input more than 1 sequence. 
+#. **Easier access to DisorderObject**. You can now return the ``DisorderObject`` by setting ``return_domains=True`` when using ``predict_disorder()``.
+#. **Batch prediction for all**\ : Previously, batch predictions were only available for the V2 disorder prediction network of metapredict. Now, you can do batch predictions using all of the disorder prediction networks - V1 (previously called legacy), V2, and V3!
+#. **Batch pLDDT predictions**\ : Batch predictions (and therefore the massive increases in prediction speed) are now available for pLDDT predictions using the ``predict_pLDDT()`` function. 
+#. **More device selection**\ : Newer versions of Torch (>2.0) support MacOS GPU utilization through the Metal Performance Shaders (MPS) framework, so you can now choose to use *mps* on MacOS. 
+#. **More clear device selection**\ : Metapredict used to fall back to using CPU for predictions if it failed to use GPU for whatever reason. This had good intentions but made troubleshooting GPU usage very tricky. Now if you specify using a specific device and it does not work, metapredict will not automatically fall back to CPU.
+#. **Ability to get protein isoforms from Uniprot**\ : We updated ``metapredict-uniprot`` to work with the new version of `getSequence <https://github.com/ryanemenecker/getSequence>`_\ , which enables you to input a valid Uniprot ID including designations for different protein isoforms. If you want to predict a sequence from the CLI using the name of the protein and the organism name (optional but recommended), please use ``metapredict-name`` as **\ ``metapredict-uniprot`` will only work with valid Uniprot Accession numbers**.
 
 
 Installation
-==============
-The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
+=============
 
-To install through PyPI, run:
+Metapredict is a software package written in Python. It can be installed from `PyPI <https://pypi.org/project/metapredict/>`_ (the Python Package Index) using the tool ``pip``. We always recommend managing your Python environment with conda. If these ideas are foreign to you, we recommend reading up a bit on Python package management and `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ before continuing.
+
+TL/DR: Recommended install commands are:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In most situations, the following two commands will ensure all the necessary dependencies are installed and work correctly:
 
 .. code-block:: bash
 
-	$ pip install metapredict
+   # ensure dependencies are from the same ecosystem (conda)
+   conda install -c conda-forge -c pytorch python=3.11 numpy pytorch scipy cython matplotlib
 
+   # install from PyPI
+   pip install metapredict
+
+To check the installation has worked run:
+
+.. code-block:: bash
+
+   metapredict-predict-disorder --help
+
+from the command line; this should yield help info on the ``metapredict-predict-disorder`` command.
+
+WARNING: Segfault when mixing ``conda`` and ``pip`` installs (March 2024)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities between ``pip`` and ``conda`` versions of PyTorch and numpy. Therefore, it is essential your numpy and PyTorch installs are from the same package manager. metapredict will - by default - pull dependencies from PyPI. However, other packages installed from conda may require conda-dependent numpy installations, which can "brick" a previously-working installation.
+
+WARNING: Problems with installing Torch with propert CUDA version (November 2024).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**This is only relevent if you are trying to run metapredict on a CUDA-enabled GPU!**
+
+If you are on an older version of CUDA, a torch version that *does not have the correct CUDA version* will be installed. This can cause a segfault when running metapredict. To fix this, you need to install torch for your specific CUDA version. For example, to install PyTorch on Linux using pip with a CUDA version of 12.1, you would run:
+
+.. code-block:: bash
+
+   pip install torch --index-url https://download.pytorch.org/whl/cu121
+
+To figure out which version of CUDA you currently have (assuming you have a CUDA-enabled GPU that is set up correctly), you need to run:
+
+.. code-block:: bash
+
+   nvidia-smi
+
+Which should return information about your GPU, NVIDIA driver version, and your CUDA version at the top.
+
+Please see the `PyTorch install instructions <https://pytorch.org/get-started/locally/>`_ for more info. 
+
+Extended installation info
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The current stable version of **metapredict** is available through GitHub or the Python Package Index (PyPI). 
+
+To install from PyPI, run:
+
+.. code-block:: bash
+
+   pip install metapredict
 
 You can also install the current development version from
 
 .. code-block:: bash
 
-	$ pip install git+https://git@github.com/idptools/parrot
-
+   pip install git+https://git@github.com/idptools/metapredict
 
 To clone the GitHub repository and gain the ability to modify a local copy of the code, run
 
 .. code-block:: bash
 
-	$ git clone https://github.com/idptools/metapredict.git
-	$ cd metapredict
-	$ pip install -e .
-	
-Note you will need the -e flag to ensure the `cython` code compiles correctly, but this also means the installed version is linked to the local version of the code.	
+   git clone https://github.com/idptools/metapredict.git
+   cd metapredict
+   pip install -e .
 
-This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with `pip`.
+Note you will need the -e flag to ensure the ``cython`` code compiles correctly, but this also means the installed version is linked to the local version of the code.    
+
+This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with ``pip``.
 
 
-About
-======
+About metapredict
+====================
 It's important to understand how tools were built and developed. Below we provide a quick overview of how metapredict works and was trained.
 
 How does metapredict work?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**metapredict V3** (the current default version) works by combining consensus disorder predictions (which is how V1 was developed) with structural predictions to assign a residue as being disordered or folded. 
-
-The original metapredict (V1) was purely a consensus disorder predictor.  Instead of predicting the percent chance that a residue within a sequence might be disordered, **metapredict** tries to predict the *consensus disorder* score for the residue. Consensus disorder reports on the fraction of independent disorder predictors that would predict a given residue as disordered.
-
-As of metapredict V2 (including V2-FF and V3) the overall disorder prediction combines the V1 consensus disorder score with inverted AlphaFold2 predictions in a single deep learning network that provides robust, accurate, and fast assignment of individual residues as being either disordered or folded. 
+**metapredict** uses a machine-learning network to generate per-residue scores from amino acid sequences that reflect the likelihood that the residue is disordered.
 
 How was metapredict V1 trained?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **metapredict V1** is a deep-learning-based predictor trained on consensus disorder data from 8 different predictors, as pre-computed and provided by `MobiDB <https://mobidb.bio.unipd.it/>`_. Functionally, this means each residue is assigned a score between 0 and 1 which reflects the confidence we have that the residue is disordered (or not). If the score was 0.5, this means half of the predictors predict that residue to be disordered. In this way, **metapredict V1** can determine the likelihood that residues are disordered by giving you an approximation of what other predictors would predict (things got pretty 'meta' there, hence the name **metapredict**).
 
-Note that metapredict V1 predictions are available via the :code:`legacy=True` flag.
-
+Note that metapredict V1 predictions are available via the :code:`--version 1` from the CLI or :code: version=1 in Python.
 
 How was metapredict V2 trained?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-V2 was trained by generating an initial hybrid score that combined AlphaFold2 predicted pLDDT scores with consensus disorder along with some signal process algorithms to make a new structure/disorder consensus prediction. Finally, we trained a new deep learning network to predict our hybrid network (meta meta), substantially improving accuracy with very little loss in performance.
+V2 was trained by generating an initial hybrid score that combined *predicted* AlphaFold2 pLDDT scores (pLDDT network V1) with consensus disorder (metapredict disorder scores V1) along with some signal process algorithms to make a new structure/disorder consensus prediction. Finally, we trained a new deep learning network to predict our hybrid network (meta meta), substantially improving accuracy with very little loss in performance.
 
 These changes and new assessment of performance are available in our preprint: `An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure.  <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ In bioRxiv (p. 2022.06.06.494887). https://doi.org/10.1101/2022.06.06.494887
- 
 
-As per the 2023 Critical Assessment of Intrinsic Disorder (CAID) competition, metapredict V2 is ranked the 9th most accurate disorder predictor available. However, importantly, it is among the fastest regardless of accuracy, and is accessible across multiple platforms, via a web server, and with very few software dependencies. Among the top 10, the difference in accuracy is 0.95 to 0.93 AUC, suggesting to us that all top 10 predictors are highly accurate. In short, we believe metapredict V2 hits a sweet spot of accuracy and performance.
 
 How does metapredict V2 differ from V2-FF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -113,12 +154,12 @@ V2 and V3 are fairly similar given that they have the same underlying disorder p
 
 
 Generating predicted pLDDT (AlphaFold2 confidence) scores in metapredict
------------------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In addition to predicting disorder scores, metapredict offers predicted confidence scores from AlphaFold2. These confidence scores measure the local confidence that AlphaFold2 has in its predicted structure. The scores go from 0-100 where 0 represents low confidence and 100 represents high confidence. For more information, please see: *Highly accurate protein structure prediction with AlphaFold* https://doi.org/10.1038/s41586-021-03819-2. In describing these scores, the team states that regions with pLDDT scores of less than 50 should not be interpreted except as *possible* disordered regions.
 
 
 What might the predicted confidence scores from AlphaFold2 be used for?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------------------------------------
 These scores can be used for many applications such as generating a quick preview of which regions of your protein of interest AF2 might be able to predict with high confidence, or which regions of your protein *might* be disordered. 
 
 AF2 is not (strictly speaking) a disorder predictor, and the confidence scores are not directly representative of protein disorder. Therefore, any conclusions drawn with regards to disorder from predicted AF2 confidence scores should be interpreted with care, but they may be able to provide an additional metric to assess the likelihood that any given protein region may be disordered.
@@ -129,7 +170,7 @@ Why is metapredict useful?
 We think **metapredict** is useful for three main reasons.
 
 1. It's highly accurate and provides strong boundaries between disordered and folded regions.
-2. It's incredibly fast; on CPUs one can predict every IDR in the human proteome in ~5 minutes. On modest GPUs one can predict every IDR in the human proteome in under 40 seconds. This stands in stark contrast to other predictors which place length caps on sequences and can take hours per sequence.
+2. It's incredibly fast; on CPUs one can predict every IDR in the human proteome in ~2.5 minutes. On modest GPUs one can predict every IDR in the human proteome in under 5 seconds. This stands in stark contrast to other predictors which place length caps on sequences and can take hours per sequence.
 3. It is easy to use and is distributed via a wide range of channels. In addition to this Python package, metapredict is distributed as a stand-alone webserver **(see: https://metapredict.net/ )**, colab notebooks for large-scale predictions, and as an `API for SHEPHARD <https://shephard.readthedocs.io/en/latest/apis.html#metapredict>`__, our general-purpose toolkit for working with an annotating large protein datasets. This Python package further implements metapredict as both Python modules and as a set of command-line tools. 
 
 In summary, we believe metapredict provides the three key ingredients of a useful disorder predictor: it's extremely accurate, it's incredibly fast, and it's very easy to use.
@@ -137,11 +178,13 @@ In summary, we believe metapredict provides the three key ingredients of a usefu
 How to cite
 ===========================
 
-If you use metapredict for your work, please cite the metapredict paper 
+If you use metapredict for your work, please cite the metapredict paper: 
 
 Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure. Biophys. J. 120, 4312–4319 (2021).
-	
-Additionally, if you are using V2 (which is now the default) please make this clear in methods section. You should not feel obliged to cite the `V2 preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_, and this pre-print exists solely so we could fully document the changes and test some edge cases in an accessible and clear way.
+
+Note that in addition to the `original paper <https://www.cell.com/biophysj/fulltext/S0006-3495(21>`_\ 00725-6), there's a `V2 preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_\ ; HOWEVER, we ask you only cite the original paper and describe the version being used (V1, V2, V2-FF, or V3).
+
+We are hoping to get a paper out for V3 in the near future (we will update this section once the V3 paper is available)...
 
 
 
@@ -181,3 +224,25 @@ Example datasets
 ==================
 
 Example data that can be used with metapredict can be found in the metapredict/data folder on GitHub. The example data set is just a .fasta file containing 5 protein sequences.
+
+
+Previous updates
+==================
+
+May 2023: Update to default version (metapredict V2-FF)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As of May 2023, we have pushed our improved version metapredict V2-FF. metapredict V2-FF does not change any of the predictions, but does implement substantial performance improvements. Notably these are realized by using the :code:`predict_disorder_batch()` function. 
+
+February 2022: Update to default version (metapredict V2)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As of February 15, 2022 we have updated metapredict to V2. This comes with important changes that improve the accuracy of metapredict. Please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the *predict_disorder_domains()* function, so please read the documentation on that function if you were using it previously. 
+
+These changes are detailed in a `permanent preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ that lives on bioRxiv. We ask you still cite the original metapredict article rather than this preprint.
+
+July 2021: Initial version (metapredict v1)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The initial version of metapredict was released in July 2021 with the corresponding paper published shortly thereafter in Biophysical Journal:
+
+Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure. Biophys. J. 120, 4312–4319 (2021).

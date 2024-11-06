@@ -6,9 +6,9 @@ Python Version Issues
 
 We have received occasional feedback that metapredict is not working for a user. A common problem is that the user is using a different version of Python than metapredict was made on. 
 
-metapredict was developed using Python version 3.7, but has been tested on 3.8, 3.9 and 3.10 as well. However, metapredict was developed for macOS and Linux, and while we expect it to work for Windows this has been far less rigorously tested.
+metapredict was developed using Python version 3.7, but has been tested on 3.8, 3.9, 3.10, 3.11, and 3.12. However, metapredict was developed for macOS and Linux, and while we expect it to work for Windows this has been far less rigorously tested.
 
-If you commonly use a Python version outside of the 3.7 - 3.10 window, a convenient workaround is to use a conda environment that has Python 3.8 set as the default version of Python. For more info on conda, please see https://docs.conda.io/projects/conda/en/latest/index.html
+If you commonly use a Python version outside of the 3.7 - 3.12 window, a convenient workaround is to use a conda environment that has Python 3.8 set as the default version of Python. For more info on conda, please see https://docs.conda.io/projects/conda/en/latest/index.html
 
 Once you have conda installed, simply use the command 
 

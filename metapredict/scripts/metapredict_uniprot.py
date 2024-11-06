@@ -9,7 +9,7 @@ import argparse
 from metapredict.metapredict_exceptions import MetapredictError
 import metapredict as meta
 from getSequence import getseq
-from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
 
 def main():
 
@@ -30,6 +30,10 @@ def main():
     parser.add_argument('-t', '--title', help='Title to put on graph')
 
     parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
+
+    parser.add_argument('-pv', '--pLDDT_version', default=DEFAULT_NETWORK_PLDDT, help='Optional. Use this flag to specify the version of pLDDT predictor. Options are 1 or 2.')                            
+
+    parser.add_argument('-s', '--silent', action='store_true', help='Optional. Use this flag to suppress any printed output.')
 
     args = parser.parse_args()
 
@@ -61,7 +65,12 @@ def main():
     # if we don't want to save...
     if args.output_file is None:
         try:
-            meta.graph_disorder(name_and_seq[1], title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, version=args.version)
+            meta.graph_disorder(name_and_seq[1], 
+                                title=graph_title, 
+                                pLDDT_scores=pLDDT_scores, 
+                                DPI=args.dpi, 
+                                version=args.version,
+                                pLDDT_version=args.pLDDT_version)
         except MetapredictError as e:
             print(e)
             exit(1)
@@ -74,5 +83,13 @@ def main():
         else:
             outname = args.output_file
 
-        meta.graph_disorder(name_and_seq[1], title=graph_title, pLDDT_scores=pLDDT_scores, DPI=args.dpi, output_file=outname, version=args.version)
+        meta.graph_disorder(name_and_seq[1], 
+                                title=graph_title, 
+                                pLDDT_scores=pLDDT_scores, 
+                                DPI=args.dpi, 
+                                output_file=outname, 
+                                version=args.version,
+                                pLDDT_version=args.pLDDT_version)
+        if not args.silent:
+            print('Saving predictions to: %s'%(os.path.abspath(args.output_file)))
 

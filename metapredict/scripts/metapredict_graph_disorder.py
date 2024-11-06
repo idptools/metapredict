@@ -11,7 +11,7 @@ import csv
 import protfasta
 
 from metapredict import meta
-from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
 
 def main():
 
@@ -24,7 +24,9 @@ def main():
 
     parser.add_argument('-p', '--pLDDT', action='store_true', help='Optional. Use this flag to include AlphaFold2 pLDDT scores in the graph.')                        
 
-    parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
+    parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are 1, 2, or 3.')                            
+
+    parser.add_argument('-pv', '--pLDDT_version', default=DEFAULT_NETWORK_PLDDT, help='Optional. Use this flag to specify the version of pLDDT predictor. Options are 1 or 2.')                            
 
     parser.add_argument('--filetype', default='png', help='Define the possible output filetype. Valid options are png, pdf, jpg. Default is png')
                         
@@ -67,7 +69,9 @@ def main():
                               output_dir=outdir,
                               output_filetype=args.filetype,
                               indexed_filenames=args.indexed_filenames,
-                              version = args.version)
+                              version = args.version,
+                              pLDDT_version = args.pLDDT_version,
+                              invalid_sequence_action=args.invalid_sequence_action)
                               
                               
                               

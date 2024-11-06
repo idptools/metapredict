@@ -7,7 +7,7 @@ In November 2024, we changed the default version of metapredict from V2 to V3. S
 
 For context, V3 provides major improvements to V2. Metapredict V3 uses a **new network to predict disorder** that in our benchmarks is the most accurate version to date. In addition, *V3 is backwards compatible with V2* and can be used as a drop-in replacement for V2. Although the Python API has been improved to massively simplify how you can use metapredict, we have **for the time being** updated it such that all previously created functions *should still work*. If they do not, please raise an issue and we will fix the problem ASAP!
   
-## What are the major changes for V3?
+## What are the major changes for metapredict V3?
 
 1. **A new disorder prediction network**: Metapredict V3 uses a new (more accurate) network for disorder prediction. V1 and V2 are still available!
 2. **A new pLDDT prediction network**: metapredict used to rely on an external package called [alphaPredict](https://github.com/ryanemenecker/alphaPredict) for pLDDT prediction. This same network is still available in metapredict when using ``meta.predict_pLDDT()`` by setting ``pLDDT_version=1``. However, the default V2 network is by all metrics better for pLDDT prediction, so we recommend using V2!
