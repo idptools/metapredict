@@ -94,7 +94,7 @@ Metapredict can be used in five different ways:
 1. As a stand-alone command-line tool (installable via pip - the code in this repository).
 2. As a Python library for integrating into your favorite bioinformatics pipeline (installable via pip - the code in this repository).
 3. As a web-server for examining disorder predictions on individual sequences found at [https://metapredict.net/](https://metapredict.net/).
-4. *NEW as of August 2022:* as a Google Colab notebook for batch-predicting disorder scores for larger numbers of sequences: [**LINK HERE**](https://colab.research.google.com/github/idptools/metapredict/blob/master/colab/metapredict_colab.ipynb). Performance-wise, batch mode can predict the entire yeast proteome in ~1.5 min using the Colab Notebook and much faster if using a local GPU.
+4. *NEW as of August 2022:* as a Google Colab notebook for batch-predicting disorder scores for larger numbers of sequences: [**LINK HERE**](https://colab.research.google.com/drive/1UOrOxun9i23XDE8lFo_4I89Tw8P3Z1D-?usp=sharing). Performance-wise, batch mode can predict the entire yeast proteome in ~1.5 min using the Colab Notebook and much faster if using a local GPU.
 5. *NEW as of May 2023:* as part of the [ALBATROSS paper](https://www.nature.com/articles/s41592-023-02159-5), we provide a colab notebook for predicting IDRs on a proteome-wide scale [**LINK HERE**](https://colab.research.google.com/github/holehouse-lab/ALBATROSS-colab/blob/main/idrome_constructor/idrome_constructor.ipynb).
 
 ## How to cite

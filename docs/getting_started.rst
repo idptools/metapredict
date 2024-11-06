@@ -8,7 +8,7 @@ What is metapredict?
 
 Our goal in building **metapredict** was to develop a robust, accurate, and high-performance predictor of intrinsic disorder that is also easy to install and use. As such, **metapredict** is implemented in Python and can be installed directly via `pip` (see below).
 
-metapredict is ALSO available via a `webserver for single sequence prediction <http://https://metapredict.net>`__ and `a Google Colab notebook for batch prediction <https://colab.research.google.com/github/idptools/metapredict/blob/master/colab/metapredict_colab.ipynb>`__. However, this documentation here focuses on the Python package which provides both a set of Python library functions and a set of command-line tools.
+metapredict is ALSO available via a `webserver for single sequence prediction <http://https://metapredict.net>`__ and `a Google Colab notebook for batch prediction <https://colab.research.google.com/drive/1UOrOxun9i23XDE8lFo_4I89Tw8P3Z1D-?usp=sharing>`__. However, this documentation here focuses on the Python package which provides both a set of Python library functions and a set of command-line tools.
 
 
 Recent metapredict updates and news
@@ -145,7 +145,7 @@ How does metapredict V2 differ from V2-FF
 
 metapredict V2 and V2-FF are identical in terms of predictions and features, with the major difference being that metapredict V2-FF offers batched predictions. Batched predictions are automatically parallelized on either the CPU or GPU. In addition, we rewrote the metapredict domain decomposition algorithm in C to provide a 10-20x improvement in performance for this step.
 
-We note that V2-FF was released after CAID, so the performance reported there is the V2 network performance. Because metapredict V2-FF is implemented in a `Google Colab notebook for batch prediction <https://colab.research.google.com/github/idptools/metapredict/blob/master/colab/metapredict_colab.ipynb>`__ you don't have to take our word for it that it's fast; just upload a proteome and see for yourself! 
+We note that V2-FF was released after CAID, so the performance reported there is the V2 network performance. Because metapredict V2-FF is implemented in a `Google Colab notebook for batch prediction <https://colab.research.google.com/drive/1UOrOxun9i23XDE8lFo_4I89Tw8P3Z1D-?usp=sharing>`__ you don't have to take our word for it that it's fast; just upload a proteome and see for yourself! **Note**: The colab notebook has now been updated to V3. However, all 3 metapredict networks are available for use in the notebook!
 
 What is new as far as the disorder prediction in V3?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
