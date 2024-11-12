@@ -278,9 +278,12 @@ def take_care_of_version(version_input):
 
 # function to load model
 # A variable to store the loaded model
-'''
 loaded_models = {}
 
+# gets model. This lets us avoid iteratively loading the model
+# because it can check the global dictionary to see if the model
+# has already been loaded. 
+# if you don't do this, you start getting memory issues
 def get_model(model_name, params, predictor_path, device):
     global loaded_models  # Ensure the dictionary is accessible across calls
     
@@ -307,7 +310,6 @@ def get_model(model_name, params, predictor_path, device):
     # Store the loaded model in the dictionary using the model_name as key
     loaded_models[model_name] = model
     return model
-'''
 
 # ....................................................................................
 
@@ -574,24 +576,11 @@ def predict(inputs,
     ##
     ## ....................................................................................    
 
-    # load network. We do this differently depending on if we used
-    # pytorch or pytorch-lightning to make the network. 
-    if params['used_lightning']==False:
-        model=architectures.BRNN_MtM(input_size=params['input_size'], 
-            hidden_size=params['hidden_size'], num_layers=params['num_layers'], 
-            num_classes=params['num_classes'], device=device)
-        network=torch.load(predictor_path, map_location=device)
-        model.load_state_dict(network)
-       
-    else:
-        # if it's a pytorch-lightning, we can just use load_from_checkpoint
-        model=architectures.BRNN_MtM_lightning
-        model = model.load_from_checkpoint(predictor_path, map_location=device)
-
-    #model = get_model(model_name=version, 
-    #                    params=params, 
-    #                    predictor_path=predictor_path, 
-    #                    device=device)
+    # load model
+    model = get_model(model_name=f'disorder_{version}', 
+                        params=params, 
+                        predictor_path=predictor_path, 
+                        device=device)
 
     # set to eval mode
     model.eval()
@@ -612,7 +601,7 @@ def predict(inputs,
             start_time = time.time()        
         
         # encode the sequence
-        seq_vector = encode_sequence.one_hot(inputs)
+        seq_vector = encode_sequence.one_hot(inputs)    
         seq_vector = seq_vector.to(device)
         seq_vector = seq_vector.view(1, len(seq_vector), -1)
 
@@ -819,7 +808,7 @@ def predict(inputs,
 
                     # lstm forward pass.
                     with torch.no_grad():
-                        outputs, (ht,ct) = model.lstm(packed_seqs)
+                        outputs, _ = model.lstm(packed_seqs)
 
                     # unpack the packed sequence
                     outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
@@ -1154,17 +1143,10 @@ def predict_pLDDT(inputs,
 
     # load network. We do this differently depending on if we used
     # pytorch or pytorch-lightning to make the network. 
-    if params['used_lightning']==False:
-        model=architectures.BRNN_MtM(input_size=params['input_size'], 
-            hidden_size=params['hidden_size'], num_layers=params['num_layers'], 
-            num_classes=params['num_classes'], device=device)
-        network=torch.load(predictor_path, map_location=device)
-        model.load_state_dict(network)
-       
-    else:
-        # if it's a pytorch-lightning, we can just use load_from_checkpoint
-        model=architectures.BRNN_MtM_lightning
-        model = model.load_from_checkpoint(predictor_path, map_location=device)
+    model = get_model(model_name=f'pLDDT_{version}', 
+                    params=params, 
+                    predictor_path=predictor_path, 
+                    device=device)
 
     # set to eval mode
     model.eval()
@@ -1408,7 +1390,7 @@ def predict_pLDDT(inputs,
 
                     # lstm forward pass.
                     with torch.no_grad():
-                        outputs, (ht,ct) = model.lstm(packed_seqs)
+                        outputs, _ = model.lstm(packed_seqs)
 
                     # unpack the packed sequence
                     outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
