@@ -1,6 +1,12 @@
 ## Changelog
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
+#### V3.0.1 (November 2024)
+Changes:
+
+* Fixed bug that caused memory issues when running many predictions.
+
+
 #### V3.0 (November 2024)
 Changes:
 
