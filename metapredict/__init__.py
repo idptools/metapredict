@@ -121,7 +121,7 @@ def print_performance(seq_len=500, num_seqs=2000, variable_length=False,
     start = time.time()
 
     # carry out prediction.
-    predict(seqs, network=version, force_disable_batch=disable_batch, 
+    predict(seqs, version=version, force_disable_batch=disable_batch, 
         use_device=device, normalized=False, show_progress_bar=verbose,
         round_values=False)
 
