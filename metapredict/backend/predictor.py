@@ -300,7 +300,7 @@ def get_model(model_name, params, predictor_path, device):
             num_classes=params['num_classes'], 
             device=device
         )
-        network = torch.load(predictor_path, map_location=device)
+        network = torch.load(predictor_path, map_location=device, weights_only=True)
         model.load_state_dict(network)
     else:
         model = architectures.BRNN_MtM_lightning.load_from_checkpoint(
