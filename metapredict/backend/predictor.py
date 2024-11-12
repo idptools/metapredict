@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import gc
 
 # local imports
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
@@ -274,6 +275,39 @@ def take_care_of_version(version_input):
     return version_input
 
 
+
+# function to load model
+# A variable to store the loaded model
+'''
+loaded_models = {}
+
+def get_model(model_name, params, predictor_path, device):
+    global loaded_models  # Ensure the dictionary is accessible across calls
+    
+    # Check if the model has already been loaded
+    if model_name in loaded_models:
+        return loaded_models[model_name]
+    
+    # If the model hasn't been loaded yet, load it
+    if not params['used_lightning']:
+        model = architectures.BRNN_MtM(
+            input_size=params['input_size'], 
+            hidden_size=params['hidden_size'], 
+            num_layers=params['num_layers'], 
+            num_classes=params['num_classes'], 
+            device=device
+        )
+        network = torch.load(predictor_path, map_location=device)
+        model.load_state_dict(network)
+    else:
+        model = architectures.BRNN_MtM_lightning.load_from_checkpoint(
+            predictor_path, map_location=device
+        )
+
+    # Store the loaded model in the dictionary using the model_name as key
+    loaded_models[model_name] = model
+    return model
+'''
 
 # ....................................................................................
 
@@ -554,6 +588,11 @@ def predict(inputs,
         model=architectures.BRNN_MtM_lightning
         model = model.load_from_checkpoint(predictor_path, map_location=device)
 
+    #model = get_model(model_name=version, 
+    #                    params=params, 
+    #                    predictor_path=predictor_path, 
+    #                    device=device)
+
     # set to eval mode
     model.eval()
 
@@ -595,10 +634,11 @@ def predict(inputs,
             if round_values==True:
                 # need to round again because the np.round doesn't 
                 # keep the rounded values when we convert to list. 
-                outputs = [round(x, 4) for x in outputs.flatten()]
+                outputs = [round(float(x), 4) for x in outputs.flatten()]
             else:
                 # otherwise just return the flattened array as a list. 
                 outputs=outputs.flatten().tolist()
+
         else:
             # if we want a numpy array, we need to make sure it's a 1D array
             outputs=outputs.flatten()
@@ -607,6 +647,7 @@ def predict(inputs,
         if print_performance:
             end_time = time.time()
             print(f"Time taken for prediction on {device}: {end_time - start_time} seconds") 
+
 
         # see if need to build disorder_domsins
         if return_domains:
@@ -684,7 +725,7 @@ def predict(inputs,
                     if round_values==True:
                         # need to round again because the np.round doesn't 
                         # keep the rounded values when we convert to list. 
-                        outputs = [round(x, 4) for x in outputs.flatten()]
+                        outputs = [round(float(x), 4) for x in outputs.flatten()]
                     else:
                         # otherwise just return the flattened array as a list. 
                         outputs=outputs.flatten().tolist()
@@ -739,7 +780,7 @@ def predict(inputs,
                                 if round_values==True:
                                     # need to round again because the np.round doesn't 
                                     # keep the rounded values when we convert to list. 
-                                    prediction = [round(x, 4) for x in prediction.flatten()]
+                                    prediction = [round(float(x), 4) for x in prediction.flatten()]
                                 else:
                                     # otherwise just return the flattened array as a list. 
                                     prediction=prediction.flatten().tolist()
@@ -812,7 +853,7 @@ def predict(inputs,
                             if round_values==True:
                                 # need to round again because the np.round doesn't 
                                 # keep the rounded values when we convert to list. 
-                                curoutput = [round(x, 4) for x in curoutput.flatten()]
+                                curoutput = [round(float(x), 4) for x in curoutput.flatten()]
                             else:
                                 # otherwise just return the flattened array as a list. 
                                 curoutput=curoutput.flatten().tolist()
@@ -1174,7 +1215,7 @@ def predict_pLDDT(inputs,
             if round_values==True:
                 # need to round again because the np.round doesn't 
                 # keep the rounded values when we convert to list. 
-                outputs = [round(x, 4) for x in outputs.flatten()]
+                outputs = [round(float(x), 4) for x in outputs.flatten()]
             else:
                 # otherwise just return the flattened array as a list. 
                 outputs=outputs.flatten().tolist()
