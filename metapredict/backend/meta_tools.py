@@ -457,3 +457,34 @@ def write_caid_format(input_dict, output_path, version):
                 current_output.write(f'{res_and_score_index+1}\t{cur_residue}\t{write_score}\t{cur_binary}\n')
         
         current_output.close()
+
+# check max length
+def exceeds_max_length(data, max_length=65535):
+    """
+    Recursively checks if a string, any element in a list, or any value in a dictionary
+    exceeds the given maximum length.
+
+    Parameters
+    ----------
+    data : str, list, dict, or any
+        The input data to check. Can be a string, list, or dictionary.
+    max_length : int, optional
+        The maximum allowed length (default is 65535 characters).
+
+    Returns
+    -------
+    bool
+        True if any string exceeds the max_length, False otherwise.
+    """
+    if isinstance(data, str):
+        # Check if the string exceeds the max length
+        return len(data) > max_length
+    elif isinstance(data, list):
+        # Check each element in the list
+        return any(exceeds_max_length(item, max_length) for item in data)
+    elif isinstance(data, dict):
+        # Check each value in the dictionary
+        return any(exceeds_max_length(value, max_length) for value in data.values())
+    else:
+        # If not a string, list, or dict, it's not something we need to check
+        return False

@@ -19,10 +19,11 @@ from tqdm import tqdm
 import gc
 
 # local imports
+from metapredict.backend.meta_tools import exceeds_max_length
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 from metapredict.backend import domain_definition as _domain_definition
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
-from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT, MAX_CUDA_LENGTH
 from metapredict.backend import encode_sequence
 from metapredict.backend import architectures
 from metapredict.metapredict_exceptions import MetapredictError
@@ -559,6 +560,11 @@ def predict(inputs,
         device_string='cpu'
     else:
         device_string = check_device(use_device, default_device=default_to_device)
+
+    # check if using gpu, specifically cuda
+    if 'cuda' in device_string:
+        if exceeds_max_length(inputs, max_length=MAX_CUDA_LENGTH):
+            raise MetapredictError(f'The input sequence is too long to run on GPU. The max length for a sequence on a CUDA GPU is {MAX_CUDA_LENGTH}.\nPlease use CPU if you want to run sequences longer than 65535 amino acids.')
 
     # set device
     device=torch.device(device_string)

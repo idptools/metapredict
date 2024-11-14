@@ -9,3 +9,6 @@ METAPREDICT_V3_THRESHOLD=0.5
 # set the current default network for metapredict.
 DEFAULT_NETWORK = 'V3'
 DEFAULT_NETWORK_PLDDT = 'V2'
+
+# various constraints on predictions we've run across
+MAX_CUDA_LENGTH=65535
