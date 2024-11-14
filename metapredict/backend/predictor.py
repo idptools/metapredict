@@ -564,7 +564,7 @@ def predict(inputs,
     # check if using gpu, specifically cuda
     if 'cuda' in device_string:
         if exceeds_max_length(inputs, max_length=MAX_CUDA_LENGTH):
-            raise MetapredictError(f'The input sequence is too long to run on GPU. The max length for a sequence on a CUDA GPU is {MAX_CUDA_LENGTH}.\nPlease use CPU if you want to run sequences longer than 65535 amino acids.')
+            raise MetapredictError(f'One of the input sequences is too long to run on GPU. The max length for a sequence on a CUDA GPU is {MAX_CUDA_LENGTH}.\nPlease use CPU if you want to run sequences longer than 65535 amino acids.')
 
     # set device
     device=torch.device(device_string)
