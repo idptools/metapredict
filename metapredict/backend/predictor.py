@@ -15,8 +15,11 @@ import time
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+import itertools
 from tqdm import tqdm
 import gc
+import weakref
+from functools import lru_cache
 
 # local imports
 from metapredict.backend.meta_tools import exceeds_max_length
@@ -27,96 +30,6 @@ from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT, MAX_C
 from metapredict.backend import encode_sequence
 from metapredict.backend import architectures
 from metapredict.metapredict_exceptions import MetapredictError
-
-# ....................................................................................
-#
-def build_DisorderObject(s,
-                         disorder,
-                         disorder_threshold=0.5,
-                         minimum_IDR_size=12,
-                         minimum_folded_domain=50,
-                         gap_closure=10,
-                         override_folded_domain_minsize=False,
-                         use_slow = False, return_numpy=True):
-
-    """
-    Function which takes a sequence, a disorder profile, and some
-    settings and then builds out a DisorderObject from.
-
-    Parameters
-    ----------------
-    s : str
-        Amino acid string
-
-    disorder : np.array
-        Array of disordered scores from the prediction
-
-    disorder_threshold  : float
-        The threshold value used to define if a region is truly disordered or not. This 
-        threshold is applied by saying if a residue has a disorder score > $disorder_threshold
-        it might be in an IDR, although other constrains/analysis are required.
-
-    minimum_IDR_size : int
-        Value that defines the shortest possible IDR. Default is 12.
-
-    minimum_folded_domain : int 
-        Value used in the final stages where any 'gaps' < $minimum_folded_domain
-        are revaluated with a slightly less stringent disorder threshold. Note that,
-        in addition, gaps < 35 are evaluated with a threshold of 0.35*disorder_threshold
-        and gaps < 20 are evaluated with a threshold of 0.25*disorder_threshold. These
-        two lengthscales were decided based on the fact that coiled-coiled regions (which
-        are IDRs in isolation) often show up with reduced apparent disorder within IDRs,
-        and but can be as short as 20-30 residues. The minimum_folded_domain is used
-        based on the idea that it allows a 'shortest reasonable' folded domain to be 
-        identified. Default is 50.
-
-    gap_closure : int
-        Value that allow short gaps within two disorder or folded domains to be
-        folded in. This actually ends up being most important when disorder scores
-        are unsmoothed. Default is 10.
-
-    override_folded_domain_minsize : bool
-        By default this function includes a fail-safe check that assumes folded domains
-        really shouldn't be less than 35 or 20 residues. However, for some approaches we
-        may wish to over-ride these thresholds to match the passed minimum_folded_domain
-        value. If this flag is set to True this override occurs. This is generally not 
-        recommended unless you expect there to be well-defined sharp boundaries which could
-        define small (20-30) residue folded domains. Default = False.
-
-    disorder_threshold : float
-        Threshold value used for deliniating between disordered and
-        and ordered regions
-
-    use_slow : bool
-        Flag which, if selected, means we use the older Python-based implementation of
-        the domain decomposition algorithm used to excise IDRs from the linear
-        disorder profile.
-
-    return_numpy : bool
-        whether to reutrn np array or not
-
-    """
-
-    # extract out disordered domains                 
-    return_tuple = _domain_definition.get_domains(s, 
-                                                  disorder, 
-                                                  disorder_threshold=disorder_threshold,
-                                                  minimum_IDR_size=minimum_IDR_size, 
-                                                  minimum_folded_domain=minimum_folded_domain,
-                                                  gap_closure=gap_closure,
-                                                  use_python=use_slow)
-
-    ## assemble the IDRs and FD boundaries
-    IDRs = []                    
-    for local_idr in return_tuple[1]:
-        IDRs.append([local_idr[0], local_idr[1]])
-
-    FDs = []
-    for local_fd in return_tuple[2]:
-        FDs.append([local_fd[0], local_fd[1]])
-
-    # build an DisorderObject and return it!
-    return _DisorderObject(s, disorder, IDRs, FDs, return_numpy=return_numpy)
 
 
 # ....................................................................................
@@ -137,16 +50,8 @@ def size_filter(inseqs):
         Returns a dictionary where keys are sequence length and
         values are a list of sequences where all seqs are same length    
     """
-
-    retdict = {}
-
-    for s in inseqs:
-        if len(s) not in retdict:
-            retdict[len(s)] = []
-
-        retdict[len(s)].append(s)
-
-    return retdict
+    return {length: list(seqs) for length, seqs in 
+            itertools.groupby(sorted(inseqs, key=len), key=len)}
 
 # ....................................................................................
 #
@@ -277,22 +182,27 @@ def take_care_of_version(version_input):
 
 
 
-# function to load model
-# A variable to store the loaded model
-loaded_models = {}
+# Module-level cache that automatically cleans up unused models
+_model_cache = {}
 
-# gets model. This lets us avoid iteratively loading the model
-# because it can check the global dictionary to see if the model
-# has already been loaded. 
-# if you don't do this, you start getting memory issues
 def get_model(model_name, params, predictor_path, device):
-    global loaded_models  # Ensure the dictionary is accessible across calls
+    """
+    Load and cache models with automatic cleanup for unused models.
+    Models are kept alive as long as they're being used somewhere.
+    """
+    cache_key = f"{model_name}_{device}"
     
-    # Check if the model has already been loaded
-    if model_name in loaded_models:
-        return loaded_models[model_name]
+    # Check if we have a valid cached model
+    if cache_key in _model_cache:
+        model_ref = _model_cache[cache_key]
+        model = model_ref()  # Get the actual model from weak reference
+        if model is not None:
+            return model
+        else:
+            # Model was garbage collected, remove the dead reference
+            del _model_cache[cache_key]
     
-    # If the model hasn't been loaded yet, load it
+    # Load the model
     if not params['used_lightning']:
         model = architectures.BRNN_MtM(
             input_size=params['input_size'], 
@@ -307,10 +217,11 @@ def get_model(model_name, params, predictor_path, device):
         model = architectures.BRNN_MtM_lightning.load_from_checkpoint(
             predictor_path, map_location=device
         )
-
-    # Store the loaded model in the dictionary using the model_name as key
-    loaded_models[model_name] = model
+    
+    # Store weak reference to allow garbage collection
+    _model_cache[cache_key] = weakref.ref(model)
     return model
+
 
 # ....................................................................................
 

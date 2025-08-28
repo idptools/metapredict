@@ -45,15 +45,16 @@ def one_hot(seq):
     # ONE HOT encoding per standard amino acid
     ONE_HOT = {'A': 0, 'C': 1, 'D': 2, 'E': 3, 'F': 4, 'G': 5, 'H': 6, 'I': 7, 'K': 8, 'L': 9,
                    'M': 10, 'N': 11, 'P': 12, 'Q': 13, 'R': 14, 'S': 15, 'T': 16, 'V': 17, 'W': 18, 'Y': 19}
-    l = len(seq)
-    m = np.zeros((l, 20))
+
 
     # try to encode, if there's an invalid amino acid, raise an exception. 
     try:
-        for i in range(l):
-            m[i, ONE_HOT[seq[i]]] = 1
-    except:
-        error_str = 'Invalid amino acid detected: ' + seq[i]
-        raise ValueError(error_str)
+        # Convert sequence to indices in one vectorized operation
+        indices = np.array([ONE_HOT[aa] for aa in seq])
+        # Use advanced indexing to create one-hot encoding
+        m = np.eye(20)[indices]
+    except KeyError as e:
+        raise ValueError(f'Invalid amino acid detected: {str(e).strip("'")}')
+    
     return torch.from_numpy(m)
 
