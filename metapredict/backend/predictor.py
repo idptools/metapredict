@@ -30,6 +30,7 @@ from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT, MAX_C
 from metapredict.backend import encode_sequence
 from metapredict.backend import architectures
 from metapredict.metapredict_exceptions import MetapredictError
+from metapredict.backend.predictor_tools import build_DisorderObject
 
 
 # ....................................................................................

@@ -54,7 +54,8 @@ def one_hot(seq):
         # Use advanced indexing to create one-hot encoding
         m = np.eye(20)[indices]
     except KeyError as e:
-        raise ValueError(f'Invalid amino acid detected: {str(e).strip("'")}')
+        invalid_aa = str(e).strip("'")
+        raise ValueError(f'Invalid amino acid detected: {invalid_aa}')
     
     return torch.from_numpy(m)
 

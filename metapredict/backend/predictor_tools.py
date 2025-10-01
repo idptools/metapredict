@@ -229,3 +229,31 @@ def check_device(use_device: Optional[Union[str, int]] = None,
         return _validate_cuda_device(use_device)
     else:
         raise MetapredictError(f"Invalid device specification: {use_device}")
+    
+
+def handle_input(seqs: Union[str, List[str], Dict[str,str]]):
+    """
+    Helper function that takes a string, list of strings, or dictionary
+    of strings and returns a dictionary of strings.
+
+    Parameters
+    ---------------
+    seqs : str, list, or dict
+        Input sequence(s) as a single string, list of strings, or dictionary
+
+    Returns
+    ---------------
+    dict
+        Dictionary where keys are sequence identifiers and values are sequences
+    """
+    if isinstance(seqs, str):
+        # single sequence string
+        return {'seq_1': seqs}
+    elif isinstance(seqs, list):
+        # list of sequences
+        return {f'seq_{i+1}': seq for i, seq in enumerate(seqs)}
+    elif isinstance(seqs, dict):
+        # already a dictionary
+        return seqs
+    else:
+        raise MetapredictError("Input must be a string, list of strings, or dictionary of strings.")
