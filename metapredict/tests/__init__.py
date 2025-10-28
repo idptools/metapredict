@@ -44,7 +44,8 @@ def build_seq(min_count=10,max_count=50):
     s = "".join(s)
     return s
 
-
+if 'output' not in os.listdir():
+    os.mkdir('output/')
 
 dir = 'output/'
 for f in os.listdir(dir):
