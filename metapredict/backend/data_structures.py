@@ -5,6 +5,11 @@ class DisorderObject:
     Simple datastructure that is returned from predict_disorder_domains
     and provides dot-notation access to key variables.
     """
+    
+    # OPTIMIZATION: Use __slots__ to reduce memory footprint and slightly improve attribute access speed
+    __slots__ = ('sequence', 'disorder', 'disordered_domain_boundaries', 
+                 'folded_domain_boundaries', '_disordered_domains_cache', 
+                 '_folded_domains_cache')
 
     def __init__(self, seq, meta, disordered_domains, folded_domains, return_numpy=False):
         """
@@ -16,17 +21,12 @@ class DisorderObject:
 
         self.folded_domain_boundaries = folded_domains
 
+        # OPTIMIZATION: Streamlined type conversion - avoid redundant isinstance checks
         # convert numerical vector types as per input argument
         if return_numpy:
-            if not isinstance(meta, np.ndarray):
-                self.disorder = np.array(meta)
-            else:
-                self.disorder = meta
+            self.disorder = np.asarray(meta) if not isinstance(meta, np.ndarray) else meta
         else:
-            if isinstance(meta, np.ndarray):
-                self.disorder = meta.tolist()
-            else:
-                self.disorder = meta
+            self.disorder = meta.tolist() if isinstance(meta, np.ndarray) else meta
 
         # Cache for domain sequences to avoid recomputation
         self._disordered_domains_cache = None

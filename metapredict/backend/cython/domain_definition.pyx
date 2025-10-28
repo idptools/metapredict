@@ -47,8 +47,9 @@ cdef binerize_function(double[:]  idr_score, double disorder_threshold):
 ##
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int sum_array(int start, int end, np.ndarray[np.int32_t, ndim=1] B):
+cdef inline int sum_array(int start, int end, np.ndarray[np.int32_t, ndim=1] B):
     """
+    OPTIMIZATION: Made inline for better performance (kept original ndarray type for speed).
     This function is actually where most of the performance boost for cythonizing this whole
     thing comes from. The first loop in the domain decomposition code has a TON of calls
     to np.sum for very small arrays which kills performance. By writing our own implementation
@@ -85,8 +86,9 @@ cdef int sum_array(int start, int end, np.ndarray[np.int32_t, ndim=1] B):
 ##
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double mean_array(int start, int end, double[:] values):
+cdef inline double mean_array(int start, int end, double[:] values):
     """
+    OPTIMIZATION: Made inline for better performance (kept memoryview as it was already optimized).
     Fast C-level mean computation for array slices. Similar performance benefit to sum_array.
 
     Parameters
@@ -98,7 +100,7 @@ cdef double mean_array(int start, int end, double[:] values):
         Ending index (exclusive)
 
     values : double[:]
-        Array of disorder values
+        Array of disorder values (memoryview for faster access)
 
     Returns
     -----------------
@@ -195,8 +197,9 @@ cpdef build_domains_from_values(double[:]  values,
             else:
                 #if np.sum(B[p1:p2]) == g and np.sum(B[p3:p4]) == g:
                 if sum_array(p1,p2,B) == g and sum_array(p3,p4,B) == g:
-                
-                    B[p2:p3] = [1]*g
+                    # OPTIMIZATION: Use C loop instead of Python list creation
+                    for k in range(p2, p3):
+                        B[k] = 1
                 i = i + 1
 
             if i + 3*g >= len(B):

@@ -106,9 +106,9 @@ def build_DisorderObject(s,
                                                   gap_closure=gap_closure,
                                                   use_python=use_slow)
 
-    ## assemble the IDRs and FD boundaries - extract just start/end positions
-    IDRs = [[local_idr[0], local_idr[1]] for local_idr in return_tuple[1]]
-    FDs = [[local_fd[0], local_fd[1]] for local_fd in return_tuple[2]]
+    ## OPTIMIZATION: get_domains now returns boundaries directly (no need to extract)
+    IDRs = return_tuple[1]
+    FDs = return_tuple[2]
 
     # build an DisorderObject and return it!
     return _DisorderObject(s, disorder, IDRs, FDs, return_numpy=return_numpy)

@@ -398,12 +398,13 @@ def get_domains(sequence,
                                                              override_folded_domain_minsize=override_folded_domain_minsize)
     else:
 
-        # if needed, cast smoothed disorder to be double (bcause the Cython function requires this).
+        # if needed, cast smoothed disorder to be double (because the Cython function requires this).
         if smoothed_disorder.dtype != np.float64:
             smoothed_disorder = smoothed_disorder.astype(np.float64)
         
+        # OPTIMIZATION: Pass disorder_threshold as float64 directly without np.double() wrapper
         disordered_domain_info = CYTHON_build_domains_from_values(smoothed_disorder,
-                                                                  np.double(disorder_threshold),
+                                                                  float(disorder_threshold),
                                                                   minimum_IDR_size=minimum_IDR_size,
                                                                   minimum_folded_domain=minimum_folded_domain,
                                                                   gap_closure=gap_closure,
@@ -411,16 +412,10 @@ def get_domains(sequence,
                                          
                                                          
 
-    # finally cycle through and get the actual IDR and FD sequences. Note the if len(d) ==2 means we
-    # skip over cases where no FDs or no IDRs were found
-    idrs = []
-    for d in disordered_domain_info[0]:
-        if len(d) == 2:
-            idrs.append([d[0], d[1], sequence[d[0]:d[1]]])
-
-    fds = []
-    for d in disordered_domain_info[1]:
-        if len(d) == 2:
-            fds.append([d[0], d[1], sequence[d[0]:d[1]]])
+    # finally cycle through and get the actual IDR and FD boundaries.
+    # OPTIMIZATION: Only return boundaries, not sequences (sequences are never used by callers
+    # and DisorderObject lazily computes them when needed)
+    idrs = disordered_domain_info[0]
+    fds = disordered_domain_info[1]
 
     return [smoothed_disorder, idrs, fds]
