@@ -177,16 +177,9 @@ def __build_domains_from_values(values,
             if i + 3*g >= len(B):
                 finished = True
 
-    # Part 2 - remove domains that are too small - we adde the '-' caps so we can use
+    # Part 2 - remove domains that are too small - we add the '-' caps so we can use
     # replace and distinguish c/n terminal values
-    B_string = '-'
-    for i in B:
-        if i == 1:
-            B_string = B_string+"1"
-        else:
-            B_string = B_string+"0"
-
-    B_string = B_string+'-'
+    B_string = ''.join(['-'] + ['1' if i == 1 else '0' for i in B] + ['-'])
 
     # for sizes of contigous stretches that are up minimum_IDR_size + 1
     # replace with empty ('0') strings

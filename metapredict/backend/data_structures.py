@@ -12,8 +12,6 @@ class DisorderObject:
         """
         self.sequence = seq
 
-        self.disorder = meta 
-
         self.disordered_domain_boundaries = disordered_domains
 
         self.folded_domain_boundaries = folded_domains
@@ -22,35 +20,35 @@ class DisorderObject:
         if return_numpy:
             if not isinstance(meta, np.ndarray):
                 self.disorder = np.array(meta)
-
-            if not isinstance(meta, np.ndarray):
-                self.meta = np.array(meta)
-        
+            else:
+                self.disorder = meta
         else:
-
             if isinstance(meta, np.ndarray):
                 self.disorder = meta.tolist()
+            else:
+                self.disorder = meta
 
-            if isinstance(meta, np.ndarray):
-                self.meta = meta.tolist()        
+        # Cache for domain sequences to avoid recomputation
+        self._disordered_domains_cache = None
+        self._folded_domains_cache = None
 
     @property
     def disordered_domains(self):
-        return self.__get_domains(self.disordered_domain_boundaries)
-
+        if self._disordered_domains_cache is None:
+            self._disordered_domains_cache = self.__get_domains(self.disordered_domain_boundaries)
+        return self._disordered_domains_cache
 
     @property
     def folded_domains(self):
-        return self.__get_domains(self.folded_domain_boundaries)
-            
+        if self._folded_domains_cache is None:
+            self._folded_domains_cache = self.__get_domains(self.folded_domain_boundaries)
+        return self._folded_domains_cache
+
     def __get_domains(self, b):
-        doms = []
-        for local in b:
-            doms.append(self.sequence[local[0]:local[1]])
-        return doms
+        return [self.sequence[local[0]:local[1]] for local in b]
 
     def __str__(self):
-        rs =  f"DisorderObject for sequence with {len(self.sequence)} residues, {len(self.disordered_domains)} IDRs, and {len(self.folded_domains)} folded domains\n"
+        rs =  f"DisorderObject for sequence with {len(self.sequence)} residues, {len(self.disordered_domain_boundaries)} IDRs, and {len(self.folded_domain_boundaries)} folded domains\n"
         rs = rs + f"Available dot variables are:\n  .sequence\n  .disorder\n  .disordered_domain_boundaries\n  .folded_domain_boundaries\n  .disordered_domains\n  .folded_domains\n"
 
         return rs

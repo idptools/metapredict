@@ -1,10 +1,7 @@
 import numpy as np
 cimport numpy as np
+cimport cython
 from libc.math cimport round
-
-import numpy as np
-cimport numpy as np
-cimport cython 
 
 from cpython cimport array
 import array
@@ -49,7 +46,7 @@ cdef binerize_function(double[:]  idr_score, double disorder_threshold):
 ## ................................................................................................
 ##
 @cython.boundscheck(False)
-@cython.wraparound(False) 
+@cython.wraparound(False)
 cdef int sum_array(int start, int end, np.ndarray[np.int32_t, ndim=1] B):
     """
     This function is actually where most of the performance boost for cythonizing this whole
@@ -61,27 +58,64 @@ cdef int sum_array(int start, int end, np.ndarray[np.int32_t, ndim=1] B):
     Parameters
     -----------------
     start : int
-        Note we don't bounds check so NEED to be sure that start >=0 or this will cause a 
+        Note we don't bounds check so NEED to be sure that start >=0 or this will cause a
         segfault (and the 'kernel will die' from Python's perspective)
 
     end : int
-        Note we don't bounds check so NEED to be sure that end < len(B) or this will cause a 
+        Note we don't bounds check so NEED to be sure that end < len(B) or this will cause a
         segfault (and the 'kernel will die' from Python's perspective)
 
     B : np.ndarray[np.int32_t, ndim=1]
-        Binary array - i.e. a 1D array of integers 
+        Binary array - i.e. a 1D array of integers
 
     Returns
     -----------------
     int
         This function returns an integer which is equal to the sum of the values
-        in the binary array between 
+        in the binary array between
     """
-    
+
     cdef int i, total_sum = 0
     for i in range(start, end):
         total_sum += B[i]
     return total_sum
+
+
+## ................................................................................................
+##
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef double mean_array(int start, int end, double[:] values):
+    """
+    Fast C-level mean computation for array slices. Similar performance benefit to sum_array.
+
+    Parameters
+    -----------------
+    start : int
+        Starting index (inclusive)
+
+    end : int
+        Ending index (exclusive)
+
+    values : double[:]
+        Array of disorder values
+
+    Returns
+    -----------------
+    double
+        Mean of values[start:end]
+    """
+    cdef int i
+    cdef double total_sum = 0.0
+    cdef int count = end - start
+
+    if count == 0:
+        return 0.0
+
+    for i in range(start, end):
+        total_sum += values[i]
+
+    return total_sum / count
 
 
 ## ................................................................................................
@@ -168,27 +202,34 @@ cpdef build_domains_from_values(double[:]  values,
             if i + 3*g >= len(B):
                 break
 
-    # build a binary string
-    B_string = '-' + ''.join(map(str, B)) + '-'
-
+    # Part 2 - remove domains that are too small
+    # Work directly with the array instead of converting to/from strings
+    cdef int j, k, count, all_ones
+    cdef int B_len = len(B)
 
     for i in range(1, minimum_IDR_size + 1):
+        # Scan for stretches of i consecutive 1s and replace with 0s if bounded by 0s or edges
+        j = 0
+        while j <= B_len - i:
+            # Check if we have i consecutive 1s starting at position j
+            all_ones = 1
+            for k in range(j, j + i):
+                if B[k] != 1:
+                    all_ones = 0
+                    break
 
-        # 011110 -> 000000
-        B_string = B_string.replace('0' + i*'1' + '0', '0' + i*'0' + '0')
+            if all_ones:
+                # Check boundaries: either edge or 0
+                # Start boundary: j==0 (edge) or B[j-1]==0
+                # End boundary: j+i==B_len (edge) or B[j+i]==0
+                if (j == 0 or B[j-1] == 0) and (j + i == B_len or B[j + i] == 0):
+                    # Replace this stretch with 0s
+                    for k in range(j, j + i):
+                        B[k] = 0
+                    j += i  # Skip past the replaced region
+                    continue
 
-        # -11110 -> -00000
-        B_string = B_string.replace('-'+i*'1' + '0', '-'+i*'0' + '0')
-
-        # 01111- -> 00000-
-        B_string = B_string.replace('0' + i*'1'+'-', '0' + i*'0'+'-')
-                   
-        # -1111- -> -0000-
-        B_string = B_string.replace('-' + i*'1'+'-', '-' + i*'0'+'-')
-
-    # 1 to -1 to cut off the artificial caps we added
-    for i in range(1, len(B_string)-1):
-        B[i-1] = int(B_string[i])
+            j += 1
 
     # Part 3 - extract domain boundaries
     if B[0] == 1:
@@ -227,17 +268,17 @@ cpdef build_domains_from_values(double[:]  values,
     # Part 4 - final closure of larger gaps if close to disorder_threshold
     for d in local_gaps:
         if d[1]-d[0] < minimum_folded_domain:
-            if np.mean(values[d[0]:d[1]]) > disorder_threshold*0.75:
+            if mean_array(d[0], d[1], values) > disorder_threshold*0.75:
                 local_domains.append(d)
                 continue
 
         if d[1]-d[0] < folded_domain_min_size_1:
-            if np.mean(values[d[0]:d[1]]) > disorder_threshold*0.35:
+            if mean_array(d[0], d[1], values) > disorder_threshold*0.35:
                 local_domains.append(d)
                 continue
 
         if d[1]-d[0] < folded_domain_min_size_2:
-            if np.mean(values[d[0]:d[1]]) > disorder_threshold*0.25:
+            if mean_array(d[0], d[1], values) > disorder_threshold*0.25:
                 local_domains.append(d)
                 continue
 
