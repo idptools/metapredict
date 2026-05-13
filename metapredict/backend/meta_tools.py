@@ -365,7 +365,7 @@ def valid_version(version_specified, prediction_type):
 
 
 
-def write_caid_format(input_dict, output_path, version):
+def write_caid_format(input_dict, output_path, version, use_fixed_cutoff=None):
     '''
     Function that takes in a dictionary and outputs a file in the format as 
     specified by IDPcentrail Critical Assessment of Intrinsic protein Disorder
@@ -385,10 +385,15 @@ def write_caid_format(input_dict, output_path, version):
     Parameters
     ----------
     input_dict : dict
-        input dictionary of disorder scores. The Key should be the
-        entry_id as as string and the associated value should be a list where the
-        first element of the list is the corresponding sequence as a string and the
-        second item of the list is the corresponding predictions as float values.
+        If ``use_fixed_cutoff`` is None, this should map entry_id (str) to a
+        DisorderObject (exposing ``.sequence``, ``.disorder`` and
+        ``.disordered_domain_boundaries`` -- a list of [start, end) Python
+        indexed boundaries marking IDRs). The IDR boundaries are used to
+        assign the per-residue binary classification.
+
+        If ``use_fixed_cutoff`` is a float, this should map entry_id (str) to
+        a 2-element list/tuple where element 0 is the sequence (str) and
+        element 1 is the per-residue disorder scores (list/array of floats).
 
     output_path : str
         the path where to save each generated file. The function will save a file
@@ -397,6 +402,13 @@ def write_caid_format(input_dict, output_path, version):
 
     version : str
         The version of the network used to make the predictions. Options are 'v1', 'v2', 'v3'
+
+    use_fixed_cutoff : float or None
+        If None (default) the binary CAID classification is taken from the
+        DisorderObject IDR boundaries (1 inside an IDR, 0 outside). If a float
+        between 0 and 1 is supplied, the classification is instead set by
+        thresholding the per-residue disorder score against this cutoff
+        (score >= cutoff -> 1).
 
     Returns
     -------
@@ -407,25 +419,22 @@ def write_caid_format(input_dict, output_path, version):
     '''
 
     # first make a list of all of the keys in the dict
-    entry_ids = []
+    entry_ids = list(input_dict.keys())
 
-    for entry_id in input_dict.keys():
-        entry_ids.append(entry_id)
-
-    # make sure output_path is a dir
-    if os.path.isdir(output_path)==False:
+    # Ensure output_path exists and is a directory
+    if not os.path.exists(output_path):
+        try:
+            os.makedirs(output_path, exist_ok=True)
+        except Exception as e:
+            raise MetapredictError(f'Could not create output directory {output_path}: {e}')
+    elif not os.path.isdir(output_path):
         raise MetapredictError(f'Please specify output_path as a directory to save generated files. {output_path} is not a valid directory.')
 
     version=valid_version(version, prediction_type='disorder')
 
-    if version.upper()=='V3':
-        cutoff_value=0.5
-    elif version.upper()=='V2':
-        cutoff_value=0.5
-    elif version.upper()=='V1':
-        cutoff_value=0.42
-    else:
-        raise Exception('invalid version detected!')
+    # validate the fixed cutoff if one was provided
+    if use_fixed_cutoff is not None:
+        valid_range(use_fixed_cutoff, 0.0, 1.0)
 
     # now iterate through the dict and write one file per sequence. 
     for ids in entry_ids:
@@ -434,9 +443,30 @@ def write_caid_format(input_dict, output_path, version):
             write_cur_id_header = '>'+cur_id
         else:
             write_cur_id_header = cur_id
-        cur_sequence = input_dict[cur_id][0]
-        cur_scores = input_dict[cur_id][1]
-        
+
+        entry = input_dict[cur_id]
+
+        if use_fixed_cutoff is None:
+            # domain-based binary classification using DisorderObject
+            cur_sequence = entry.sequence
+            cur_scores = entry.disorder
+
+            # build a per-residue binary mask from the IDR domain boundaries
+            # (boundaries are half-open Python-indexed [start, end) intervals).
+            cur_binary_mask = [0] * len(cur_sequence)
+            for boundary in entry.disordered_domain_boundaries:
+                start, end = boundary[0], boundary[1]
+                for i in range(start, end):
+                    cur_binary_mask[i] = 1
+        else:
+            # threshold-based binary classification using raw scores.
+            cur_sequence = entry[0]
+            cur_scores = entry[1]
+            cur_binary_mask = [
+                get_binary_prediction(s, cutoff_value=use_fixed_cutoff)
+                for s in cur_scores
+            ]
+
         # open the file to write to
         with open(f'{output_path}/{cur_id}.caid', 'w') as current_output:
 
@@ -447,7 +477,7 @@ def write_caid_format(input_dict, output_path, version):
             for res_and_score_index in range(0, len(cur_sequence)):
                 cur_residue = cur_sequence[res_and_score_index]
                 cur_score = cur_scores[res_and_score_index]
-                cur_binary = get_binary_prediction(cur_score, cutoff_value=cutoff_value)
+                cur_binary = cur_binary_mask[res_and_score_index]
                 write_score=str(round(float(cur_score),3))
                 if len(write_score) < 5:
                     for i in range(0, 5-len(write_score)):
@@ -455,8 +485,6 @@ def write_caid_format(input_dict, output_path, version):
 
                 # write as tsv the caid formatted info
                 current_output.write(f'{res_and_score_index+1}\t{cur_residue}\t{write_score}\t{cur_binary}\n')
-        
-        current_output.close()
 
 # check max length
 def exceeds_max_length(data, max_length=65535):

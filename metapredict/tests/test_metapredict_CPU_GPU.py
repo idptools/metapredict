@@ -12,6 +12,12 @@ import protfasta
 import os
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
 import numpy as np
+import pytest
+try:
+    import torch
+    cuda_available = torch.cuda.is_available()
+except ImportError:
+    cuda_available = False
 
 
 # get some sequences to test out
@@ -41,18 +47,21 @@ def test_disorder_v3_cpu(sequences=sequences):
     print(f'Running metapredict version {version} on {device}\n')
     meta.predict_disorder(sequences, version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disorder_v1_gpu(sequences=sequences):
     version='v1'
     device='cuda'
     print(f'Running metapredict version {version} on {device}\n')
     meta.predict_disorder(sequences, version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disorder_v2_gpu(sequences=sequences):
     version='v2'
     device='cuda'
     print(f'Running metapredict version {version} on {device}\n')
     meta.predict_disorder(sequences, version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disorder_v3_gpu(sequences=sequences):
     version='v3'
     device='cuda'
@@ -71,12 +80,14 @@ def test_pLDDT_v2_cpu(sequences=sequences):
     print(f'Running pLDDT prediction version {version} on {device}\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_pLDDT_v1_gpu(sequences=sequences):
     version='v1'
     device='cuda'
     print(f'Running pLDDT prediction version {version} on {device}\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_pLDDT_v2_gpu(sequences=sequences):
     version='v2'
     device='cuda'
@@ -101,18 +112,21 @@ def test_force_disable_batch_disorder_v3_cpu(sequences=sequences):
     print(f'Running metapredict version {version} on {device}, no batch prediction\n')
     meta.predict_disorder(sequences, version=version, device=device, force_disable_batch=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_force_disable_batch_disorder_v1_gpu(sequences=sequences):
     version='v1'
     device='cuda'
     print(f'Running metapredict version {version} on {device}\n, no batch prediction')
     meta.predict_disorder(sequences, version=version, device=device, force_disable_batch=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_force_disable_batch_disorder_v2_gpu(sequences=sequences):
     version='v2'
     device='cuda'
     print(f'Running metapredict version {version} on {device}\n, no batch prediction')
     meta.predict_disorder(sequences, version=version, device=device, force_disable_batch=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_force_disable_batch_disorder_v3_gpu(sequences=sequences):
     version='v3'
     device='cuda'
@@ -131,12 +145,14 @@ def test_force_disable_batch_pLDDT_v2_cpu(sequences=sequences):
     print(f'Running pLDDT prediction version {version} on {device}, no batch prediction\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device, force_disable_batch=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_force_disable_batch_pLDDT_v1_gpu(sequences=sequences):
     version='v1'
     device='cuda'
     print(f'Running pLDDT prediction version {version} on {device}, no batch prediction\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device, force_disable_batch=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_force_disable_batch_pLDDT_v2_gpu(sequences=sequences):
     version='v2'
     device='cuda'
@@ -162,18 +178,21 @@ def test_disable_pack_n_pad_disorder_v3_cpu(sequences=sequences):
     print(f'Running metapredict version {version} on {device}, no pack-n-pad\n')
     meta.predict_disorder(sequences, version=version, device=device, disable_pack_n_pad=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disable_pack_n_pad_disorder_v1_gpu(sequences=sequences):
     version='v1'
     device='cuda'
     print(f'Running metapredict version {version} on {device}, no pack-n-pad\n')
     meta.predict_disorder(sequences, version=version, device=device, disable_pack_n_pad=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disable_pack_n_pad_disorder_v2_gpu(sequences=sequences):
     version='v2'
     device='cuda'
     print(f'Running metapredict version {version} on {device}, no pack-n-pad\n')
     meta.predict_disorder(sequences, version=version, device=device, disable_pack_n_pad=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disable_pack_n_pad_disorder_v3_gpu(sequences=sequences):
     version='v3'
     device='cuda'
@@ -192,12 +211,14 @@ def test_disable_pack_n_pad_pLDDT_v2_cpu(sequences=sequences):
     print(f'Running pLDDT prediction version {version} on {device}, no pack-n-pad\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device, disable_pack_n_pad=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disable_pack_n_pad_pLDDT_v1_gpu(sequences=sequences):
     version='v1'
     device='cuda'
     print(f'Running pLDDT prediction version {version} on {device}, no pack-n-pad\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device, disable_pack_n_pad=True)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disable_pack_n_pad_pLDDT_v2_gpu(sequences=sequences):
     version='v2'
     device='cuda'
@@ -212,6 +233,7 @@ def close_enough(val1, val2, allowed_error=0.001):
     else:
         return False
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disorder_v1_cpu_vs_gpu(sequences=sequences):
     version='v1'
     print(f'Running metapredict version {version}, comparing CPU vs GPU scores.\n')
@@ -224,6 +246,7 @@ def test_disorder_v1_cpu_vs_gpu(sequences=sequences):
         for i in range(len(cur_cpu_scores)):
             assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disorder_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
     print(f'Running metapredict version {version}, comparing CPU vs GPU scores.\n')
@@ -236,6 +259,7 @@ def test_disorder_v2_cpu_vs_gpu(sequences=sequences):
         for i in range(len(cur_cpu_scores)):
             assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_disorder_v3_cpu_vs_gpu(sequences=sequences):
     version='v3'
     print(f'Running metapredict version {version}, comparing CPU vs GPU scores.\n')
@@ -248,6 +272,7 @@ def test_disorder_v3_cpu_vs_gpu(sequences=sequences):
         for i in range(len(cur_cpu_scores)):
             assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i])==True
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
     version='v1'
     print(f'Running pLDDT prediction version {version}, comparing CPU vs GPU scores.\n')
@@ -262,6 +287,7 @@ def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
             # so we want to use 0.1 here instead of 0.001
             assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i], allowed_error=0.1)==True
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_pLDDT_v2_cpu_vs_gpu(sequences=sequences):
     version='v2'
     print(f'Running pLDDT prediction version {version}, comparing CPU vs GPU scores.\n')
@@ -292,18 +318,21 @@ def test_single_sequence_disorder_v3_cpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGS
     print(f'Running metapredict version {version} on {device}\n')
     meta.predict_disorder(sequences, version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_single_sequence_disorder_v1_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
     version='v1'
     device='cuda'
     print(f'Running metapredict version {version} on {device}\n')
     meta.predict_disorder(sequences, version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_single_sequence_disorder_v2_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
     version='v2'
     device='cuda'
     print(f'Running metapredict version {version} on {device}\n')
     meta.predict_disorder(sequences, version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_single_sequence_disorder_v3_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
     version='v3'
     device='cuda'
@@ -322,12 +351,14 @@ def test_single_sequence_pLDDT_v2_cpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSG
     print(f'Running pLDDT prediction version {version} on {device}\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_single_sequence_pLDDT_v1_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
     version='v1'
     device='cuda'
     print(f'Running pLDDT prediction version {version} on {device}\n')
     meta.predict_pLDDT(sequences, pLDDT_version=version, device=device)
 
+@pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
 def test_single_sequence_pLDDT_v2_gpu(sequences='GSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGSGS'):
     version='v2'
     device='cuda'

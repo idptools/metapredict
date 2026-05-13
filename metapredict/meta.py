@@ -2077,7 +2077,8 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
 # ..........................................................................................
 #
-def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK):
+def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
+                          use_fixed_cutoff=None):
     '''
     executing script for generating a caid-compliant output file for disorder
     predictions using a .fasta file as the input.
@@ -2096,6 +2097,14 @@ def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK):
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3. 
 
+    use_fixed_cutoff : float or None
+        If None (default) the per-residue binary classification in the CAID
+        output is derived from the metapredict domain-decomposition algorithm
+        (i.e. residues inside an IDR are classified as 1, otherwise 0). If a
+        float between 0 and 1 is provided, the binary classification is
+        instead assigned by simple thresholding of the per-residue disorder
+        score against this cutoff (score >= cutoff -> 1).
+
     Returns
     --------
     None
@@ -2106,14 +2115,23 @@ def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK):
     # check version and make sure it is an uppercase string
     version = _meta_tools.valid_version(version, 'disorder')
 
+    # validate the fixed cutoff if one was provided
+    if use_fixed_cutoff is not None:
+        _meta_tools.valid_range(use_fixed_cutoff, 0.0, 1.0)
+
     # read in the ids and seqs as a list of lists where each list has a first element that corresponds
     # to the ID and the second corresponds to the sequence. Convert invalid amino acids if needed.
     entry_id_and_seqs = _protfasta.read_fasta(input_fasta, return_list=False, invalid_sequence_action = 'convert')
 
-    # predict
-    predictions = _predict(entry_id_and_seqs, version=version, return_numpy=False)
+    # If a fixed cutoff was requested we don't need the domain decomposition;
+    # otherwise return DisorderObjects so we can use IDR domain boundaries to
+    # assign the binary disorder classifications in the CAID output.
+    return_domains = use_fixed_cutoff is None
+    predictions = _predict(entry_id_and_seqs, version=version, return_numpy=False,
+                           return_domains=return_domains)
 
     # write the output file
-    _meta_tools.write_caid_format(predictions, output_path, version=version)
+    _meta_tools.write_caid_format(predictions, output_path, version=version,
+                                  use_fixed_cutoff=use_fixed_cutoff)
 
 
