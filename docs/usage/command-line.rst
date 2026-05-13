@@ -756,10 +756,18 @@ The third argument specifies the version of Metapredict to use. The options are:
 - ``v2``
 - ``v3``
 
+
 **Example**:
 
 .. code-block:: bash
 
     $ metapredict-caid proteins.fasta output/ v3
+
+CAID Output Binarization: Algorithmic Domain Assignment
+------------------------------------------------------
+
+By default, ``metapredict-caid`` uses an algorithmic approach to assign binary labels for IDRs and folded domains. Instead of applying a strict per-residue disorder score cutoff, metapredict decomposes each sequence into contiguous intrinsically disordered regions (IDRs) and folded domains using a domain segmentation algorithm. This results in more biologically meaningful domain assignments that better reflect the underlying disorder/folded state segmentation.
+
+If you prefer the legacy strict cutoff-based assignment, you can use the ``--use-fixed-cutoff`` flag to specify a threshold for per-residue binarization.
 
 
