@@ -1,6 +1,6 @@
 # metapredict: A machine learning-based tool for predicting protein disorder.
 
-### Last updated November 2024
+### Last updated May 2026
 
 ## Current default version: V3
 In November 2024, we changed the default version of metapredict from V2 to V3. Small increments (3.0.x) may be made as bug fixes or feature enhancements.
