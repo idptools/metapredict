@@ -1,3 +1,4 @@
+"""
 # code to carry out the caid2 analsis for Disorder PDB dataset. 
 
 '''
@@ -8,7 +9,7 @@ facing.
 '''
 
 
-"""
+
 #  This is commented out because it requires sklearn. Given that none of the stuff
 #  in the analysis part of metapredict is necessary for users, I'm leaving
 #  stuff back here commenting out to avoid addint sklearn as another dependency. 
@@ -20,6 +21,20 @@ from metapredict.backend.network_parameters import metapredict_networks, pplddt_
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, precision_recall_curve
 import math
 import matplotlib.pyplot as plt
+
+def use_domains_function(seq_domain):
+    # domain-based binary classification using DisorderObject
+    cur_sequence = seq_domain.sequence
+    cur_scores = seq_domain.disorder
+
+    # build a per-residue binary mask from the IDR domain boundaries
+    # (boundaries are half-open Python-indexed [start, end) intervals).
+    cur_binary_mask = [0] * len(cur_sequence)
+    for boundary in seq_domain.disordered_domain_boundaries:
+        start, end = boundary[0], boundary[1]
+        for i in range(start, end):
+            cur_binary_mask[i] = 1
+    return cur_binary_mask
 
 def read_caid2_seq_disorder(caid_file='caid2_disorder_pdb.fasta'):
     '''
@@ -80,7 +95,10 @@ def stretch(scores, base=0.1, top=0.95):
 
 
 
-def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False, smoothing=None, stretch_scores=False):
+def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False, 
+                           smoothing=None, 
+                           stretch_scores=False, 
+                           use_domains=False):
     '''
     function to get the metapredict scores that match
     to each sequence in the caid2 dataset.
@@ -98,6 +116,8 @@ def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False,
         whether to smooth scores over some window. Default=None (no smoothing)
     stretch_scores : bool
         whether to stretch the scores
+    use_domains : bool
+        whether to use domain-based binary classification
 
     Returns
     --------
@@ -127,7 +147,7 @@ def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False,
     
     # now get metapredict predictions.
     if plddt==False:
-        metapredict_scores = predict(caid2_seqs, version=version)
+        metapredict_scores = predict(caid2_seqs, version=version, return_domains=use_domains)
     else:
         metapredict_scores = predict_pLDDT(caid2_seqs, version=version, return_as_disorder_score=True)
 
@@ -151,12 +171,18 @@ def get_metapredict_scores(caid2_seqs_scores, version, cutoff=None, plddt=False,
     results={}
     for s in metapredict_scores:
         name=s
-        sequence=metapredict_scores[s][0]
-        scores=metapredict_scores[s][1]
-        binary_scores=np.array(scores)
-        binary_scores[binary_scores<cutoff] = 0
-        binary_scores[binary_scores>=cutoff] = 1
-        results[name] = {'sequence':sequence, 'scores':scores, 'binary':binary_scores.astype(int).tolist()}
+        if not use_domains:
+            sequence=metapredict_scores[s][0]
+            scores=metapredict_scores[s][1]
+            binary_scores=np.array(scores)
+            binary_scores[binary_scores<cutoff] = 0
+            binary_scores[binary_scores>=cutoff] = 1
+            results[name] = {'sequence':sequence, 'scores':scores, 'binary':binary_scores.astype(int).tolist()}
+        else:
+            sequence=metapredict_scores[s].sequence
+            scores=metapredict_scores[s].disorder
+            binary_scores=np.array(use_domains_function(metapredict_scores[s]))
+            results[name] = {'sequence':sequence, 'scores':scores, 'binary':binary_scores.astype(int).tolist()}
     return results
 
 
@@ -209,7 +235,8 @@ def calc_mcc(metapredict_scores, caid_scores):
     return mcc_value
 
 def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=False,
-    evaluation_fasta='caid2_disorder_pdb.fasta'):
+    evaluation_fasta='caid2_disorder_pdb.fasta',
+    use_domains=False):
     '''
     Calculate the AUC, APS, and F1 max
 
@@ -233,6 +260,9 @@ def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=Fa
         the fasta file to use for evaluation. 
         Default is the caid2_disorder_pdb.fasta
 
+    use_domains : bool
+        Whether to use domain-based binary classification. Default is False (per-residue binary classification)
+
     whether to stretch the scores
 
     Returns
@@ -249,7 +279,7 @@ def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=Fa
     # get caid dict. 
     caid_vals = read_caid2_seq_disorder(caid_file=evaluation_fasta)
     # do metapredict prediction
-    metapredict_vals = get_metapredict_scores(caid_vals, version, cutoff=cutoff, smoothing=smoothing, stretch_scores=stretch_scores)
+    metapredict_vals = get_metapredict_scores(caid_vals, version, cutoff=cutoff, smoothing=smoothing, stretch_scores=stretch_scores, use_domains=use_domains)
     # get linear values for metapredict and caid
     metapredict_linear = []
     caid_linear = ''
@@ -284,7 +314,8 @@ def calculate_stats(version='V2', cutoff=None, smoothing=None, stretch_scores=Fa
 
 
 
-def print_current_network_accuracy(evaluation='all', additional_networks=None):
+
+def print_current_network_accuracy(evaluation='all', additional_networks=None, use_domains=False):
     '''
     Function to print out the current network accuracies. Just a nice
     one-liner to have sitting around. 
@@ -298,6 +329,9 @@ def print_current_network_accuracy(evaluation='all', additional_networks=None):
     additional_networks : list
         additional networks to test. Must be in the 
         metapredict_networks dictionary in network_parameters.py
+
+    use_domains : bool
+    whether to use domain-based binary classification. Default is False (per-residue binary classification)
     '''
     # list of current networks
     nets=['V1', 'V2', 'V3']
@@ -327,7 +361,8 @@ def print_current_network_accuracy(evaluation='all', additional_networks=None):
 
     # add the results for each network 
     for net in nets:
-        results = calculate_stats(version=net)
+        results = calculate_stats(version=net,
+                                  use_domains=use_domains)
         temp=''
         for result in results:
             temp = temp + f'{result} = {results[result]}, '
@@ -336,4 +371,9 @@ def print_current_network_accuracy(evaluation='all', additional_networks=None):
     # print the results
     print(eval_string)
 
+print('no domains')
+print_current_network_accuracy()
+
+print('with domains')
+print_current_network_accuracy(use_domains=True)
 """
