@@ -4,11 +4,15 @@ from metapredict import meta
 
 import numpy as np
 
-from metapredict.backend.cython.domain_definition import build_domains_from_values 
-from metapredict.backend.domain_definition import __build_domains_from_values as  domain_definition
-
-
 import pytest
+
+# This test exists purely to compare the Cython and pure-Python domain
+# decomposition implementations, so it is meaningless (and cannot even import)
+# when the Cython extension has not been compiled for the current environment.
+# Skip the whole module cleanly in that case rather than erroring at collection.
+_cython = pytest.importorskip('metapredict.backend.cython.domain_definition')
+build_domains_from_values = _cython.build_domains_from_values
+from metapredict.backend.domain_definition import __build_domains_from_values as  domain_definition
 
 from . import build_seq
 

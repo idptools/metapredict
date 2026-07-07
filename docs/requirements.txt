@@ -4,16 +4,16 @@
 ###### Requirements without Version Specifiers ######
 versioningit
 sphinx_rtd_theme
-numpy
-torch
+numpy>=2.0
+torch>=2.3
 argparse
 matplotlib
-protfasta
-scipy
+protfasta>=0.1.19
+scipy>=1.13
 urllib3
 tqdm
 getSequence
-pytorch_lightning
+pytorch_lightning>=2.0
 #
 ###### Requirements with Version Specifiers ######
 #   See https://www.python.org/dev/peps/pep-0440/#version-specifiers

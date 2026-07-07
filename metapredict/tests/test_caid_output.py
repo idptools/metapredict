@@ -97,8 +97,10 @@ def test_caid_output_matches_reference(tmp_path):
     # Output to a temp directory
     out_dir = tmp_path
 
-    # Run prediction
-    meta.predict_disorder_caid(fasta_path, str(out_dir), version="v3")
+    # Run prediction. Pin to CPU: the reference .caid files were generated
+    # on CPU and this test does an exact string diff, so cuDNN LSTM's ~1e-4
+    # drift from CPU is enough to change 3rd-decimal scores in the output.
+    meta.predict_disorder_caid(fasta_path, str(out_dir), version="v3", device="cpu")
 
     # List of expected files (from reference dir)
     expected_files = [f for f in os.listdir(ref_dir) if f.endswith(".caid")]

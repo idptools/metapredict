@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy
 from scipy.signal import savgol_filter
@@ -8,14 +10,44 @@ from metapredict.metapredict_exceptions import DomainError
 # in turn means it can be easily built on readthedocs without needing to compile Cython in line there.
 # This fix was added in May 2023
 try:
-    from .cython.domain_definition import build_domains_from_values as CYTHON_build_domains_from_values    
-except ModuleNotFoundError as e:
-    print('ERROR: Cython module was not found. This will happen if your installation did not correctly compile the cython modules')
+    from .cython.domain_definition import build_domains_from_values as CYTHON_build_domains_from_values
+    _CYTHON_AVAILABLE = True
+except (ModuleNotFoundError, ImportError):
+    # ModuleNotFoundError: extension was never compiled.
+    # ImportError: a compiled .so exists but is for a different platform/python
+    #   version and cannot be loaded (common in editable/dev installs).
+    # In either case we fall back to the pure-Python implementation at runtime
+    # (see get_domains), so we only need a stub whose signature matches the real
+    # call site - this way a *direct* call still raises a clear message rather
+    # than an opaque "unexpected keyword argument" TypeError.
+    _CYTHON_AVAILABLE = False
+
+    def CYTHON_build_domains_from_values(values,
+                                         disorder_threshold,
+                                         minimum_IDR_size=12,
+                                         minimum_folded_domain=50,
+                                         gap_closure=10,
+                                         override_folded_domain_minsize=False):
+        raise ModuleNotFoundError('Could not import build_domains_from_values() in '
+                                  'metapredict.backend.cython.domain_definition. The Cython '
+                                  'module is not compiled for this environment.')
 
 
-    # build a mock function
-    def CYTHON_build_domains_from_values(a,b,c,d,e,f):
-        raise ModuleNotFoundError('Could not import build_domains_from_values() in metapredict.backend.cython.domain_definition. Cython code has not compiled')
+# module-level flag so the pure-Python fallback warning is only emitted once
+_warned_cython_fallback = False
+
+
+def _warn_cython_fallback():
+    """Emit a one-time warning when we silently fall back to the pure-Python
+    domain-decomposition implementation because the Cython extension could not
+    be loaded."""
+    global _warned_cython_fallback
+    if not _warned_cython_fallback:
+        warnings.warn('The metapredict Cython domain-decomposition module could not be loaded '
+                      'for this environment; falling back to the slower pure-Python '
+                      'implementation. Results are equivalent, but reinstall/recompile '
+                      'metapredict to restore full speed.', RuntimeWarning, stacklevel=2)
+        _warned_cython_fallback = True
 
     
 """
@@ -395,8 +427,14 @@ def get_domains(sequence,
     #smoothed_disorder = np.where(smoothed_disorder<0, 0, smoothed_disorder)
     #smoothed_disorder = np.where(smoothed_disorder>1, 1, smoothed_disorder)    
 
-    # Using smoothed disorder extract out domains
-    if use_python:
+    # Using smoothed disorder extract out domains. Use the pure-Python
+    # implementation if explicitly requested OR if the Cython extension could
+    # not be loaded for this environment (in which case warn once).
+    use_python_impl = use_python or not _CYTHON_AVAILABLE
+    if use_python_impl and not use_python:
+        _warn_cython_fallback()
+
+    if use_python_impl:
         disordered_domain_info = __build_domains_from_values(smoothed_disorder,
                                                              disorder_threshold,
                                                              minimum_IDR_size=minimum_IDR_size,
@@ -408,7 +446,7 @@ def get_domains(sequence,
         # if needed, cast smoothed disorder to be double (bcause the Cython function requires this).
         if smoothed_disorder.dtype != np.float64:
             smoothed_disorder = smoothed_disorder.astype(np.float64)
-        
+
         disordered_domain_info = CYTHON_build_domains_from_values(smoothed_disorder,
                                                                   np.double(disorder_threshold),
                                                                   minimum_IDR_size=minimum_IDR_size,

@@ -19,11 +19,11 @@ from tqdm import tqdm
 import gc
 
 # local imports
-from metapredict.backend.meta_tools import exceeds_max_length
+from metapredict.backend.meta_tools import exceeds_max_length, valid_batch_size
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 from metapredict.backend import domain_definition as _domain_definition
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
-from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT, MAX_CUDA_LENGTH
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT, MAX_CUDA_LENGTH, DEFAULT_BATCH_SIZE_BY_DEVICE
 from metapredict.backend import encode_sequence
 from metapredict.backend import architectures
 from metapredict.metapredict_exceptions import MetapredictError
@@ -151,54 +151,81 @@ def size_filter(inseqs):
 # ....................................................................................
 #
 
-def check_device(use_device, default_device='cuda'):
+def mps_is_available():
     '''
-    Function to check the device was correctly set. 
-    
+    Helper that safely reports whether an Apple-silicon MPS backend is available.
+    torch.backends.mps only exists in PyTorch >= 1.12, so we guard with hasattr
+    to avoid an AttributeError on older builds.
+
+    Returns
+    ---------------
+    bool
+        True if the MPS backend is present and available, otherwise False.
+    '''
+    return hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+
+
+def check_device(use_device, default_device='gpu'):
+    '''
+    Function to check the device was correctly set.
+
     Parameters
     ---------------
-    use_device : int or str 
-        Identifier for the device to be used for predictions. 
+    use_device : int or str
+        Identifier for the device to be used for predictions.
         Possible inputs: 'cpu', 'mps', 'cuda', 'cuda:int', or an int that corresponds to
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
-        cuda.is_available() returns False, instead of falling back to CPU, 
+        cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
-        using CUDA as you were expecting. 
+        using CUDA as you were expecting.
         If 'mps' is specified and mps is not available, an exception will be raised.
 
-    default_device : str
-        The default device to use if device=None.
-        If device=None and default_device != 'cpu' and default_device is
-        not available, device_string will be returned as 'cpu'.
-        I'm adding this in case we want to change the default architecture in the future. 
-        For example, we could make default device 'gpu' where it will check for 
-        cuda or mps and use either if available and then otherwise fall back to CPU. 
+    default_device : str or list
+        The device to auto-select when use_device is None. Either a mode string
+        or an ordered list of devices to try. Options are:
+
+        - 'gpu' - prefer an available accelerator, checking cuda, then mps, then cpu.
+        - 'cuda' - use cuda if available, otherwise fall back to cpu.
+        - 'mps' - use mps if available, otherwise fall back to cpu.
+        - 'cpu' - always use cpu.
+        - an ordered list such as ['cuda', 'cpu', 'mps'] - try each device in
+          order and return the first one that is available. This is how the
+          per-network default device preferences are expressed.
 
     Returns
     ---------------
     device_string : str
-        returns the device string as a string. 
+        returns the device string as a string.
     '''
-    # if use_device is None, check for cuda. 
+    # if use_device is None, auto-select based on the requested default.
     if use_device==None:
-        # check if default device is available.
-        if default_device=='cpu':
-            return 'cpu'
-        elif default_device=='mps':
-            if torch.backends.mps.is_available():
-                return default_device
-            else:
-                return 'cpu'
-        elif default_device=='cuda':
-            if torch.cuda.is_available():
-                return 'cuda'
-            else:
-                return 'cpu'
+        # resolve the preference into an ordered list of devices to try
+        if isinstance(default_device, (list, tuple)):
+            device_order = list(default_device)
+        elif default_device == 'gpu':
+            device_order = ['cuda', 'mps', 'cpu']
+        elif default_device in ('cuda', 'mps', 'cpu'):
+            device_order = [default_device, 'cpu']
         else:
-            raise MetapredictError("Default device can only be set to 'cpu', 'mps', or 'cuda'")
+            raise MetapredictError("Default device must be 'gpu', 'cuda', 'mps', 'cpu', or an ordered list of these")
+
+        # return the first available device in the requested order
+        for dev in device_order:
+            if dev == 'cpu':
+                return 'cpu'
+            elif dev == 'cuda':
+                if torch.cuda.is_available():
+                    return 'cuda'
+            elif dev == 'mps':
+                if mps_is_available():
+                    return 'mps'
+            else:
+                raise MetapredictError(f"Invalid device '{dev}' in device order; must be one of 'cpu', 'cuda', 'mps'")
+        # nothing in the requested order was available -> fall back to cpu
+        return 'cpu'
 
 
-    else:  
+    else:
         # if input is an int, make it a string and then do checks. 
         if isinstance(use_device, int)==True:
             use_device=f'cuda:{use_device}'
@@ -211,8 +238,8 @@ def check_device(use_device, default_device='cuda'):
             if use_device=='cpu':
                 return use_device
             elif use_device=='mps':
-                # check if mps is available. 
-                if torch.backends.mps.is_available():
+                # check if mps is available.
+                if mps_is_available():
                     return use_device
                 else:
                     raise MetapredictError('mps was specified, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
@@ -243,6 +270,57 @@ def check_device(use_device, default_device='cuda'):
 
     # if we made it here, raise error
     raise MetapredictError("There is a problem with the check_device function in metapredict/backend/predictor.py.\nPlease raise an issue because you shouldn't be able to see this message.")
+
+
+def resolve_batch_size(batch_size, device_string, network_params):
+    '''
+    Resolve the batch size to use for a prediction.
+
+    If ``batch_size`` is provided it is used as-is (it is validated separately by
+    meta_tools.valid_batch_size). Otherwise a default is resolved in the following
+    order, so the default can be both network- and device-dependent:
+
+      1. the network's own per-device default, network_params['device_batch_size']
+         (e.g. the memory-light V1/V2 networks use larger batches than V3);
+      2. the global per-device default, parameters.DEFAULT_BATCH_SIZE_BY_DEVICE
+         (used by networks that do not define their own, e.g. pLDDT);
+      3. the network's configured batch size, network_params['batch_size'].
+
+    Parameters
+    ---------------
+    batch_size : int or None
+        The user-supplied batch size, or None to use a network/device default.
+
+    device_string : str
+        The resolved device, e.g. 'cpu', 'mps', 'cuda' or 'cuda:0'.
+
+    network_params : dict
+        The network's parameter dictionary. Uses the optional 'device_batch_size'
+        mapping and the required 'batch_size' fallback.
+
+    Returns
+    ---------------
+    int
+        The batch size to use.
+    '''
+    if batch_size is not None:
+        return batch_size
+
+    # 'cuda:0' etc. -> 'cuda'
+    device_base = device_string.split(':')[0]
+
+    # 1. network-specific per-device default
+    per_network = network_params.get('device_batch_size', {})
+    if device_base in per_network:
+        return per_network[device_base]
+
+    # 2. global per-device default
+    if device_base in DEFAULT_BATCH_SIZE_BY_DEVICE:
+        return DEFAULT_BATCH_SIZE_BY_DEVICE[device_base]
+
+    # 3. the network's configured batch size
+    return network_params['batch_size']
+
 
 def take_care_of_version(version_input):
     '''
@@ -332,18 +410,19 @@ def predict(inputs,
             force_disable_batch=False,
             disable_pack_n_pad = False,
             silence_warnings = False,
-            default_to_device = 'cuda'):
+            batch_size=None,
+            default_to_device = None):
     """
     Batch mode predictor which takes advantage of PyTorch
-    parallelization such that whether it's on a GPU or a 
+    parallelization such that whether it's on a GPU or a
     CPU, predictions for a set of sequences are performed
     rapidly.
 
     Parameters
     ----------
     inputs : string list or dictionary
-        An individual sequence or a collection of sequences 
-        that are presented either as a list of sequences or 
+        An individual sequence or a collection of sequences
+        that are presented either as a list of sequences or
         a dictionary of key-value pairs where values are sequences.
 
     version : string
@@ -359,14 +438,14 @@ def predict(inputs,
         metapredict will raise an Exception so you know that you are not
         using CUDA as you were expecting. 
         Default: None
-            When set to None, we will check if there is a cuda-enabled
-            GPU. If there is, we will try to use that GPU. 
-            If you set the value to be an int, we will use cuda:int as the device
-            where int is the int you specify. The GPU numbering is 0 indexed, so 0 
-            corresponds to the first GPU and so on. Only specify this if you
-            know which GPU you want to use. 
-            * Note: MPS is only supported in Pytorch 2.1 or later. If I remember
-            right it might have been beta supported in 2.0 *.
+        When set to None, we will check if there is a cuda-enabled
+        GPU. If there is, we will try to use that GPU. 
+        If you set the value to be an int, we will use cuda:int as the device
+        where int is the int you specify. The GPU numbering is 0 indexed, so 0 
+        corresponds to the first GPU and so on. Only specify this if you
+        know which GPU you want to use. 
+        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
+        right it might have been beta-supported in 2.0.
 
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1. 
@@ -477,13 +556,21 @@ def predict(inputs,
         whether to silence warnings such as the one about compatibility
         to use pack-n-pad due to torch version restrictions. 
 
-    default_to_device : str
-        The default device to use if device=None.
-        If device=None and default_device != 'cpu' and default_device is
-        not available, device_string will be returned as 'cpu'.
-        I'm adding this in case we want to change the default architecture in the future. 
-        For example, we could make default device 'gpu' where it will check for 
-        cuda or mps and use either if available and then otherwise fall back to CPU.
+    batch_size : int or None
+        Number of sequences processed per forward pass during batch prediction.
+        Must be a power of two and >= 32 (e.g. 32, 64, 128, 256, 512, 1024), or
+        None to use a per-network, per-device default (see network_parameters).
+        Batch size only affects speed and memory, not the predicted values;
+        larger batches are typically faster on a GPU/MPS. Default = None.
+
+    default_to_device : str, list or None
+        Overrides how the device is auto-selected when use_device is None.
+        Default = None, which uses the per-network device preference defined in
+        network_parameters (the small V1/V2 disorder networks prefer cpu over
+        mps, since cpu is faster for them, while V3 prefers mps). Can instead be
+        set to 'gpu' (cuda -> mps -> cpu), 'cuda', 'mps', 'cpu', or an explicit
+        ordered list of devices to try; the first available device in the chosen
+        order is used, otherwise cpu.
 
     Returns
     -------------
@@ -550,6 +637,12 @@ def predict(inputs,
     # get params
     params=net['parameters']
 
+    # validate any user-supplied batch size. Batch size only affects how sequences
+    # are grouped for the forward pass, not the predicted scores. The value that is
+    # actually used (effective_batch_size) is resolved below, once the device is
+    # known, since the default batch size depends on the device.
+    valid_batch_size(batch_size)
+
     ##
     ## FIGURE OUT WHERE WE ARE DOING THE PREDICTIONS
     ##
@@ -559,7 +652,14 @@ def predict(inputs,
     if isinstance(inputs, str)==True:
         device_string='cpu'
     else:
-        device_string = check_device(use_device, default_device=default_to_device)
+        # resolve the auto-select preference: an explicit default_to_device wins,
+        # otherwise use this network's per-network device order (falling back to
+        # the generic gpu order for any network that does not define one).
+        if default_to_device is not None:
+            _device_pref = default_to_device
+        else:
+            _device_pref = params.get('device_order', ['cuda', 'mps', 'cpu'])
+        device_string = check_device(use_device, default_device=_device_pref)
 
     # check if using gpu, specifically cuda
     if 'cuda' in device_string:
@@ -568,6 +668,10 @@ def predict(inputs,
 
     # set device
     device=torch.device(device_string)
+
+    # resolve the batch size to use now that the device is known (an explicit
+    # batch_size wins; otherwise use the network/device-dependent default)
+    effective_batch_size = resolve_batch_size(batch_size, device_string, params)
 
     # see if we need to mess with packing / padding
     if disable_pack_n_pad==False:
@@ -747,7 +851,7 @@ def predict(inputs,
                 for local_size in size_filtered:
                     local_seqs = size_filtered[local_size]
                     # load the data
-                    seq_loader = DataLoader(local_seqs, batch_size=params['batch_size'], shuffle=False)
+                    seq_loader = DataLoader(local_seqs, batch_size=effective_batch_size, shuffle=False)
 
                     # iterate through batches in seq_loader
                     for batch in seq_loader:
@@ -791,7 +895,7 @@ def predict(inputs,
                 sequence_list.sort(key=len, reverse=True)
                 # we will be using pack-n-pad.
                 # load seqs into DataLoader
-                seq_loader = DataLoader(sequence_list, batch_size=params['batch_size'], shuffle=False) 
+                seq_loader = DataLoader(sequence_list, batch_size=effective_batch_size, shuffle=False)
                 num_batches=len(seq_loader)
                 
                 # set progress bar info if we are going to display it. 
@@ -952,7 +1056,8 @@ def predict_pLDDT(inputs,
             return_as_disorder_score=False,
             plddt_base=0.35,
             plddt_top=0.95,
-            default_to_device = 'cuda'):
+            batch_size=None,
+            default_to_device = None):
     """
     Batch mode predictor which takes advantage of PyTorch
     parallelization such that whether it's on a GPU or a 
@@ -987,14 +1092,14 @@ def predict_pLDDT(inputs,
         metapredict will raise an Exception so you know that you are not
         using CUDA as you were expecting. 
         Default: None
-            When set to None, we will check if there is a cuda-enabled
-            GPU. If there is, we will try to use that GPU. 
-            If you set the value to be an int, we will use cuda:int as the device
-            where int is the int you specify. The GPU numbering is 0 indexed, so 0 
-            corresponds to the first GPU and so on. Only specify this if you
-            know which GPU you want to use. 
-            * Note: MPS is only supported in Pytorch 2.1 or later. If I remember
-            right it might have been beta supported in 2.0 *.
+        When set to None, we will check if there is a cuda-enabled
+        GPU. If there is, we will try to use that GPU. 
+        If you set the value to be an int, we will use cuda:int as the device
+        where int is the int you specify. The GPU numbering is 0 indexed, so 0 
+        corresponds to the first GPU and so on. Only specify this if you
+        know which GPU you want to use. 
+        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
+        right it might have been beta-supported in 2.0.
 
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1. 
@@ -1046,13 +1151,21 @@ def predict_pLDDT(inputs,
         the highest value plddt can be when converting it to a disorder score
         Default=0.95
 
-    default_to_device : str
-        The default device to use if device=None.
-        If device=None and default_device != 'cpu' and default_device is
-        not available, device_string will be returned as 'cpu'.
-        I'm adding this in case we want to change the default architecture in the future. 
-        For example, we could make default device 'gpu' where it will check for 
-        cuda or mps and use either if available and then otherwise fall back to CPU.
+    batch_size : int or None
+        Number of sequences processed per forward pass during batch prediction.
+        Must be a power of two and >= 32 (e.g. 32, 64, 128, 256, 512, 1024), or
+        None to use a per-network, per-device default (see network_parameters).
+        Batch size only affects speed and memory, not the predicted values;
+        larger batches are typically faster on a GPU/MPS. Default = None.
+
+    default_to_device : str, list or None
+        Overrides how the device is auto-selected when use_device is None.
+        Default = None, which uses the per-network device preference defined in
+        network_parameters (the small V1/V2 disorder networks prefer cpu over
+        mps, since cpu is faster for them, while V3 prefers mps). Can instead be
+        set to 'gpu' (cuda -> mps -> cpu), 'cuda', 'mps', 'cpu', or an explicit
+        ordered list of devices to try; the first available device in the chosen
+        order is used, otherwise cpu.
 
     Returns
     -------------
@@ -1101,6 +1214,12 @@ def predict_pLDDT(inputs,
     # get params
     params=net['parameters']
 
+    # validate any user-supplied batch size. Batch size only affects how sequences
+    # are grouped for the forward pass, not the predicted scores. The value that is
+    # actually used (effective_batch_size) is resolved below, once the device is
+    # known, since the default batch size depends on the device.
+    valid_batch_size(batch_size)
+
     # make sure that we set return_decimals to True if we are doing disorder prediction using plddt scores
     if return_as_disorder_score==True:
         return_decimals=True
@@ -1128,10 +1247,21 @@ def predict_pLDDT(inputs,
     if isinstance(inputs, str)==True:
         device_string='cpu'
     else:
-        device_string = check_device(use_device, default_device=default_to_device)
+        # resolve the auto-select preference: an explicit default_to_device wins,
+        # otherwise use this network's per-network device order (falling back to
+        # the generic gpu order for any network that does not define one).
+        if default_to_device is not None:
+            _device_pref = default_to_device
+        else:
+            _device_pref = params.get('device_order', ['cuda', 'mps', 'cpu'])
+        device_string = check_device(use_device, default_device=_device_pref)
     
     # set device
     device=torch.device(device_string)
+
+    # resolve the batch size to use now that the device is known (an explicit
+    # batch_size wins; otherwise use the network/device-dependent default)
+    effective_batch_size = resolve_batch_size(batch_size, device_string, params)
 
     # see if we need to mess with packing / padding
     if disable_pack_n_pad==False:
@@ -1320,7 +1450,7 @@ def predict_pLDDT(inputs,
                 for local_size in size_filtered:
                     local_seqs = size_filtered[local_size]
                     # load the data
-                    seq_loader = DataLoader(local_seqs, batch_size=params['batch_size'], shuffle=False)
+                    seq_loader = DataLoader(local_seqs, batch_size=effective_batch_size, shuffle=False)
 
                     # iterate through batches in seq_loader
                     for batch in seq_loader:
@@ -1373,7 +1503,7 @@ def predict_pLDDT(inputs,
                 sequence_list.sort(key=len, reverse=True)
                 # we will be using pack-n-pad.
                 # load seqs into DataLoader
-                seq_loader = DataLoader(sequence_list, batch_size=params['batch_size'], shuffle=False) 
+                seq_loader = DataLoader(sequence_list, batch_size=effective_batch_size, shuffle=False)
                 num_batches=len(seq_loader)
                 
                 # set progress bar info if we are going to display it. 

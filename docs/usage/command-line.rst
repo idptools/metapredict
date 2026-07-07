@@ -28,7 +28,7 @@ Example of usage:
 
 By default, the results are saved to a ``disorder_scores.csv`` file in the current working directory. Additionally, a progress bar is displayed, and predictions will automatically use a GPU if one is available.
 
-Note that as of metapredict V3, all three networks can be submitted in batch for massive increases in prediction speed. Further, metapredict will automatically use a CUDA GPU if available. A progress bar will also be generated in the terminal.
+Note that as of metapredict V3, all three networks can be submitted in batch for massive increases in prediction speed. Further, metapredict will automatically use a GPU (CUDA, or Apple Silicon MPS) if available. A progress bar will also be generated in the terminal.
 
 Additional Usage
 ~~~~~~~~~~~~~~~~~
@@ -47,7 +47,7 @@ Use the ``-o`` or ``--output-file`` flag to specify the desired output file path
 Selecting a Specific Version of ``metapredict``
 -------------------------------------------------
 
-To use a specific version (e.g., V1 or V2) of ``metapredict``, use the ``-v`` or ``--version`` flag. This allows you to run predictions using previous network versions for compatibility.
+To use a specific version (e.g., V1, V2, or V3) of ``metapredict``, use the ``-v`` or ``--version`` flag. This allows you to run predictions using previous network versions for compatibility.
 
 **Example**:
 
@@ -61,7 +61,7 @@ Specifying the Device for Prediction
 
 You can manually specify the device for prediction with the ``-d`` or ``--device`` flag. Available options are ``cpu``, ``mps`` (for Apple Silicon), ``cuda`` (for GPUs), or ``cuda:int`` to specify a specific GPU by its index.
 
-By default, ``metapredict`` will use a CUDA-enabled GPU if available, otherwise it defaults to the CPU.
+By default, ``metapredict`` automatically selects a device in the order CUDA GPU → Apple Silicon MPS → CPU, using the first one that is available.
 
 **Example**:
 
@@ -86,6 +86,18 @@ Additional Notes
 
 1. **Error Handling**: If the input file is missing or invalid, an error message will be displayed, and the script will terminate.
 2. **Relative vs Absolute Paths**: You can provide either relative or absolute paths for both input and output files. If the specified output directory doesn't exist, you may encounter an error, so ensure the directory is created beforehand.
+
+
+Handling Non-Standard Amino Acids
+----------------------------------
+
+Use the ``--invalid-sequence-action`` flag to control how sequences containing non-standard amino acids are handled when the input FASTA file is parsed. The default is ``convert``, which converts non-standard residues to their closest standard amino acid. See the `protfasta documentation <https://protfasta.readthedocs.io/en/latest/read_fasta.html>`__ for the full list of options.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-predict-disorder interestingProteins.fasta --invalid-sequence-action convert
 
 
 Predicting IDRs from a fasta file
@@ -165,7 +177,7 @@ Specifying the Device for Prediction
 
 Use the ``-d`` or ``--device`` flag to choose the device for prediction. Available options include ``cpu``, ``mps`` (for Apple Silicon), ``cuda`` (for GPUs), or ``cuda:int`` to specify a specific GPU by its index.
 
-By default, ``metapredict-predict-idrs`` will use a CUDA-enabled GPU if available, otherwise it defaults to the CPU.
+By default, ``metapredict-predict-idrs`` automatically selects a device in the order CUDA GPU → Apple Silicon MPS → CPU, using the first one that is available.
 
 **Example**:
 
@@ -173,6 +185,30 @@ By default, ``metapredict-predict-idrs`` will use a CUDA-enabled GPU if availabl
 
     $ metapredict-predict-idrs interestingProteins.fasta -d cuda:0
 
+
+
+Handling Non-Standard Amino Acids
+----------------------------------
+
+Use the ``--invalid-sequence-action`` flag to control how sequences containing non-standard amino acids are handled when the input FASTA file is parsed. The default is ``convert``, which converts non-standard residues to their closest standard amino acid. See the `protfasta documentation <https://protfasta.readthedocs.io/en/latest/read_fasta.html>`__ for the full list of options.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-predict-idrs interestingProteins.fasta --invalid-sequence-action convert
+
+
+Printing Status Updates
+------------------------
+
+Use the ``--verbose`` flag to print status updates to the terminal as IDRs are predicted.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-predict-idrs interestingProteins.fasta --verbose
 
 
 Predicting disorder scores from sequence
@@ -264,6 +300,18 @@ To specify the device to run the prediction on (CPU, MPS, CUDA), use the ``-d`` 
 .. code-block:: bash
 
     $ metapredict-predict-pLDDT input_sequences.fasta -d cuda:0
+
+Handling Non-Standard Amino Acids
+----------------------------------
+
+Use the ``--invalid-sequence-action`` flag to control how sequences containing non-standard amino acids are handled when the input FASTA file is parsed. The default is ``convert``, which converts non-standard residues to their closest standard amino acid. See the `protfasta documentation <https://protfasta.readthedocs.io/en/latest/read_fasta.html>`__ for the full list of options.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-predict-pLDDT interestingProteins.fasta --invalid-sequence-action convert
+
 
 Generate Disorder Plots from FASTA files
 =========================================
@@ -370,6 +418,18 @@ If you would like to change the disorder threshold line plotted on the graph, us
 
     $ metapredict-graph-disorder /Users/thisUser/Desktop/interestingProteins.fasta -o /Users/thisUser/Desktop/DisorderGraphsFolder/ --disorder-threshold 0.5
 
+
+
+Handling Non-Standard Amino Acids
+----------------------------------
+
+Use the ``--invalid-sequence-action`` flag to control how sequences containing non-standard amino acids are handled when the input FASTA file is parsed. The default is ``convert``, which converts non-standard residues to their closest standard amino acid. See the `protfasta documentation <https://protfasta.readthedocs.io/en/latest/read_fasta.html>`__ for the full list of options.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-graph-disorder interestingProteins.fasta --invalid-sequence-action convert
 
 
 Quick Disorder Graph for a Sequence
@@ -695,13 +755,25 @@ To index the output filenames with a leading unique integer, use the ``--indexed
 
 Specifying the pLDDT Version
 -----------------------------
-You can specify which version of the pLDDT predictor to use (V1, V2, or V3) with the ``-v`` or ``--pLDDT-version`` flag. The default version is determined by the ``DEFAULT_NETWORK_PLDDT`` setting.
+You can specify which version of the pLDDT predictor to use (V1 or V2) with the ``-v`` or ``--pLDDT-version`` flag. The default version is determined by the ``DEFAULT_NETWORK_PLDDT`` setting.
 
 **Example**:
 
 .. code-block:: bash
 
     $ metapredict-graph-pLDDT proteins.fasta -v V2
+
+
+Handling Non-Standard Amino Acids
+----------------------------------
+
+Use the ``--invalid-sequence-action`` flag to control how sequences containing non-standard amino acids are handled when the input FASTA file is parsed. The default is ``convert``, which converts non-standard residues to their closest standard amino acid. See the `protfasta documentation <https://protfasta.readthedocs.io/en/latest/read_fasta.html>`__ for the full list of options.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-graph-pLDDT interestingProteins.fasta --invalid-sequence-action convert
 
 
 Generate Disorder Scores for CAID from a FASTA file
@@ -764,7 +836,7 @@ The third argument specifies the version of Metapredict to use. The options are:
     $ metapredict-caid proteins.fasta output/ v3
 
 CAID Output Binarization: Algorithmic Domain Assignment
-------------------------------------------------------
+-------------------------------------------------------
 
 By default, ``metapredict-caid`` uses an algorithmic approach to assign binary labels for IDRs and folded domains. Instead of applying a strict per-residue disorder score cutoff, metapredict decomposes each sequence into contiguous intrinsically disordered regions (IDRs) and folded domains using a domain segmentation algorithm. This results in more biologically meaningful domain assignments that better reflect the underlying disorder/folded state segmentation.
 

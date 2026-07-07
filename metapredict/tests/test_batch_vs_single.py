@@ -61,10 +61,19 @@ def test_size_filter():
     assert len(out[3]) == 1
     assert len(out[6]) == 1
 
+# Batch-vs-single comparisons must pin the batch call to device='cpu':
+# predict_disorder(single_str) hard-codes CPU (predictor.py:580-582 — "using
+# GPU for a single sequence would be silly"), so leaving the batch call on
+# the 'gpu' default gives a CPU-vs-CUDA/MPS comparison. The resulting
+# ~1e-4 float drift then trips atol=0.003 near saturation and, in
+# test_batch_idrs, shifts threshold-derived IDR boundaries by a residue —
+# breaking exact string comparisons. Also, because build_seq() is unseeded,
+# whether any given run drifts far enough to trip the tolerance is random.
+
 ## test the new metapredict predictor
 def test_metapredict_predictor():
     """
-    Simple one -off test make sure we predict disorder scores that 
+    Simple one -off test make sure we predict disorder scores that
 
     """
 
@@ -72,8 +81,8 @@ def test_metapredict_predictor():
     assert score_compare(meta.predict_disorder(seq), local_data.S2)==True
 
     test = {'test':seq}
-    
-    out = meta.predict_disorder_batch(test)
+
+    out = meta.predict_disorder_batch(test, device='cpu')
 
     # using a tolerance of 1e-3 because batch works on single and on double
     # precision, but if no pair of residues is different than 1e-4 these are
@@ -87,19 +96,20 @@ def test_metapredict_predictor():
 def test_batch_prediction():
 
     nseqs=100
-    
+
     seqs = {}
     for idx, _ in enumerate(range(nseqs)):
         s = build_seq()
         seqs[idx] = s
 
-    # get predictions
-    preds = meta.predict_disorder_batch(seqs)
-    
+    # get predictions (pin to CPU so the batch path is comparable to the
+    # single-seq path, which predict_disorder hard-codes to CPU).
+    preds = meta.predict_disorder_batch(seqs, device='cpu')
+
     for s in seqs:
         single = meta.predict_disorder(seqs[s])
         assert score_compare(np.array(preds[s][1]), single)
-    
+
 
 def test_batch_idrs():
 
@@ -108,16 +118,16 @@ def test_batch_idrs():
         s = build_seq()
         seqs[idx] = s
 
-    # predictions
-    preds = meta.predict_disorder_batch(seqs, return_domains=True)
-    
+    # predictions (pin to CPU — see note above)
+    preds = meta.predict_disorder_batch(seqs, return_domains=True, device='cpu')
+
     for s in seqs:
         single = meta.predict_disorder_domains(seqs[s])
 
         p = preds[s]
         for idx in range(len(p.disordered_domains)):
             assert p.disordered_domains[idx] == single.disordered_domains[idx]
-            assert p.disordered_domain_boundaries[idx] == single.disordered_domain_boundaries[idx] 
+            assert p.disordered_domain_boundaries[idx] == single.disordered_domain_boundaries[idx]
 
         for idx in range(len(p.folded_domains)):
             assert p.folded_domains[idx] == single.folded_domains[idx]
@@ -138,9 +148,10 @@ def test_big_test_batch():
     scores = np.load(onehundred_scores, allow_pickle=True).tolist()
     seqs = protfasta.read_fasta(onehundred_seqs)
 
-
-
-    batch_predictions = meta.predict_disorder_batch(seqs)
+    # Reference .npy scores were generated on CPU; pin to CPU so the CUDA
+    # cuDNN LSTM's ~1e-4 drift doesn't intermittently push residues past
+    # atol=0.003 near saturation (0/1).
+    batch_predictions = meta.predict_disorder_batch(seqs, device='cpu')
 
     for idx, k in enumerate(seqs):
         assert np.allclose(scores[idx], batch_predictions[k][1], atol=0.003)

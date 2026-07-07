@@ -39,20 +39,50 @@ What are the major changes for metapredict V3?
 Installation
 =============
 
-Metapredict is a software package written in Python. It can be installed from `PyPI <https://pypi.org/project/metapredict/>`_ (the Python Package Index) using the tool ``pip``. We always recommend managing your Python environment with conda. If these ideas are foreign to you, we recommend reading up a bit on Python package management and `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ before continuing.
+Metapredict is a Python package published on `PyPI <https://pypi.org/project/metapredict/>`_. It supports Python 3.9-3.14; the instructions below use **Python 3.12**, which we recommend. Choose whichever of the three workflows - pip, conda, or uv - best matches your setup. If Python environments are new to you, we suggest reading up on Python package management and `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ first.
 
-TL/DR: Recommended install commands are:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Each option creates a clean, isolated Python 3.12 environment and then installs metapredict from PyPI.
 
-In most situations, the following two commands will ensure all the necessary dependencies are installed and work correctly:
+Option 1 - pip (PyPI)
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
-   # ensure dependencies are from the same ecosystem (conda)
-   conda install -c conda-forge -c pytorch python=3.11 numpy pytorch scipy cython matplotlib
+   # create and activate a Python 3.12 virtual environment
+   python3.12 -m venv metapredict-env
+   source metapredict-env/bin/activate         # Windows: metapredict-env\Scripts\activate
 
-   # install from PyPI
+   # install metapredict from PyPI
    pip install metapredict
+
+Option 2 - conda
+^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   # create a Python 3.12 environment with the scientific dependencies from conda
+   conda create -n metapredict -c conda-forge -c pytorch python=3.12 numpy scipy pytorch cython matplotlib
+   conda activate metapredict
+
+   # install metapredict from PyPI
+   pip install metapredict
+
+Installing numpy and PyTorch from conda (rather than letting pip pull them) keeps them in the same ecosystem - see the segfault warning below.
+
+Option 3 - uv
+^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   # create a Python 3.12 environment (uv will download the interpreter if needed)
+   uv venv --python 3.12
+   source .venv/bin/activate                    # Windows: .venv\Scripts\activate
+
+   # install metapredict
+   uv pip install metapredict
+
+Check the installation
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 To check the installation has worked run:
 
@@ -63,12 +93,12 @@ To check the installation has worked run:
 from the command line; this should yield help info on the ``metapredict-predict-disorder`` command.
 
 WARNING: Segfault when mixing ``conda`` and ``pip`` installs (March 2024)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities between ``pip`` and ``conda`` versions of PyTorch and numpy. Therefore, it is essential your numpy and PyTorch installs are from the same package manager. metapredict will - by default - pull dependencies from PyPI. However, other packages installed from conda may require conda-dependent numpy installations, which can "brick" a previously-working installation.
 
 WARNING: Problems with installing Torch with propert CUDA version (November 2024).
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **This is only relevent if you are trying to run metapredict on a CUDA-enabled GPU!**
 
@@ -131,7 +161,7 @@ How was metapredict V1 trained?
 
 **metapredict V1** is a deep-learning-based predictor trained on consensus disorder data from 8 different predictors, as pre-computed and provided by `MobiDB <https://mobidb.bio.unipd.it/>`_. Functionally, this means each residue is assigned a score between 0 and 1 which reflects the confidence we have that the residue is disordered (or not). If the score was 0.5, this means half of the predictors predict that residue to be disordered. In this way, **metapredict V1** can determine the likelihood that residues are disordered by giving you an approximation of what other predictors would predict (things got pretty 'meta' there, hence the name **metapredict**).
 
-Note that metapredict V1 predictions are available via the :code:`--version 1` from the CLI or :code: version=1 in Python.
+Note that metapredict V1 predictions are available via the :code:`--version 1` from the CLI or :code:`version=1` in Python.
 
 How was metapredict V2 trained?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -178,13 +208,15 @@ In summary, we believe metapredict provides the three key ingredients of a usefu
 How to cite
 ===========================
 
-If you use metapredict for your work, please cite the metapredict paper: 
+If you use metapredict for your work, please cite the original metapredict paper and describe which version of metapredict you used (V1, V2, V2-FF, or V3):
 
-Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure. Biophys. J. 120, 4312–4319 (2021).
+Emenecker, R. J., Griffith, D. & Holehouse, A. S. metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure. Biophys. J. 120, 4312–4319 (2021). doi:10.1016/j.bpj.2021.08.039
 
-Note that in addition to the `original paper <https://www.cell.com/biophysj/fulltext/S0006-3495(21>`_\ 00725-6), there's a `V2 preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_\ ; HOWEVER, we ask you only cite the original paper and describe the version being used (V1, V2, V2-FF, or V3).
+You may additionally cite the preprints describing later updates to metapredict — the V2 preprint and the metapredict "Tree of Life" preprint:
 
-We are hoping to get a paper out for V3 in the near future (we will update this section once the V3 paper is available)...
+Emenecker, R. J., Griffith, D. & Holehouse, A. S. Metapredict V2: An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure. bioRxiv 2022.06.06.494887 (2022). doi:10.1101/2022.06.06.494887
+
+Lotthammer, J. M., Hernández-García, J., Griffith, D., Weijers, D., Holehouse, A. S. & Emenecker, R. J. Metapredict enables accurate disorder prediction across the Tree of Life. bioRxiv 2024.11.05.622168 (2024). doi:10.1101/2024.11.05.622168
 
 
 

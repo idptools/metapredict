@@ -1,10 +1,11 @@
 include LICENSE
-include MANIFEST.in
 
+# Ship the full package (including the trained network weight files under
+# metapredict/backend/networks and metapredict/backend/ppLDDT/networks) in the
+# source distribution. Compiled artifacts are rebuilt on install, so exclude them.
 graft metapredict
-graft metapredict/scripts
-global-exclude *.py[cod] __pycache__ *.so
-
-#recursive-include metapredict/backend/networks *
-#recursive-exclude metapredict/backend/tests *
-
+# Exclude compiled/generated build artifacts: bytecode, compiled extensions, and
+# the Cython-generated C file (regenerated from the .pyx at build time by Cython,
+# which is a build requirement). This guarantees the C source always matches the
+# numpy/Cython used for the build rather than a stale copy left in the tree.
+global-exclude *.py[cod] *.so *.c

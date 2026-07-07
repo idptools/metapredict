@@ -108,6 +108,10 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+# per-Python-version test environments created by devtools/test-python-versions.sh
+.venvs/
+# tox
+.tox/
 
 # Spyder project settings
 .spyderproject
@@ -125,3 +129,6 @@ ENV/
 # profraw files from LLVM? Unclear exactly what triggers this
 # There are reports this comes from LLVM profiling, but also Xcode 9.
 *profraw
+
+# Claude Code local session memory / handoff notes (Dropbox-synced, not committed)
+.claude/

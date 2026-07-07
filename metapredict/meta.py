@@ -8,7 +8,7 @@
 ##Handles the primary functions
 
 # NOTE - any new functions must be added to this list!
-__all__ =  ['predict_disorder', 'predict_disorder_domains', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid', 'predict_disorder_batch']
+__all__ =  ['predict_disorder', 'predict_disorder_domains', 'graph_disorder', 'predict_all', 'percent_disorder', 'predict_disorder_fasta', 'graph_disorder_fasta', 'predict_disorder_uniprot', 'graph_disorder_uniprot', 'predict_disorder_domains_uniprot', 'predict_disorder_domains_from_external_scores', 'graph_pLDDT_uniprot', 'predict_pLDDT_uniprot', 'graph_pLDDT_fasta', 'predict_pLDDT_fasta', 'graph_pLDDT', 'predict_pLDDT', 'predict_disorder_caid', 'predict_disorder_batch', 'predict_disorder_stream']
  
 # import packages
 import os
@@ -50,9 +50,9 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
     normalized=True,  round_values=True, return_numpy=True, return_domains=False,
     disorder_threshold=None, minimum_IDR_size=12, minimum_folded_domain=50,
     gap_closure=10, override_folded_domain_minsize=False, print_performance=False, 
-    show_progress_bar=False, force_disable_batch=False, 
-    disable_pack_n_pad=False, silence_warnings=False, 
-    legacy=False):
+    show_progress_bar=False, force_disable_batch=False,
+    disable_pack_n_pad=False, silence_warnings=False,
+    batch_size=None, legacy=False):
     """
     The main function in metapredict. Updated to handle much more advanced
     functionality while maintaining backwards compatibility with previous
@@ -115,26 +115,30 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
         is the latest version as defined in parameters. Alternatively, 'V1', 'V2',
         or 'V3' can be specified to access a specific version of metapredict
 
-    device : int or str 
-        Identifier for the device to be used for predictions. 
+    device : int or str
+        Identifier for the device to be used for predictions.
         Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
-        cuda.is_available() returns False, instead of falling back to CPU, 
+        cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
-        using CUDA as you were expecting. 
+        using CUDA as you were expecting.
         Default: None
-            When set to None, we will check if there is a cuda-enabled
-            GPU. If there is, we will try to use that GPU. 
-            If you set the value to be an int, we will use cuda:int as the device
-            where int is the int you specify. The GPU numbering is 0 indexed, so 0 
-            corresponds to the first GPU and so on. Only specify this if you
-            know which GPU you want to use. 
-            * Note: MPS is only supported in Pytorch 2.1 or later. If I remember
-            right it might have been beta supported in 2.0 *. MPS is still fairly
-            new, so use at your own risk. 
+        When set to None, metapredict picks a device automatically in
+        the order cuda -> mps -> cpu (first available wins). Note that
+        for a single-sequence string input this function forces the CPU
+        path regardless of what's available, since using a GPU for one
+        sequence is not worthwhile; batch (list/dict) inputs honour
+        the auto-selection.
+        If you set the value to be an int, we will use cuda:int as the device
+        where int is the int you specify. The GPU numbering is 0 indexed, so 0
+        corresponds to the first GPU and so on. Only specify this if you
+        know which GPU you want to use.
+        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
+        right it might have been beta-supported in 2.0. MPS is still fairly
+        new, so use at your own risk.
 
     normalized : bool
-        Whether or not to normalize disorder values to between 0 and 1. 
+        Whether or not to normalize disorder values to between 0 and 1.
         Default : True
 
     round_values : bool
@@ -236,8 +240,15 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
         whether to silence warnings such as the one about compatibility
         to use pack-n-pad due to torch version restrictions. 
 
+    batch_size : int or None
+        Number of sequences processed per forward pass during batch prediction.
+        Must be a power of two and >= 32 (e.g. 32, 64, 128, 256, 512, 1024), or
+        None to use a per-network, per-device default (see network_parameters).
+        Batch size only affects speed and memory, not the predicted values;
+        larger batches are typically faster on a GPU/MPS. Default = None.
+
     legacy : bool
-        whether to use the legacy version of metapredict. This is 
+        whether to use the legacy version of metapredict. This is
         maintained for backwards compatibility, but the recommended
         approach is to use the version parameter to specify which
         version of metapredict you want to use. If you set this to
@@ -281,12 +292,12 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
         override_folded_domain_minsize=override_folded_domain_minsize,
         print_performance=print_performance, show_progress_bar=show_progress_bar,
         force_disable_batch=force_disable_batch, disable_pack_n_pad=disable_pack_n_pad,
-        silence_warnings=silence_warnings)
+        silence_warnings=silence_warnings, batch_size=batch_size)
 
 
 # ..........................................................................................
 #
-def predict_disorder_domains_from_external_scores(disorder, 
+def predict_disorder_domains_from_external_scores(disorder,
                                                   sequence=None,
                                                   disorder_threshold=0.5, 
                                                   minimum_IDR_size=12, 
@@ -646,7 +657,8 @@ def predict_disorder_batch(input_sequences,
                                 gap_closure=10,
                                 override_folded_domain_minsize=False,
                                 show_progress_bar = True,
-                                disable_batch = False):
+                                disable_batch = False,
+                                batch_size = None):
 
     """
     Batch mode predictor which takes advantage of PyTorch
@@ -654,14 +666,20 @@ def predict_disorder_batch(input_sequences,
     CPU, predictions for a set of sequences are performed
     rapidly.
 
-    This now works with all versions of metapredict.     
+    This now works with all versions of metapredict.
 
-    Note also that batch mode uses 32-bit float vectors
-    whereas non-batch uses 64-bit float vectors, so the
-    precise values in batch vs. non-batch may differ 
-    slighly, however this is a numerical precision difference,
-    such that values by both methods are always within
-    1e-3 of one another.
+    Both the batch and single-sequence paths run in 32-bit precision
+    (encoding is float32 so the network runs in float32 on every
+    supported backend, including MPS which does not support float64).
+    On the same device the two paths agree to within ~1e-3, but note
+    that predict_disorder(single_string) forces the CPU path (using a
+    GPU for a single sequence is not worthwhile), so if you leave the
+    default device=None here (which picks a GPU when one is available)
+    you are comparing a GPU batch result to a CPU single-sequence
+    result. The cuDNN/MPS LSTM diverges from CPU by ~1e-4 in most
+    positions and can be larger near saturation (scores near 0 or 1).
+    Pin device='cpu' if you need bit-for-bit-comparable outputs across
+    the two paths.
 
     Parameters
     --------------
@@ -675,39 +693,42 @@ def predict_disorder_batch(input_sequences,
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3. 
 
-    device : int or str 
-        Identifier for the device to be used for predictions. 
+    device : int or str
+        Identifier for the device to be used for predictions.
         Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
-        cuda.is_available() returns False, instead of falling back to CPU, 
+        cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
-        using CUDA as you were expecting. 
+        using CUDA as you were expecting.
         Default: None
-            When set to None, we will check if there is a cuda-enabled
-            GPU. If there is, we will try to use that GPU. 
-            If you set the value to be an int, we will use cuda:int as the device
-            where int is the int you specify. The GPU numbering is 0 indexed, so 0 
-            corresponds to the first GPU and so on. Only specify this if you
-            know which GPU you want to use. 
-            * Note: MPS is only supported in Pytorch 2.1 or later. If I remember
-            right it might have been beta supported in 2.0 *.
+        When set to None, metapredict picks a device automatically in
+        the order cuda -> mps -> cpu (first available wins). Set
+        device='cpu' explicitly if you need results that are
+        bit-for-bit reproducible across machines, or that exactly
+        match the CPU-only predict_disorder(single_string) path.
+        If you set the value to be an int, we will use cuda:int as the device
+        where int is the int you specify. The GPU numbering is 0 indexed, so 0
+        corresponds to the first GPU and so on. Only specify this if you
+        know which GPU you want to use.
+        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
+        right it might have been beta-supported in 2.0.
 
     normalized : bool
-        Whether or not to normalize disorder values to between 0 and 1. 
+        Whether or not to normalize disorder values to between 0 and 1.
         Default : True
 
     round_values : bool
-        Whether to round the values to 4 decimal places. 
+        Whether to round the values to 4 decimal places.
         Default : True
 
     return_numpy : bool
-        Whether to return a numpy array or a list for single predictions. 
-        Default : True   
+        Whether to return a numpy array or a list for single predictions.
+        Default : True
 
     return_domains : bool
         Flag which, if set to true, means we return DisorderDomain
         objects instead of simply the disorder scores. These
-        domain objects include the boundaries between IDRs and 
+        domain objects include the boundaries between IDRs and
         folded domains, the disorder scores, and the individual
         sequences for IDRs and folded domains. This adds a small
         amount of overhead to the prediction, but typically only
@@ -777,7 +798,14 @@ def predict_disorder_batch(input_sequences,
     disable_batch : bool
         Whether to override any use of batch predictions and predict
         sequences individually.
-        Default = False    
+        Default = False
+
+    batch_size : int or None
+        Number of sequences processed per forward pass during batch prediction.
+        Must be a power of two and >= 32 (e.g. 32, 64, 128, 256, 512, 1024), or
+        None to use a per-network, per-device default (see network_parameters).
+        Batch size only affects speed and memory, not the predicted values;
+        larger batches are typically faster on a GPU/MPS. Default = None.
 
     Returns
     -------------
@@ -825,13 +853,245 @@ def predict_disorder_batch(input_sequences,
                         override_folded_domain_minsize=False,
                         gap_closure = gap_closure,
                         show_progress_bar = show_progress_bar,
-                        force_disable_batch = disable_batch)
+                        force_disable_batch = disable_batch,
+                        batch_size = batch_size)
 
 
 
 # ..........................................................................................
 #
-def graph_disorder(sequence, 
+def predict_disorder_stream(filepath,
+                            version=DEFAULT_NETWORK,
+                            device=None,
+                            normalized=True,
+                            round_values=True,
+                            return_numpy=True,
+                            return_domains=False,
+                            disorder_threshold=None,
+                            minimum_IDR_size=12,
+                            minimum_folded_domain=50,
+                            gap_closure=10,
+                            override_folded_domain_minsize=False,
+                            force_disable_batch=False,
+                            disable_pack_n_pad=False,
+                            silence_warnings=False,
+                            batch_size=None,
+                            legacy=False,
+                            chunk_size=5000,
+                            invalid_sequence_action='convert',
+                            expect_unique_header=False,
+                            duplicate_record_action='ignore',
+                            duplicate_sequence_action='ignore'):
+    """
+    Stream disorder predictions for a FASTA file that may be too large to fit in
+    memory.
+
+    This is the streaming counterpart to :func:`predict_disorder`. Rather than
+    loading the whole FASTA file, predicting everything, and returning it all at
+    once, this function reads the file lazily (via ``protfasta.read_fasta_stream``),
+    predicts sequences in fixed-size chunks so that batch-mode speed is retained,
+    and yields the results one sequence at a time. The prediction working set is
+    therefore bounded by ``chunk_size`` (and the forward-pass memory by
+    ``batch_size``) rather than by the size of the file, so files with tens or
+    hundreds of millions of sequences can be processed on a normal machine.
+
+    By default this is **flat in memory**: the duplicate/uniqueness checks in
+    ``protfasta.read_fasta_stream`` are turned off (``expect_unique_header=False``
+    and the duplicate actions at ``'ignore'``), so nothing accumulates across the
+    file and billion-record inputs stream fine. If you instead want duplicate
+    headers to be detected, pass ``expect_unique_header=True``; that keeps a
+    running ``O(records)`` set of headers and emits a one-time warning about the
+    memory cost (silence it with ``silence_warnings=True``).
+
+    Because results are produced lazily, this function is a **generator** and must
+    be iterated (it does not return a dictionary). Each item is a
+    ``(header, prediction)`` tuple, where ``prediction`` matches what
+    :func:`predict_disorder` returns for a single dictionary value:
+
+    * if ``return_domains`` is False, ``prediction`` is a ``[sequence, scores]``
+      list (``scores`` is a numpy array or list per ``return_numpy``);
+    * if ``return_domains`` is True, ``prediction`` is a ``DisorderObject``.
+
+    A typical use, writing scores to disk without ever holding the whole file in
+    memory::
+
+        for header, (sequence, scores) in meta.predict_disorder_stream('huge.fasta'):
+            out.write(f'{header}\\t{",".join(map(str, scores))}\\n')
+
+    Parameters
+    ----------
+    filepath : str
+        Path to the (potentially very large) input FASTA file.
+
+    version : str
+        The disorder network to use ('V1', 'V2' or 'V3'). Default = DEFAULT_NETWORK.
+
+    device : int or str
+        Device to use for predictions. Same behaviour as :func:`predict_disorder`;
+        None (default) selects the per-network default device.
+
+    normalized : bool
+        Whether to normalize disorder scores to between 0 and 1. Default = True.
+
+    round_values : bool
+        Whether to round scores to 4 decimal places. Default = True.
+
+    return_numpy : bool
+        Whether scores are numpy arrays (True) or lists (False). Default = True.
+
+    return_domains : bool
+        If True, yield ``DisorderObject`` predictions (with IDR/folded-domain
+        boundaries) instead of ``[sequence, scores]`` lists. Default = False.
+
+    disorder_threshold : float
+        Threshold used when ``return_domains`` is True. Default = None (the
+        network-specific default is used).
+
+    minimum_IDR_size : int
+        Used only if ``return_domains`` is True. Default = 12.
+
+    minimum_folded_domain : int
+        Used only if ``return_domains`` is True. Default = 50.
+
+    gap_closure : int
+        Used only if ``return_domains`` is True. Default = 10.
+
+    override_folded_domain_minsize : bool
+        Used only if ``return_domains`` is True. Default = False.
+
+    force_disable_batch : bool
+        Predict sequences individually rather than in batches. Default = False.
+
+    disable_pack_n_pad : bool
+        Disable pack-n-pad batching. Default = False.
+
+    silence_warnings : bool
+        Silence prediction warnings. Default = False.
+
+    batch_size : int or None
+        Batch size for each chunk's forward pass. Must be a power of two and
+        >= 32, or None to use a per-network, per-device default. Default = None.
+
+    legacy : bool
+        If True, force the V1 (legacy) network. Default = False.
+
+    chunk_size : int
+        Number of sequences accumulated from the stream and predicted together
+        as one batch job before their results are yielded. Larger values give
+        better batching efficiency at the cost of higher peak memory. Must be a
+        positive integer. Default = 5000.
+
+    invalid_sequence_action : str
+        How ``protfasta.read_fasta_stream`` handles non-standard residues while
+        reading. Default = 'convert'.
+
+    expect_unique_header : bool
+        Passed to ``protfasta.read_fasta_stream``. Defaults to False so that
+        streaming is flat in memory (no duplicate-header detection). Set to True
+        to raise on duplicate headers, at the cost of an ``O(records)`` running
+        set of headers (a one-time memory warning is then emitted). Default =
+        False.
+
+    duplicate_record_action : str
+        Passed to ``protfasta.read_fasta_stream`` ('ignore', 'fail' or 'remove').
+        Note that protfasta forbids 'ignore' when ``expect_unique_header`` is True,
+        so the default 'ignore' is automatically promoted to 'fail' in that case
+        (harmless, since unique headers already preclude duplicate records). When
+        ``expect_unique_header`` is False the value is used as given. Default =
+        'ignore'.
+
+    duplicate_sequence_action : str
+        Passed to ``protfasta.read_fasta_stream`` ('ignore', 'fail' or 'remove').
+        'fail'/'remove' keep an ``O(records)`` set of sequence digests. Default =
+        'ignore'.
+
+    Yields
+    ------
+    tuple
+        ``(header, prediction)`` tuples, in the order the sequences appear in the
+        file. See above for the form of ``prediction``.
+
+    Raises
+    ------
+    MetapredictError
+        If the installed protfasta does not provide ``read_fasta_stream``, or if
+        ``chunk_size`` is not a positive integer.
+    """
+
+    # --- eager validation (raised at call time, before any iteration) ---
+
+    # streaming requires a protfasta build that provides read_fasta_stream
+    if not hasattr(_protfasta, 'read_fasta_stream'):
+        raise MetapredictError(
+            'predict_disorder_stream() requires a version of protfasta that provides '
+            'read_fasta_stream() [0.1.19 or higher]. Please update protfasta.')
+
+    if not isinstance(chunk_size, int) or isinstance(chunk_size, bool) or chunk_size < 1:
+        raise MetapredictError(f'chunk_size must be a positive integer, got {chunk_size!r}')
+
+    # protfasta forbids expect_unique_header=True together with
+    # duplicate_record_action='ignore'. Because unique headers already preclude
+    # duplicate records, transparently promote the default 'ignore' -> 'fail' in
+    # that case. This gives callers one-knob control: leave expect_unique_header
+    # True for the historical behaviour, or set it False for truly flat,
+    # file-size-independent memory (no per-record bookkeeping).
+    if expect_unique_header and duplicate_record_action == 'ignore':
+        duplicate_record_action = 'fail'
+
+    # resolve version / legacy exactly as predict_disorder does
+    version = _meta_tools.valid_version(version, 'disorder')
+    if legacy == True:
+        version = 'V1'
+
+    # --- the actual streaming happens lazily in this generator ---
+    def _stream():
+        def _predict_chunk(chunk):
+            # chunk is an ordered {header: sequence} dict; predict it in one batch job
+            results = _predict(chunk,
+                               version=version,
+                               use_device=device,
+                               normalized=normalized,
+                               round_values=round_values,
+                               return_numpy=return_numpy,
+                               return_domains=return_domains,
+                               disorder_threshold=disorder_threshold,
+                               minimum_IDR_size=minimum_IDR_size,
+                               minimum_folded_domain=minimum_folded_domain,
+                               gap_closure=gap_closure,
+                               override_folded_domain_minsize=override_folded_domain_minsize,
+                               show_progress_bar=False,
+                               force_disable_batch=force_disable_batch,
+                               disable_pack_n_pad=disable_pack_n_pad,
+                               silence_warnings=silence_warnings,
+                               batch_size=batch_size)
+            # yield in the order the records arrived in this chunk
+            for header in chunk:
+                yield header, results[header]
+
+        chunk = {}
+        for header, sequence in _protfasta.read_fasta_stream(
+                filepath,
+                invalid_sequence_action=invalid_sequence_action,
+                expect_unique_header=expect_unique_header,
+                duplicate_record_action=duplicate_record_action,
+                duplicate_sequence_action=duplicate_sequence_action,
+                silence_warnings=silence_warnings):
+            chunk[header] = sequence
+            if len(chunk) >= chunk_size:
+                yield from _predict_chunk(chunk)
+                chunk = {}
+
+        # predict and yield any trailing (partial) chunk
+        if chunk:
+            yield from _predict_chunk(chunk)
+
+    return _stream()
+
+
+
+# ..........................................................................................
+#
+def graph_disorder(sequence,
                    version = DEFAULT_NETWORK,
                    pLDDT_version = DEFAULT_NETWORK_PLDDT,
                    title = 'Predicted protein disorder', 
@@ -946,7 +1206,8 @@ def graph_disorder(sequence,
 def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=False,
     device=None, normalized=True, round_values=True, return_numpy=True,
     print_performance=False, show_progress_bar=False, force_disable_batch=False,
-    disable_pack_n_pad=False, silence_warnings=False, return_as_disorder_score=False):
+    disable_pack_n_pad=False, silence_warnings=False, return_as_disorder_score=False,
+    batch_size=None):
     """
     Function to return predicted pLDDT scores. pLDDT scores are the scores
     reported by AlphaFold2 (AF2) that provide a measure of the confidence 
@@ -972,22 +1233,26 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
         will be between 0 and 1. 
         Default is False. 
 
-    device : int or str 
-        Identifier for the device to be used for predictions. 
+    device : int or str
+        Identifier for the device to be used for predictions.
         Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
-        cuda.is_available() returns False, instead of falling back to CPU, 
+        cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
-        using CUDA as you were expecting. 
+        using CUDA as you were expecting.
         Default: None
-            When set to None, we will check if there is a cuda-enabled
-            GPU. If there is, we will try to use that GPU. 
-            If you set the value to be an int, we will use cuda:int as the device
-            where int is the int you specify. The GPU numbering is 0 indexed, so 0 
-            corresponds to the first GPU and so on. Only specify this if you
-            know which GPU you want to use. 
-            * Note: MPS is only supported in Pytorch 2.1 or later. If I remember
-            right it might have been beta supported in 2.0 *.
+        When set to None, metapredict picks a device automatically in
+        the order cuda -> mps -> cpu (first available wins). Note that
+        for a single-sequence string input this function forces the CPU
+        path regardless of what's available, since using a GPU for one
+        sequence is not worthwhile; batch (list/dict) inputs honour
+        the auto-selection.
+        If you set the value to be an int, we will use cuda:int as the device
+        where int is the int you specify. The GPU numbering is 0 indexed, so 0
+        corresponds to the first GPU and so on. Only specify this if you
+        know which GPU you want to use.
+        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
+        right it might have been beta-supported in 2.0.
 
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1. 
@@ -1032,11 +1297,18 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
         it looks like a disorder score (higher value=disordereed and lower
         value = not disordered). This is similar to the approach that we used
         to generate the scores that were combined with legacy metapredict to make
-        V2 and V3. 
+        V2 and V3.
+
+    batch_size : int or None
+        Number of sequences processed per forward pass during batch prediction.
+        Must be a power of two and >= 32 (e.g. 32, 64, 128, 256, 512, 1024), or
+        None to use a per-network, per-device default (see network_parameters).
+        Batch size only affects speed and memory, not the predicted values;
+        larger batches are typically faster on a GPU/MPS. Default = None.
 
     Returns
     --------
-    
+
     list or np.ndarray
         Returns a list (or np.ndarray) of floats that corresponds to the 
         per-residue pLDDT score. Return type depends on the flag 
@@ -1060,7 +1332,8 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
             force_disable_batch=force_disable_batch,
             disable_pack_n_pad = disable_pack_n_pad,
             silence_warnings = silence_warnings,
-            return_as_disorder_score=return_as_disorder_score)
+            return_as_disorder_score=return_as_disorder_score,
+            batch_size=batch_size)
 
 
 # ..........................................................................................
@@ -2078,7 +2351,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
 # ..........................................................................................
 #
 def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
-                          use_fixed_cutoff=None):
+                          use_fixed_cutoff=None, device=None):
     '''
     executing script for generating a caid-compliant output file for disorder
     predictions using a .fasta file as the input.
@@ -2105,6 +2378,12 @@ def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
         instead assigned by simple thresholding of the per-residue disorder
         score against this cutoff (score >= cutoff -> 1).
 
+    device : str or int or None
+        Device identifier passed through to the batch predictor
+        (e.g. 'cpu', 'cuda', 'mps', or an int GPU index). If None (default)
+        the predictor picks a device automatically. Pin to 'cpu' if you need
+        byte-identical CAID output across machines with different accelerators.
+
     Returns
     --------
     None
@@ -2128,7 +2407,7 @@ def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
     # assign the binary disorder classifications in the CAID output.
     return_domains = use_fixed_cutoff is None
     predictions = _predict(entry_id_and_seqs, version=version, return_numpy=False,
-                           return_domains=return_domains)
+                           return_domains=return_domains, use_device=device)
 
     # write the output file
     _meta_tools.write_caid_format(predictions, output_path, version=version,

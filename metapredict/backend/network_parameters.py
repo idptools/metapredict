@@ -36,9 +36,14 @@ meta_predict_disorder_100e_v1 = {
     'problem_type': 'regression', 
     'datatype': 'residues', 
     'learn_rate': 0.001, 
-    'batch_size': 32,
+    'batch_size': 512,
     'epochs': 100,
     'used_lightning': False,
+    # V1 is a tiny network (hidden_size 5): CPU beats MPS at every batch size, so
+    # prefer cuda, then cpu, and only fall back to mps if cpu were unavailable.
+    'device_order': ['cuda', 'cpu', 'mps'],
+    # per-device default batch sizes: mps 512, cuda 256, cpu 256.
+    'device_batch_size': {'cuda': 256, 'mps': 512, 'cpu': 256},
     'disorder_threshold':METAPREDICT_LEGACY_THRESHOLD,
     'info': "This network is the original metapredict network as published in 'Metapredict: a fast, accurate, and easy-to-use predictor of consensus disorder and structure', Biophysical Journal 120, 4312–4319, October 19, 2021",
     'type': 'disorder'
@@ -54,9 +59,14 @@ metameta_2_7_22_nl2_hs20_b32_V3 = {
     'problem_type': 'regression', 
     'datatype': 'residues', 
     'learn_rate': 0.001, 
-    'batch_size': 32,
+    'batch_size': 512,
     'epochs': 100,
     'used_lightning': False,
+    # V2 is a small network (hidden_size 10): like V1, CPU is faster than MPS, so
+    # prefer cuda, then cpu, and only fall back to mps if cpu were unavailable.
+    'device_order': ['cuda', 'cpu', 'mps'],
+    # per-device default batch sizes: mps 512, cuda 256, cpu 256.
+    'device_batch_size': {'cuda': 256, 'mps': 512, 'cpu': 256},
     'disorder_threshold':METAPREDICT_V2_THRESHOLD,
     'info': "This network is the network known as metapredict V2 or V2-FF. From 'Metapredict V2: An update to metapredict, a fast, accurate, and easy-to-use predictor of consensus disorder and structure' - Biorixv, doi: https://doi.org/10.1101/2022.06.06.494887"    ,
     'type': 'disorder'
@@ -78,10 +88,15 @@ smoothed_v3 = {
     'num_linear_layers': 1,
     'gradient_clip_val':   1,
     'use_dropout': False,
-    'batch_size': 256,
+    'batch_size': 512,
     'used_lightning': True,
     'momentum':    0.9968434498981696,
     'last_epoch': 100,
+    # V3 is a larger network that genuinely benefits from a GPU: prefer cuda,
+    # then Apple-silicon mps, and fall back to cpu.
+    'device_order': ['cuda', 'mps', 'cpu'],
+    # per-device default batch sizes: mps 512, cuda 256, cpu 256.
+    'device_batch_size': {'cuda': 256, 'mps': 512, 'cpu': 256},
     'disorder_threshold': METAPREDICT_V3_THRESHOLD,
     'info': 'Similar to v2 metapredict as far as training data except we used real pLDDT scores based on AF2 V4 structures instead of predicted pLDDT. In addition, values were smoothed over a 25 residue sliding window before being used for training. Depending on some additional testing, this is likely to be our next released network.',
     'type': 'disorder'

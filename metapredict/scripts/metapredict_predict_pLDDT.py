@@ -21,7 +21,7 @@ def main():
 
     parser.add_argument('--invalid-sequence-action', help="For parsing FASTA file, defines how to deal with non-standard amino acids. See https://protfasta.readthedocs.io/en/latest/read_fasta.html for details. Default='convert' ", default='convert')
 
-    parser.add_argument('-v', '--pLDDT-version', default=DEFAULT_NETWORK_PLDDT, help='Optional. Use this flag to specify the version of metapredict. Options are V1, or V2')                            
+    parser.add_argument('-v', '--pLDDT-version', default=DEFAULT_NETWORK_PLDDT, help='Optional. Use this flag to specify the version of the pLDDT predictor. Options are V1 or V2.')
 
     parser.add_argument('-s', '--silent', action='store_true', help='Optional. Use this flag to suppress the progress bar.')
 

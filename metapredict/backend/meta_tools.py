@@ -15,6 +15,44 @@ def valid_range(inval, minval, maxval):
         raise MetapredictError(f'Value {inval:1.3f} is outside of range [{minval:1.3f}, {maxval:1.3f}]')
 
 
+def valid_batch_size(batch_size):
+    """
+    Validate a user-supplied batch size for batch prediction.
+
+    A valid batch size is a power of two that is greater than or equal to 32
+    (i.e. 32, 64, 128, 256, 512, 1024, ...). ``None`` is also accepted and means
+    "use the default batch size defined for the network".
+
+    Parameters
+    ----------
+    batch_size : int or None
+        The batch size to validate.
+
+    Returns
+    -------
+    None
+        Returns nothing; raises if the value is invalid.
+
+    Raises
+    ------
+    MetapredictError
+        If ``batch_size`` is not ``None`` and is not a power-of-two integer >= 32.
+    """
+    if batch_size is None:
+        return
+
+    # bool is a subclass of int, so exclude it explicitly
+    if isinstance(batch_size, bool) or not isinstance(batch_size, int):
+        raise MetapredictError(
+            f'batch_size must be an integer power of two >= 32 (e.g. 32, 64, 128, '
+            f'256, 512, 1024), or None to use the network default. Got {batch_size!r}')
+
+    if batch_size < 32 or (batch_size & (batch_size - 1)) != 0:
+        raise MetapredictError(
+            f'batch_size must be a power of two >= 32 (e.g. 32, 64, 128, 256, 512, '
+            f'1024). Got {batch_size}')
+
+
 def write_csv(input_dict, output_file):
     """
     Function that writes the scores in an input dictionary out to a standardized CVS file format.
@@ -208,27 +246,27 @@ def split_fasta(fasta_list, number_splits):
     '''
     
     # Calculate the number of protein sequences per sublist
-    seqs_per_sublist = len(fasta_list) // num_sublists
+    seqs_per_sublist = len(fasta_list) // number_splits
 
     # also count remainder
-    remainder = len(fasta_list) % num_sublists
+    remainder = len(fasta_list) % number_splits
 
     # Create the sublists
     sublists = []
     start = 0
-    for i in range(num_sublists):
+    for i in range(number_splits):
 
         # note: saying 1 if 1 < remainder else 0 means we distribute
         # the remainder evenly across the sublists
         sublist_size = seqs_per_sublist + (1 if i < remainder else 0)
 
         # create a sublist between start and sublist_size position
-        sublist = strings[start:start+sublist_size]
+        sublist = fasta_list[start:start+sublist_size]
         sublists.append(sublist)
         start = start + sublist_size
 
     # sanity check - good to be sure!
-    if np.sum([len(s) for s in sublist]) != len(fasta_list):
+    if np.sum([len(s) for s in sublists]) != len(fasta_list):
         raise Exception('splitting of fasta file did not get all proteins')
 
     return sublists
@@ -369,15 +407,14 @@ def write_caid_format(input_dict, output_path, version, use_fixed_cutoff=None):
     '''
     Function that takes in a dictionary and outputs a file in the format as 
     specified by IDPcentrail Critical Assessment of Intrinsic protein Disorder
-    (CAID). Format is as follows - 
-        ouptut is a plain text output where the
-        prediction has an entry header >entry_id header, similar to the beginning
-        of a .fasta file
-        Every line following the entry_id contains tab separated columns with columns
-        ordered as follows - 1) residue number, 2) residue name, 3) confidence score,
-        4) binary classification where 1 = disordered and 0 = not disordered.
+    (CAID). The format is as follows: the output is a plain text file where the
+    prediction has an entry header >entry_id, similar to the beginning of a
+    .fasta file. Every line following the entry_id contains tab-separated columns
+    ordered as follows - 1) residue number, 2) residue name, 3) confidence score,
+    4) binary classification where 1 = disordered and 0 = not disordered.
 
-    Example (from idpcentral.org/caid):
+    Example (from idpcentral.org/caid)::
+
         >P04637
         1    M    0.892    1
         2    E    0.813    1

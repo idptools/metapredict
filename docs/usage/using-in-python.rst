@@ -20,9 +20,9 @@ Update to metapredict V3 (November 2024)
 
 In November 2024 we upated the default version of metapredict updated to be V3. V3 introduces a few new changes including increased speed for all disorder and pLDDT predictions on CPU or GPU **and new networks for pLDDT and disorder prediction**. The new default network for disorder prediction is V3. The new default network for pLDDT prediction is V2. Furthermore, V3 introduces simplification to our Python functionality in that :code:`predict_disorder()` now offers functionality for individual predictions and batch predictions for all metapredict networks. In addition, the same functionality now applies to :code:`predict_pLDDT()`, enabling massive increases in pLDDT prediction. 
 		
-If a CUDA-enabled GPU is available, batch prediction will automatically use it. If not, batch prediction will fallback to CPU. While all the original functionality is preserved, :code:`predict_disorder()`, offers a 5-10x speedup on CPUs and 30-40x speedup on GPUs. In addition, Apple Silicon machines can now use the MPS framework for GPU predictions. 
+If a GPU is available, batch prediction will automatically use it — metapredict checks for a CUDA GPU first, then Apple Silicon MPS, and otherwise falls back to CPU. While all the original functionality is preserved, :code:`predict_disorder()`, offers a 5-10x speedup on CPUs and 30-40x speedup on GPUs.
 
-:code:`predict_disorder()` can **as of v3** take in a single sequence, a list of sequences or a dictionary of sequences, and returns individual scores, a list or dictionary that maps input index back to a two-position list of sequence and disorder scores or, if :code:`return_disorder_domains` is set to True, metapredict will return :code:`DisorderDomain` objects.
+:code:`predict_disorder()` can **as of v3** take in a single sequence, a list of sequences or a dictionary of sequences, and returns individual scores, a list or dictionary that maps input index back to a two-position list of sequence and disorder scores or, if :code:`return_domains` is set to True, metapredict will return :code:`DisorderObject` objects.
 
 This functionality is described in detail in the function documentation under the Python Module Documentation entry for :code:`predict_disorder()`.
 
@@ -36,7 +36,7 @@ The ``predict_disorder()`` function can take in an individual sequence as a stri
 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 **Predicting disorder for a single sequence**  
   
@@ -126,7 +126,7 @@ To use the V2 metapredict network, simply set ``version=2``.
 
 Selecting a specific device to use for predictions
 ------------------------------------------------------
-If you are predicting a single IDR, metapredict will just use the CPU. However, if you input a list or dictionary of sequences, metapredict will see if a CUDA-enabled GPU is available to use and *if one is available*, metapredict will use that GPU to increase the speed of disorder prediction. However, you can 'force' metapredict to use one or the other if you'd like. You can also specify a GPU if you have multiple available. In addition, if you are using MacOS and an Apple Silicon computer, you can use a Mac GPU using the MPS framework. Metapredict will not do this automatically because mps is still under development.
+If you are predicting a single IDR, metapredict will just use the CPU. However, if you input a list or dictionary of sequences, metapredict will automatically look for a GPU to increase the speed of disorder prediction, checking devices in the order CUDA → MPS (Apple Silicon) → CPU and using the first one that is available. You can also 'force' metapredict to use a specific device if you'd like, or select a particular GPU by index if you have several available.
 
 **Example - predicting on CPU:** 
 
@@ -201,7 +201,7 @@ The DisorderObject has 6 dot variables that can be called to get information abo
     meta.predict_disorder(sequences, return_domains=True)
 
 
-For DisorderObjects, you can also specify the ``disorder_threshold`` (default is the default value for your chosen network), ``minimum_IDR_size`` (default=12), ``minimum_folded_domain`` (default=50), ``gap_closure`` (default=10), and ``override_folded_domain_minsuze`` (default=False). 
+For DisorderObjects, you can also specify the ``disorder_threshold`` (default is the default value for your chosen network), ``minimum_IDR_size`` (default=12), ``minimum_folded_domain`` (default=50), ``gap_closure`` (default=10), and ``override_folded_domain_minsize`` (default=False). 
 
  * ``minimum_IDR_size``: The shortest length of a possible IDR.
  * ``minimum_folded_domain``: The shortest length of a possible folded domain. This is NOT a hard limit and functions to modulate the removal of large gaps (i.e. gaps less than this size are treated less strictly).
@@ -210,8 +210,9 @@ For DisorderObjects, you can also specify the ``disorder_threshold`` (default is
  * ``disorder_threshold``: The disorder threshold for the prediction. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. 
 
 **Additional options when using predict_disorder() -**
-Additional options whenusing ``predict_disorder()`` are:
- * ``print_performance``: If you want to see the performance of the prediction, you can set this to True. 
+Additional options when using ``predict_disorder()`` are:
+
+ * ``print_performance``: If you want to see the performance of the prediction, you can set this to True.
  * ``show_progress_bar``: If you want to see the progress of the predictions, you can set this to True. This will make a progress bar appear when doing predictions. 
  * ``force_disable_batch``: Allows you to disable batch predictions. This is mainly for debugging. 
  * ``disable_pack_n_pad``: Allows disabling of the packing and padding of sequences. This is mainly for debugging. 
@@ -226,7 +227,7 @@ Predicting AlphaFold2 Confidence Scores
 The ``predict_pLDDT()`` function now works similar to the ``predict_disorder()`` function. It can now take in an individual sequence as a string, a list of sequences, or a dictionary of sequences where the key for each sequence is the name of that sequence and value in the dictionary is the corresponding sequence. Depending on your input, metapredict will return **for single sequences:** a list of predicted pLDDT scores for the residues of the input sequence, **for a list of sequences:** a nested list where the first value in each sublist is the sequence and the second value in each sublist is a list or numpy array of pLDDT scores, and **for a dictionary of sequences:** a dictionary where the key is the name of the sequence and the value is a list where the first element in the list is the sequence and the second value in the list is a list or numpy array of pLDDT scores. 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 **Single sequence predictions using meta.predict_pLDDT()**  
   
 Running -
@@ -297,11 +298,27 @@ Additional Usage:
 
 Disabling prediction value normalization
 ------------------------------------------
-By default, output prediction values are normalized between 0 and 1. You can remove normalization by specifying ``normalized=False`` as a second argument in meta.predict_pLDDT(). 
+By default, output prediction values are returned on the 0 to 100 pLDDT scale and clipped to lie within that range. You can remove the clipping by specifying ``normalized=False`` as a second argument in meta.predict_pLDDT(). 
 
 .. code-block:: python
 	
 	meta.predict_pLDDT("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", normalized=False)
+
+Returning pLDDT scores as decimals (0 to 1)
+---------------------------------------------
+By default, pLDDT scores are returned on the 0 to 100 confidence scale. If you would prefer the raw decimal values between 0 and 1, set ``return_decimals=True``.
+
+.. code-block:: python
+
+	meta.predict_pLDDT("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", return_decimals=True)
+
+Converting pLDDT scores into a disorder score
+-----------------------------------------------
+Predicted pLDDT scores can be converted into an effective disorder score by setting ``return_as_disorder_score=True``. This inverts and rescales the pLDDT score so that higher values correspond to more disordered residues, returning values between 0 and 1.
+
+.. code-block:: python
+
+	meta.predict_pLDDT("DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR", return_as_disorder_score=True)
 
 Using the different versions of the metapredict pLDDT network
 ---------------------------------------------------------------
@@ -317,7 +334,7 @@ V2 is the default metapredict network for pLDDT prediction. To use the original 
 
 Selecting a specific device to use for predictions
 ------------------------------------------------------
-If you are predicting a single pLDDT score, metapredict will just use the CPU. However, if you input a list or dictionary of sequences, metapredict will see if a CUDA-enabled GPU is available to use and *if one is available*, metapredict will use that GPU to increase the speed of pLDDT prediction. However, you can 'force' metapredict to use one or the other if you'd like. You can also specify a GPU if you have multiple available. In addition, if you are using MacOS and an Apple Silicon computer, you can use a Mac GPU using the MPS framework. Metapredict will not do this automatically because mps is still under development.
+If you are predicting a single pLDDT score, metapredict will just use the CPU. However, if you input a list or dictionary of sequences, metapredict will automatically look for a GPU to increase the speed of pLDDT prediction, checking devices in the order CUDA → MPS (Apple Silicon) → CPU and using the first one that is available. You can also 'force' metapredict to use a specific device if you'd like, or select a particular GPU by index if you have several available.
 
 **Example - predicting pLDDT scores on CPU:** 
 
@@ -350,7 +367,7 @@ If you are predicting a single pLDDT score, metapredict will just use the CPU. H
 
 Returning a list instead of a np.array
 ---------------------------------------------
-By default, metapredict will return a numpy array of predicted disorder values. However, if you would like to return a list instead, you can specify ``return_numpy=False``.
+By default, metapredict will return a numpy array of predicted pLDDT scores. However, if you would like to return a list instead, you can specify ``return_numpy=False``.
 
 **Example - returning a list:** 
 
@@ -386,7 +403,7 @@ The ``predict_disorder_domains()`` function takes in an amino acid sequence and 
 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -546,7 +563,7 @@ The ``percent_disorder()`` function will return the percent of residues in a seq
 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -565,7 +582,7 @@ Specifying mode
 ----------------
 ``Percent_disorder()`` has two modes defined by the ``mode`` keyword: ``threshold`` and ``disorder_domains``. 
 
-The default usage is with the ``threshold`` mode. In this case, each residue is evaluated against a threshold value, where disorder scores above that threshold count towards disordered residues. This mode uses a threshold value of 0.5 (for V2) or 0.3 (for legacy / V1), although the threshold can be changed (see below).
+The default usage is with the ``threshold`` mode. In this case, each residue is evaluated against a threshold value, where disorder scores above that threshold count towards disordered residues. This mode uses a threshold value of 0.5 (for V2) or 0.42 (for legacy / V1), although the threshold can be changed (see below).
 
 The alternative mode, ``disorder_domains``, makes use of metapredict's ``predict_disorder_domains()`` functionality. Now, the sequence is divided up into IDRs and folded domains, and then the percentage disordered is based on what fraction of residues fall into IDRs. The underlying disorder domain prediction uses the default disorder thresholds as per the  ``predict_disorder_domains()`` function, but this can be over-ridden if a ``disorder_threshold`` keyword is passed. For example:
 
@@ -583,7 +600,7 @@ because the short 'folded' region where residue have a disorder score below the 
 
 Changing the cutoff value
 ---------------------------
-If you want to be more strict in what you consider to be disordered for calculating percent disorder of an input sequence, you can simply specify the cutoff value by adding the argument ``cutoff=<value>`` where the ``<value>`` corresponds to the percent (expressed as a fraction) you would like to use as the cutoff (for example, 0.8 would be 80%).
+If you want to be more strict in what you consider to be disordered for calculating percent disorder of an input sequence, you can simply specify the cutoff value by adding the argument ``disorder_threshold=<value>`` where the ``<value>`` corresponds to the percent (expressed as a fraction) you would like to use as the cutoff (for example, 0.8 would be 80%).
 
 **Example:**
 
@@ -624,7 +641,7 @@ The ``graph_disorder()`` function will show a plot of the predicted disorder con
 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 	
@@ -711,13 +728,13 @@ In addition, you can specify the color of the shaded regions by specifying ``sha
 
 Saving the graph
 --------------------
-By default, the graph will automatically appear. However, you can also save the graph if you'd like. To do this, simply specify ``output_file = path_where_to_save/filename.file_extension.`` For example, ``output_file=/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png``. You can save the file with any valid matplotlib extension (``.png``, ``.pdf``, etc.). 
+By default, the graph will automatically appear. However, you can also save the graph if you'd like. To do this, simply specify ``output_file = path_where_to_save/filename.file_extension.`` For example, ``output_file="/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png"``. You can save the file with any valid matplotlib extension (``.png``, ``.pdf``, etc.). 
 
 **Example**
 
 .. code-block:: python
 
-    meta.graph_disorder("DAPPTSQEHTQAEDKER", output_file=/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png)
+    meta.graph_disorder("DAPPTSQEHTQAEDKER", output_file="/Users/thisUser/Desktop/cool_graphs/myCoolGraph.png")
 
 
 Using other metapredict networks
@@ -737,7 +754,7 @@ Graphing AlphaFold2 Confidence Scores
 The ``graph_pLDDT()`` function will show a plot of the predicted AlphaFold2 pLDDT confidence scores across the input amino acid sequence.
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -766,7 +783,7 @@ Predicting Disorder From a .fasta File:
 By using the ``predict_disorder_fasta()`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -827,7 +844,7 @@ Predicting AlphaFold2 confidence scores From a .fasta File
 Just like with ``predict_disorder_fasta``, you can use ``predict_pLDDT_fasta`` to get predicted AlphaFold2 pLDDT confidence scores from a fasta file. All the same functionality in ``predict_disorder_fasta`` is in ``predict_pLDDT_fasta``.
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -854,7 +871,7 @@ Predict Disorder Using Uniprot ID
 By using the ``predict_disorder_uniprot()`` function, you can return predicted consensus disorder values for the amino acid sequence of a protein by specifying the UniProt ID. 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 .. code-block:: python
 
     meta.predict_disorder_uniprot("Q8N6T3")
@@ -879,7 +896,7 @@ Predicting AlphaFold2 Confidence Scores Using Uniprot ID
 By using the ``predict_pLDDT_uniprot`` function, you can generate predicted AlphaFold2 pLDDT confidence scores by inputting a UniProt ID.
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -911,7 +928,7 @@ You cannot specify the output file name here! By default, the file name will be 
 This command will generate a graph for ***every*** sequence in the .fasta file. If you have 1,000 sequences in a .fasta file and you do not specify the ``output_dir``, it will generate **1,000** graphs that you will have to close sequentially. Therefore, I recommend specifying the ``output_dir`` such that the output is saved to a dedicated folder.
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -985,7 +1002,7 @@ Generating AlphaFold2 Confidence Score Graphs from fasta files
 By using the ``graph_pLDDT_fasta`` function, you can graph predicted AlphaFold2 pLDDT confidence scores for the amino acid sequences in a .fasta file. This works the same as ``graph_disorder_fasta`` but instead returns graphs with just the predicted AlphaFold2 pLDDT scores.
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -1011,7 +1028,7 @@ Generating Graphs Using UniProt ID
 By using the ``graph_disorder_uniprot()`` function, you can graph predicted consensus disorder values for the amino acid sequence of a protein by specifying the UniProt ID. 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -1056,7 +1073,7 @@ Generating AlphaFold2 Confidence Score Graphs Using UniProt ID
 Just like with disorder predictions, you can also get AlphaFold2 pLDDT confidence score graphs using the Uniprot ID. This will **only display the pLDDT confidence scores** and not the predicted disorder scores. 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -1097,7 +1114,7 @@ In addition to inputting a sequence, you can predict disorder domains by inputti
 
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -1118,7 +1135,7 @@ To use other metapredict networks, simply set ``version=1`` for legacy metapredi
 
 .. code-block:: python
     
-    meta.predict_disorder_domains_uniprot('Q8N6T3' version=1)
+    meta.predict_disorder_domains_uniprot('Q8N6T3', version=1)
 
 
 
@@ -1128,7 +1145,7 @@ Batch prediction of disorder scores or disordered domains
 As of metapredict V2-FF (V2.6), metapredict enables GPU or CPU enabled batch prediction using ``predict_disorder_batch()``, though you can now use ``predict_disorder()``.
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 The simplest usage is to pass a list of sequences to :code:`predict_disorder_batch()` e.g.:
 
@@ -1170,7 +1187,7 @@ To use other metapredict networks, simply set ``version=1`` for legacy metapredi
 
 .. code-block:: python
     
-    meta.predict_disorder_domains_uniprot('Q8N6T3' version=1)
+    meta.predict_disorder_batch(seqs, version=1)
 
 Predicting disordered domains in batch mode
 --------------------------------------------
@@ -1210,7 +1227,7 @@ As an example:
 	print(tmp.disordered_domains)
 		['APSPASPPASPSA']
 		
-	print(disorder)
+	print(tmp.disorder)
 		[0.8983 0.9628 0.9682 0.9767 0.9798 0.9904 0.9774 0.9711 0.9656 		0.969 0.9361 0.8879 0.7606]
 		
 The various options for changing the definition of a disordered domain are also available to be passed to :code:`meta.predict_disorder_batch()`. For a complete list of possible input variables we recommend checking out the corresponding Python module documentation.
@@ -1224,9 +1241,94 @@ To use other metapredict networks, simply set ``version=1`` for legacy metapredi
 
 .. code-block:: python
     
-    meta.predict_disorder_domains_uniprot('Q8N6T3' version=1)
+    meta.predict_disorder_batch(seqs, return_domains=True, version=1)
 
-    
+
+Streaming disorder predictions for very large FASTA files
+==========================================================
+
+When you need to predict disorder for a FASTA file that is too large to hold in memory — for example a full metagenome or a UniProt release with tens or hundreds of millions of sequences — you can use :code:`predict_disorder_stream()`. It is the streaming counterpart to :code:`predict_disorder()`: instead of reading the whole file, predicting everything, and returning it all at once (which would exhaust memory on a very large file), it reads the file lazily, predicts sequences in chunks so that batch-mode speed is retained, and yields one result at a time. Peak memory stays bounded by the chunk size rather than by the size of the file, so files with hundreds of millions of sequences can be processed on a normal machine.
+
+.. note::
+
+   :code:`predict_disorder_stream()` relies on the streaming FASTA reader in
+   ``protfasta``, so it requires ``protfasta`` version 0.1.19 or later.
+
+When should I use it?
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Use :code:`predict_disorder_stream()` when:
+
+* Your input FASTA file is too large to load into memory (roughly, more sequences than would fit in RAM as a Python dictionary).
+* You want to start processing results before the whole file has finished predicting — for example, writing scores to disk as they are produced.
+
+For files that comfortably fit in memory, the regular :code:`predict_disorder()` (which takes a list or dictionary of sequences) is simpler, returns everything at once, and is the recommended choice.
+
+Basic usage
+~~~~~~~~~~~~~
+
+:code:`predict_disorder_stream()` is a generator, so you iterate over it. Each item is a :code:`(header, prediction)` tuple, where :code:`prediction` is a :code:`[sequence, scores]` list — the same value :code:`predict_disorder()` returns for a single dictionary entry:
+
+.. code-block:: python
+
+    import metapredict as meta
+
+    for header, (sequence, scores) in meta.predict_disorder_stream("huge_proteome.fasta"):
+        print(header, scores.mean())
+
+Because each result is produced and then discarded, this loop uses a bounded amount of memory no matter how large the input file is.
+
+Writing results to disk as they stream
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The most common use is to write predictions straight to an output file, so the full set of results never has to live in memory at once:
+
+.. code-block:: python
+
+    import metapredict as meta
+
+    with open("disorder_scores.tsv", "w") as out:
+        for header, (sequence, scores) in meta.predict_disorder_stream("huge_proteome.fasta"):
+            scores_str = ",".join(f"{s:.4f}" for s in scores)
+            out.write(f"{header}\t{scores_str}\n")
+
+Streaming IDRs (DisorderObjects)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set :code:`return_domains=True` to stream :code:`DisorderObject` predictions (with IDR and folded-domain boundaries) instead of raw scores. Each yielded value is then a :code:`DisorderObject`:
+
+.. code-block:: python
+
+    import metapredict as meta
+
+    with open("idrs.tsv", "w") as out:
+        for header, disorder_object in meta.predict_disorder_stream("huge_proteome.fasta", return_domains=True):
+            for idr_start, idr_end in disorder_object.disordered_domain_boundaries:
+                out.write(f"{header}\tIDR\t{idr_start}\t{idr_end}\n")
+
+Tuning speed and memory
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:code:`predict_disorder_stream()` accepts the same prediction options as :code:`predict_disorder()` (``version``, ``device``, ``normalized``, ``round_values``, ``return_numpy``, ``batch_size`` and so on), plus two streaming-specific options:
+
+* ``chunk_size`` — the number of sequences read from the file and predicted together as one batch job before their results are yielded (default 5000). Larger values improve batching efficiency (fewer, larger prediction calls) at the cost of higher peak memory; smaller values reduce memory further. The chunk size only affects speed and memory — it never changes the predicted scores.
+* ``invalid_sequence_action`` — how non-standard residues are handled while the file is read (passed through to ``protfasta``; default ``'convert'``).
+
+For example, to stream predictions from the V2 network on the CPU with a larger chunk and batch size:
+
+.. code-block:: python
+
+    import metapredict as meta
+
+    stream = meta.predict_disorder_stream("huge_proteome.fasta",
+                                          version=2,
+                                          device="cpu",
+                                          chunk_size=20000,
+                                          batch_size=256)
+    for header, (sequence, scores) in stream:
+        ...
+
+
 Predicting Disorder Domains from external scores
 ====================================================
 
@@ -1251,7 +1353,7 @@ The ``predict_disorder_domains_from_external_scores()`` function takes in an dis
     List of the actual sequences for folded domains
 
 Example of usage:
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -1316,13 +1418,13 @@ Additional Usage:
 Altering the disorder threshold
 ----------------------------------------
 
-To alter the disorder threshold, simply set ``disorder_threshold=my_value`` where ``my_value`` is a float. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.42
+To alter the disorder threshold, simply set ``disorder_threshold=my_value`` where ``my_value`` is a float. The higher the threshold value, the more conservative metapredict will be for designating a region as disordered. Default = 0.5
 
 **Example**
 
 .. code-block:: python
 
-	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", disorder_threshold=0.3)
+	meta.predict_disorder_domains_from_external_scores(disorder_scores, disorder_threshold=0.3)
 
 Altering minimum IDR size
 --------------------------------
@@ -1332,7 +1434,7 @@ The minimum IDR size will define the smallest possible region that could be cons
 
 .. code-block:: python
 
-	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_IDR_size = 10)
+	meta.predict_disorder_domains_from_external_scores(disorder_scores, minimum_IDR_size = 10)
 
 Altering the minimum folded domain size
 ------------------------------------------------
@@ -1342,7 +1444,7 @@ The minimum folded domain size defines where we expect the limit of small folded
 
 .. code-block:: python
 
-	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", minimum_folded_domain = 60)
+	meta.predict_disorder_domains_from_external_scores(disorder_scores, minimum_folded_domain = 60)
 
 Altering gap_closure
 ------------------------
@@ -1352,5 +1454,42 @@ The gap closure defines the largest gap that would be closed. Gaps here refer to
 
 .. code-block:: python
 
-	meta.predict_disorder_domains_from_external_scores("MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLV", gap_closure = 5)
+	meta.predict_disorder_domains_from_external_scores(disorder_scores, gap_closure = 5)
 
+
+Predicting all disorder and pLDDT scores at once
+==================================================
+
+The ``predict_all()`` function is a convenience function that runs every metapredict network on a single sequence and returns all of the scores together. This is handy when you want to compare the different disorder networks (V1, V2, and V3) and both pLDDT networks (V1 and V2) for the same protein.
+
+.. code-block:: python
+
+	ppLDDT_v1, ppLDDT_v2, disorder_v1, disorder_v2, disorder_v3 = meta.predict_all("MKAPSNGFLPSSNEGEKKPINSQL")
+
+The function returns a tuple of five numpy arrays, in the following order:
+
+* ``[0]`` - predicted pLDDT scores from the V1 pLDDT network (normalized between 0 and 1)
+* ``[1]`` - predicted pLDDT scores from the V2 pLDDT network (normalized between 0 and 1)
+* ``[2]`` - V1 (legacy) metapredict disorder scores
+* ``[3]`` - V2 metapredict disorder scores
+* ``[4]`` - V3 metapredict disorder scores
+
+Note that ``predict_all()`` only accepts a single sequence passed as a string.
+
+
+Generating CAID-format output
+===============================
+
+The ``predict_disorder_caid()`` function reads sequences from a FASTA file and writes one CAID-compliant output file per sequence into a specified directory. This is primarily useful for benchmarking metapredict using the format from the Critical Assessment of protein Intrinsic Disorder (CAID).
+
+.. code-block:: python
+
+	meta.predict_disorder_caid("/path/to/input.fasta", "/path/to/output_directory")
+
+The parameters are:
+
+* ``input_fasta`` - path to the input FASTA file.
+* ``output_path`` - directory where the per-sequence ``.caid`` files are written.
+* ``version`` - the disorder network to use (V1, V2, or V3). Default = V3.
+* ``use_fixed_cutoff`` - if ``None`` (default), the per-residue binary disorder/order classification in the CAID output is taken from metapredict's domain-decomposition algorithm (residues inside an IDR are classified as 1, otherwise 0). If a float between 0 and 1 is passed, residues are instead classified by thresholding the per-residue disorder score against that value.
+* ``device`` - the device to run predictions on (see the device-selection notes above). Default = ``None``, which auto-selects a device in the order CUDA → MPS → CPU.
