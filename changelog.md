@@ -2,17 +2,19 @@
 This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
 
 #### V3.1.0 (July 2026)
+Version 3.1.0 represents a "major" update, inasmuch as new functionality is added, and performance increases noted.
+
 Changes:
 
 * Automatic device selection is now chosen per network. When you don't specify a device, each disorder network picks the hardware that is actually fastest for it: the small V1 and V2 networks prefer CPU over Apple Silicon MPS (they are faster on CPU), while the larger V3 network prefers MPS. A CUDA GPU is always used first when one is present. This fixes a slowdown where the tiny legacy networks ran much slower on MPS than on CPU. You can still pin any device with `device=` (single-sequence predictions continue to run on CPU). Note that CPU and GPU results can differ very slightly due to floating-point differences, so set `device='cpu'` if you need bit-for-bit reproducible scores.
 
 * Added a `batch_size` option to `predict_disorder()`, `predict_pLDDT()` and `predict_disorder_batch()`. This controls how many sequences are processed per forward pass and can be tuned for your hardware — larger batches are typically much faster on a GPU/MPS. It must be a power of two and at least 32. Changing the batch size only affects speed and memory, never the predicted scores.
 
-* Default batch sizes are now selected per network and per device (used when you don't pass `batch_size`). This substantially speeds up batch prediction on Apple Silicon, where the previous small default left the GPU badly under-used.
+* Default batch sizes are now selected per network and per device (used when you don't pass `batch_size`). This substantially speeds up batch prediction for V1 and V2 substantially, where the previous small default left things badly under utilized. This does increase the memory footprint (V1 and V2 batch sizes were previously fixed at 32, now default to 512), but if memory is an issue the footprint can be titrated using the `batch_size` option.
 
 * Added `predict_disorder_stream()`, a streaming version of `predict_disorder()` for FASTA files that are too large to fit in memory. It reads the file lazily, predicts sequences in chunks (so batch-mode speed is retained), and yields `(header, prediction)` results one sequence at a time, keeping peak memory bounded by the chunk size rather than by the size of the file. This makes it possible to predict disorder for files with tens or hundreds of millions of sequences on a normal machine. This feature relies on `protfasta`'s streaming reader, so the minimum required `protfasta` version is now 0.1.19.
 
-* Sped up the per-residue sequence encoding used on every prediction by fully vectorizing it and encoding sequences directly as 32-bit floats. This also removes an incompatibility that could prevent predictions from running on the MPS (Apple Silicon) backend.
+* Sped up the per-residue sequence encoding used on every prediction by fully vectorizing it and encoding sequences directly as 32-bit floats (as opposed to 64-bit floats). This also removes an incompatibility that could prevent predictions from running on the MPS (Apple Silicon) backend.
 
 * Fixed a bug where `predict_disorder_domains()` and the related domain functions raised a `TypeError` when the compiled Cython domain-decomposition module was not available for the current environment (for example in a development install or under a mismatched Python version). metapredict now falls back to the equivalent pure-Python implementation and prints a single warning, so domain prediction works everywhere. Recompiling the Cython module restores full speed.
 
