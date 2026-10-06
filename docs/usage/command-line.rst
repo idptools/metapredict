@@ -12,7 +12,7 @@ Over three iterations we have updated the network behind metapredict to improve 
 Predicting Disorder Scores from FASTA Files
 ==============================================
 
-The ``metapredict-predict-disorder`` command-line tool processes a ``.fasta`` file as input and generates disorder scores for each sequence in the file. The results are saved to a ``.csv`` file for further analysis.
+The ``metapredict-predict-disorder`` command-line tool processes a ``.fasta`` file as input and generates disorder scores for each sequence in the file. The results are saved to a ``.csv`` file for further analysis. Each row of the file contains the FASTA header (with any commas replaced by spaces), then the amino acid sequence, then one disorder score per residue.
 
 Once ``metapredict`` is installed, you can run ``metapredict-predict-disorder`` from the command line:
 
@@ -59,7 +59,7 @@ To use a specific version (e.g., V1, V2, or V3) of ``metapredict``, use the ``-v
 Specifying the Device for Prediction
 -------------------------------------
 
-You can manually specify the device for prediction with the ``-d`` or ``--device`` flag. Available options are ``cpu``, ``mps`` (for Apple Silicon), ``cuda`` (for GPUs), or ``cuda:int`` to specify a specific GPU by its index.
+You can manually specify the device for prediction with the ``-d`` or ``--device`` flag. Available options are ``cpu``, ``mps`` (for Apple Silicon), ``cuda`` (for GPUs), or ``cuda:int`` to specify a specific GPU by its index. A bare index such as ``0`` is treated the same as ``cuda:0``.
 
 By default, ``metapredict`` automatically selects a device in the order CUDA GPU → Apple Silicon MPS → CPU, using the first one that is available.
 
@@ -175,7 +175,7 @@ The ``--threshold`` flag allows you to specify a custom disorder threshold. By d
 Specifying the Device for Prediction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use the ``-d`` or ``--device`` flag to choose the device for prediction. Available options include ``cpu``, ``mps`` (for Apple Silicon), ``cuda`` (for GPUs), or ``cuda:int`` to specify a specific GPU by its index.
+Use the ``-d`` or ``--device`` flag to choose the device for prediction. Available options include ``cpu``, ``mps`` (for Apple Silicon), ``cuda`` (for GPUs), or ``cuda:int`` to specify a specific GPU by its index. A bare index such as ``0`` is treated the same as ``cuda:0``.
 
 By default, ``metapredict-predict-idrs`` automatically selects a device in the order CUDA GPU → Apple Silicon MPS → CPU, using the first one that is available.
 
@@ -256,7 +256,7 @@ Example of usage:
 
     $ metapredict-predict-pLDDT input_sequences.fasta
 
-By default, the script will generate a CSV file called ``pLDDT_scores.csv`` with pLDDT scores for each sequence in the input FASTA file.
+By default, the script will generate a CSV file called ``pLDDT_scores.csv`` with pLDDT scores for each sequence in the input FASTA file. Each row contains the FASTA header (with any commas replaced by spaces), then the amino acid sequence, then one pLDDT score per residue.
 
 Additional Usage
 ~~~~~~~~~~~~~~~~~
@@ -813,7 +813,7 @@ The first argument is the path to the FASTA file containing the protein sequence
 
 Output Directory
 ----------------
-The second argument specifies the directory where the generated `.caid` files will be saved. If the directory does not exist, it will be created.
+The second argument specifies the directory where the generated `.caid` files will be saved. If the directory does not exist, it will be created. Each file is named after the sequence's FASTA header, with any characters that aren't allowed in file names (such as the ``|`` in UniProt headers, or ``/ \ : * ? " < >``) replaced by ``_``, so for example ``>sp|P04637|P53_HUMAN`` is written to ``sp_P04637_P53_HUMAN.caid``. The header inside the file is unchanged. If two headers would give the same file name, metapredict raises an error rather than overwrite one of them.
 
 **Example**:
 

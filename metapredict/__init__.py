@@ -11,6 +11,8 @@ from metapredict.meta import *
 from metapredict.parameters import DEFAULT_NETWORK
 from metapredict.backend.network_parameters import metapredict_networks 
 from metapredict.backend.predictor import predict
+from metapredict.backend.predictor import take_care_of_version as _take_care_of_version
+from metapredict.metapredict_exceptions import MetapredictError
 
 import os
 from importlib.metadata import version, PackageNotFoundError
@@ -78,15 +80,15 @@ def print_performance(seq_len=500, num_seqs=2000, variable_length=False,
 
     Returns
     ---------------
-    int
-        Returns the nearest number of sequences-per-second metapredict is currently
-        predicting. For ref, on a spring 2020 MBP this value was ~10,000 sequences per
-        second.
+    float
+        Returns the number of residues per second metapredict is currently
+        predicting.
 
     """
 
-    # make version uppercase
-    version=version.upper()
+    # normalize the version so 'legacy', 'v3', '3' and 3 are all accepted, as
+    # documented above
+    version=_take_care_of_version(version)
 
     # make sure valid network
     if version not in list(metapredict_networks.keys()):
@@ -182,15 +184,15 @@ def print_performance_backend(seq_len=500, num_seqs=2000, variable_length=False,
 
     Returns
     ---------------
-    int
-        Returns the nearest number of sequences-per-second metapredict is currently
-        predicting. For ref, on a spring 2020 MBP this value was ~10,000 sequences per
-        second.
+    float
+        Returns the number of residues per second metapredict is currently
+        predicting.
 
     """
 
-    # make version uppercase
-    version=version.upper()
+    # normalize the version so 'legacy', 'v3', '3' and 3 are all accepted, as
+    # documented above
+    version=_take_care_of_version(version)
 
     # make sure valid network
     if version not in list(metapredict_networks.keys()):

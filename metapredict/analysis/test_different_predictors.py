@@ -10,7 +10,7 @@ import math
 import numpy as np
 
 from metapredict.backend.predictor import predict, predict_pLDDT
-from metapredict.backend.creating_V2_and_V3_scores import meta_predict_hybrid_v3
+from creating_V2_and_V3_scores import meta_predict_hybrid_v3  # sibling module in analysis/
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, precision_recall_curve
 

@@ -4,6 +4,7 @@
 
 # import stuff for making CLI
 import os
+import sys
 import argparse
 import protfasta
 
@@ -25,7 +26,7 @@ def main():
 
     parser.add_argument('--mode', help='Defines the mode in which IDRs are reported. Options are currently: "fasta", "shephard-domains", "shephard-domains-uniprot". By default this generates a FASTA file with header format that matches the input file with an additional set of fields that are "IDR_START=$START  IDR_END=$END" where $START and $END are the starting and ending IDRs (indexing from 0, as in Python slice notation). If mode is set to shephard-domains than a SHEPHAD-compliant domains file is generated (where indexing starts at 1 to match protein numbering). If shephard-domains-uniprot the uniprot ID is extracted from the header assuming standard uniprot formatting (where indexing starts at 1 to match protein numbering). Default = fasta', default='fasta')
 
-    parser.add_argument('--threshold', help='Defines the threshold used to define a region as disordered or not. Default=0.42 for v1, 0.5 for v2.', default=None)
+    parser.add_argument('--threshold', type=float, help='Defines the threshold used to define a region as disordered or not. Default=0.42 for v1, 0.5 for v2 and v3.', default=None)
     
     parser.add_argument('--verbose', help='If included then prints out status updates', action='store_true')
     
@@ -50,6 +51,7 @@ def main():
     
     if not os.path.isfile(args.data_file):
         print(f'Error: Could not find passed fasta file [{args.data_file:s}]')
+        sys.exit(1)
 
     # read in sequences
     sequences = protfasta.read_fasta(args.data_file, 
@@ -101,41 +103,47 @@ def main():
 
     # if the return type is a SHEPHARD-compliant Domains file
     elif args.mode == 'shephard-domains':
-        fh = open(outfile_name, 'w')
+        # use a context manager so the file is always flushed and closed
+        with open(outfile_name, 'w') as fh:
 
-        # for each protein
-        for s in idrs:
+            # for each protein
+            for s in idrs:
 
-            # calculate number of IDRs
-            n_idrs = len(idrs[s].disordered_domains)
+                # calculate number of IDRs
+                n_idrs = len(idrs[s].disordered_domains)
 
-            for idx in range(n_idrs):
+                for idx in range(n_idrs):
 
-                idr_start = idrs[s].disordered_domain_boundaries[idx][0] + 1
-                idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
+                    idr_start = idrs[s].disordered_domain_boundaries[idx][0] + 1
+                    idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
 
-                fh.write(f'{s}\t{idr_start}\t{idr_end}\tIDR\n')
+                    fh.write(f'{s}\t{idr_start}\t{idr_end}\tIDR\n')
 
     elif args.mode == 'shephard-domains-uniprot':
-        fh = open(outfile_name, 'w')
+        # use a context manager so the file is always flushed and closed
+        with open(outfile_name, 'w') as fh:
 
-        # for each protein
-        for s in idrs:
+            # for each protein
+            for s in idrs:
 
-            try:
-                uid = s.split('|')[1]
-            except IndexError:
-                print(f'Error parsing header line: {s}\nCould not split on "|" characters.')
-                exit(1)
-            
-            # calculate number of IDRs
-            n_idrs = len(idrs[s].disordered_domains)
+                try:
+                    uid = s.split('|')[1]
+                except IndexError:
+                    print(f'Error parsing header line: {s}\nCould not split on "|" characters.')
+                    sys.exit(1)
 
-            for idx in range(n_idrs):                
-                idr_start = idrs[s].disordered_domain_boundaries[idx][0] + 1
-                idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
+                # calculate number of IDRs
+                n_idrs = len(idrs[s].disordered_domains)
 
-                fh.write(f'{uid}\t{idr_start}\t{idr_end}\tIDR\n')
-                
+                for idx in range(n_idrs):
+                    idr_start = idrs[s].disordered_domain_boundaries[idx][0] + 1
+                    idr_end   = idrs[s].disordered_domain_boundaries[idx][1]
+
+                    fh.write(f'{uid}\t{idr_start}\t{idr_end}\tIDR\n')
+
         
 
+
+
+if __name__ == "__main__":
+    main()

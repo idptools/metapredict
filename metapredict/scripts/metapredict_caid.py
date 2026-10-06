@@ -55,3 +55,6 @@ def main():
         version=args.version,
         use_fixed_cutoff=args.use_fixed_cutoff,
     )
+
+if __name__ == "__main__":
+    main()

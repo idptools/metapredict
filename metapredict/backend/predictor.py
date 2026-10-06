@@ -19,7 +19,7 @@ from tqdm import tqdm
 import gc
 
 # local imports
-from metapredict.backend.meta_tools import exceeds_max_length, valid_batch_size
+from metapredict.backend.meta_tools import exceeds_max_length, valid_batch_size, valid_range, raise_exception_on_empty_sequence
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 from metapredict.backend import domain_definition as _domain_definition
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
@@ -104,6 +104,7 @@ def build_DisorderObject(s,
                                                   minimum_IDR_size=minimum_IDR_size, 
                                                   minimum_folded_domain=minimum_folded_domain,
                                                   gap_closure=gap_closure,
+                                                  override_folded_domain_minsize=override_folded_domain_minsize,
                                                   use_python=use_slow)
 
     ## assemble the IDRs and FD boundaries
@@ -148,6 +149,36 @@ def size_filter(inseqs):
 
     return retdict
 
+
+# ....................................................................................
+#
+def unique_sequences_in_batch_order(sequences):
+    """
+    Return the unique sequences in the fixed order used to build batches:
+    longest first, with sequences of equal length in alphabetical order.
+
+    Which sequences share a batch changes the predicted scores very slightly
+    (around 1e-7, because the LSTM kernels compute differently for different
+    batch sizes). Deduplicating with set() alone gave an order that changed
+    from run to run, because Python randomises string hashing in every new
+    process, so batch predictions were not exactly repeatable. With this fixed
+    order the same set of sequences always produces exactly the same batches,
+    and so exactly the same scores, regardless of the order (or number of
+    duplicates) in which they were passed. Longest-first is also the order
+    torch.nn.utils.rnn.pack_padded_sequence requires (enforce_sorted=True).
+
+    Parameters
+    ---------------
+    sequences : iterable of str
+        Amino acid sequences, possibly containing duplicates.
+
+    Returns
+    ---------------
+    list of str
+        The unique sequences, longest first and alphabetical within a length.
+    """
+    return sorted(set(sequences), key=lambda seq: (-len(seq), seq))
+
 # ....................................................................................
 #
 
@@ -174,7 +205,9 @@ def check_device(use_device, default_device='gpu'):
     use_device : int or str
         Identifier for the device to be used for predictions.
         Possible inputs: 'cpu', 'mps', 'cuda', 'cuda:int', or an int that corresponds to
-        the index of a specific cuda-enabled GPU. If 'cuda' is specified and
+        the index of a specific cuda-enabled GPU. A string of digits (e.g. '0', which is
+        how the command-line tools pass a GPU index) is treated the same way as an int.
+        If 'cuda' is specified and
         cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
         using CUDA as you were expecting.
@@ -226,15 +259,26 @@ def check_device(use_device, default_device='gpu'):
 
 
     else:
-        # if input is an int, make it a string and then do checks. 
+        # bool is a subclass of int, so reject it explicitly rather than
+        # silently turning True into 'cuda:True'
+        if isinstance(use_device, bool):
+            raise MetapredictError(f'Invalid device {use_device!r}. Device can only be set to: None, a string equal to cpu, mps, cuda, or cuda:int, or an int that is the index of a specific CUDA-enabled GPU')
+
+        # if input is an int, make it a string and then do checks.
         if isinstance(use_device, int)==True:
             use_device=f'cuda:{use_device}'
-        
+
         # if input is a string (it should be...)
         if isinstance(use_device, str)==True:
             # make use_device lowercase
-            use_device=use_device.lower()
-            # if CPU specified, use CPU    
+            use_device=use_device.lower().strip()
+
+            # the command-line tools pass a GPU index as a string (e.g. '0'), so
+            # treat an all-digit string the same way as an int GPU index
+            if use_device.isdigit():
+                use_device=f'cuda:{use_device}'
+
+            # if CPU specified, use CPU
             if use_device=='cpu':
                 return use_device
             elif use_device=='mps':
@@ -243,28 +287,30 @@ def check_device(use_device, default_device='gpu'):
                     return use_device
                 else:
                     raise MetapredictError('mps was specified, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
-            elif 'cuda' in use_device:
+            elif use_device.startswith('cuda'):
+                # make sure the device string is either 'cuda' or 'cuda:int' before
+                # checking availability, so typos like 'cuda0' get a clear message
+                pattern = r"^cuda(:\d+)?$"
+                if re.match(pattern, use_device)==None:
+                    error_message = f'{use_device} was specified as the device, but it does not match the pattern of cuda or cuda:int where int is a positive integer.'
+                    raise MetapredictError(error_message)
+
                 # make sure cuda is available.
                 if torch.cuda.is_available()==False:
                     error_message = f'{use_device} was specified as the device, but torch.cuda.is_available() returned False.'
                     raise MetapredictError(error_message) 
                 if use_device == 'cuda':
                     return use_device
-                elif ':' in use_device:
-                    # make sure a positive integer is specified 
-                    pattern = r"^cuda(:\d+)?$"
-                    # if the pattern doesn't match, raise an exception. 
-                    if re.match(pattern, str(use_device))==None:
-                        error_message = f'{use_device} was specified as the device, but it does not match the pattern of cuda:int where int is a positive integer.'
+                else:
+                    # make sure there are enough devices such that it is possible that the specified device index works.
+                    device_index = int(use_device.split(":")[1])
+                    num_devices = torch.cuda.device_count()
+                    if device_index >= num_devices:
+                        error_message = f'{use_device} was specified as the device, but there are only {num_devices} cuda-enabled GPUs available.\nRemember, GPU indices are 0-indexed, so cuda:0 is for the first GPU and so on.\nThe max device index you can use based on torch.cuda.device_count() is {num_devices-1}.'
                         raise MetapredictError(error_message)
-                    else:
-                        # make sure there are enough devices such that it is possible that the specified device index works. 
-                        device_index = int(use_device.split(":")[1])
-                        num_devices = torch.cuda.device_count()
-                        if device_index >= num_devices:
-                            error_message = f'{use_device} was specified as the device, but there are only {num_devices} cuda-enabled GPUs available.\nRemember, GPU indices are 0-indexed, so cuda:0 is for the first GPU and so on.\nThe max device index you can use based on torch.cuda.device_count() is {num_devices-1}.'
-                            raise MetapredictError(error_message)
-                        return use_device
+                    return use_device
+            else:
+                raise MetapredictError(f"Invalid device '{use_device}'. Device can only be set to: None, a string equal to 'cpu', 'mps', 'cuda', 'cuda:int' where int is some positive integer, or an int that is equal to the index of a specific CUDA-enabled GPU")
         else:
             raise MetapredictError("Device can only be set to: None, a string equal to 'cpu', 'mps', 'cuda', 'cuda:int' where int is some positive integer, or an int that is equal to the index of a specific CUDA-enabled GPU")
 
@@ -382,7 +428,9 @@ def get_model(model_name, params, predictor_path, device):
         network = torch.load(predictor_path, map_location=device, weights_only=True)
         model.load_state_dict(network)
     else:
-        model = architectures.BRNN_MtM_lightning.load_from_checkpoint(
+        # networks trained with pytorch-lightning are stored as Lightning
+        # checkpoints, which we read with plain PyTorch (no Lightning needed)
+        model = architectures.BRNN_MtM_lightning.from_checkpoint(
             predictor_path, map_location=device
         )
 
@@ -631,6 +679,12 @@ def predict(inputs,
     if disorder_threshold is None:
         disorder_threshold = net['parameters']['disorder_threshold']
 
+    # the threshold is only used when building DisorderObjects; in that case it
+    # must be a number in [0, 1] (a string threshold would otherwise crash, or be
+    # silently mis-compared, inside the domain decomposition)
+    if return_domains:
+        valid_range(disorder_threshold, 0.0, 1.0)
+
     # load and setup the network (same code as used by the non-batch version)
     PATH = os.path.dirname(os.path.realpath(__file__))
     predictor_path = f"{PATH}/networks/{net['weights']}"
@@ -642,6 +696,9 @@ def predict(inputs,
     # actually used (effective_batch_size) is resolved below, once the device is
     # known, since the default batch size depends on the device.
     valid_batch_size(batch_size)
+
+    # make sure none of the sequences are empty
+    raise_exception_on_empty_sequence(inputs)
 
     ##
     ## FIGURE OUT WHERE WE ARE DOING THE PREDICTIONS
@@ -750,11 +807,13 @@ def predict(inputs,
 
         # see if need to build disorder_domsins
         if return_domains:
-            outputs= build_DisorderObject(inputs, outputs, 
+            outputs= build_DisorderObject(inputs, outputs,
                                             disorder_threshold=disorder_threshold,
-                                            minimum_IDR_size=minimum_IDR_size, 
+                                            minimum_IDR_size=minimum_IDR_size,
                                             minimum_folded_domain=minimum_folded_domain,
-                                            gap_closure=gap_closure,use_slow=use_slow,
+                                            gap_closure=gap_closure,
+                                            override_folded_domain_minsize=override_folded_domain_minsize,
+                                            use_slow=use_slow,
                                             return_numpy=return_numpy)
         # return the output
         return outputs
@@ -773,10 +832,10 @@ def predict(inputs,
                     seq2id[s] = [k]
                 else:
                     seq2id[s].append(k)
-            sequence_list = list(seq2id.keys())
+            sequence_list = unique_sequences_in_batch_order(seq2id.keys())
         elif isinstance(inputs, list):
             mode = 'list'
-            sequence_list = list(set(inputs))
+            sequence_list = unique_sequences_in_batch_order(inputs)
         else:
             raise Exception('Invalid data type passed - expect a single sequence or a list or dictionary of sequences')
 
@@ -791,16 +850,11 @@ def predict(inputs,
         # check if we are disabling batch predictions. If we are, we need to
         # do all predictions individually
         if force_disable_batch==True:
-            tot_num_seqs=len(sequence_list)
             # see if a progress bar is wanted
             if show_progress_bar:
                 pbar = tqdm(total=len(sequence_list))
-                # set pbar update amount
-                pbar_update_amount=int(0.1*tot_num_seqs)
-                if pbar_update_amount==0:
-                    pbar_update_amount=1
             # iterate through sequence list
-            for cur_seq_num, seq in enumerate(sequence_list):
+            for seq in sequence_list:
                 # encode the sequence
                 seq_vector = encode_sequence.one_hot(seq)
                 seq_vector = seq_vector.to(device)
@@ -831,10 +885,10 @@ def predict(inputs,
 
                 # add to dict
                 pred_dict[seq]=outputs
-                # update progress bar
+                # update progress bar one sequence at a time (tqdm itself limits
+                # how often the bar is redrawn, so this is cheap)
                 if show_progress_bar:
-                    if cur_seq_num % (pbar_update_amount)==0:
-                        pbar.update(pbar_update_amount)
+                    pbar.update(1)
 
         else:         
             # if we are disabling pack-n-pad functionalitity...
@@ -870,7 +924,7 @@ def predict(inputs,
                             elif normalized==True and round_values==False:
                                 prediction=np.squeeze(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=1))
                             elif normalized==False and round_values==True:
-                                prediction=np.squeeze(np.round(outputs[j][0:len(seq)]))
+                                prediction=np.squeeze(np.round(outputs[j][0:len(seq)], 4))
                             else:
                                 prediction=np.squeeze(outputs[j][0:len(seq)])
 
@@ -891,8 +945,9 @@ def predict(inputs,
                     if show_progress_bar:
                         pbar.update(1)
             else:
-                # sort the seqs by length, makes pack-n-pad stuff more efficient
-                sequence_list.sort(key=len, reverse=True)
+                # sequence_list is already longest-first (see
+                # unique_sequences_in_batch_order), which keeps padding to a
+                # minimum and is the order pack_padded_sequence requires
                 # we will be using pack-n-pad.
                 # load seqs into DataLoader
                 seq_loader = DataLoader(sequence_list, batch_size=effective_batch_size, shuffle=False)
@@ -995,6 +1050,7 @@ def predict(inputs,
                                                              minimum_IDR_size=minimum_IDR_size, 
                                                              minimum_folded_domain=minimum_folded_domain,
                                                              gap_closure=gap_closure,
+                                                             override_folded_domain_minsize=override_folded_domain_minsize,
                                                              use_slow=use_slow, return_numpy=return_numpy)
 
             end_time = time.time()
@@ -1220,6 +1276,9 @@ def predict_pLDDT(inputs,
     # known, since the default batch size depends on the device.
     valid_batch_size(batch_size)
 
+    # make sure none of the sequences are empty
+    raise_exception_on_empty_sequence(inputs)
+
     # make sure that we set return_decimals to True if we are doing disorder prediction using plddt scores
     if return_as_disorder_score==True:
         return_decimals=True
@@ -1255,7 +1314,12 @@ def predict_pLDDT(inputs,
         else:
             _device_pref = params.get('device_order', ['cuda', 'mps', 'cpu'])
         device_string = check_device(use_device, default_device=_device_pref)
-    
+
+    # check if using gpu, specifically cuda
+    if 'cuda' in device_string:
+        if exceeds_max_length(inputs, max_length=MAX_CUDA_LENGTH):
+            raise MetapredictError(f'One of the input sequences is too long to run on GPU. The max length for a sequence on a CUDA GPU is {MAX_CUDA_LENGTH}.\nPlease use CPU if you want to run sequences longer than {MAX_CUDA_LENGTH} amino acids.')
+
     # set device
     device=torch.device(device_string)
 
@@ -1363,10 +1427,10 @@ def predict_pLDDT(inputs,
                     seq2id[s] = [k]
                 else:
                     seq2id[s].append(k)
-            sequence_list = list(seq2id.keys())
+            sequence_list = unique_sequences_in_batch_order(seq2id.keys())
         elif isinstance(inputs, list):
             mode = 'list'
-            sequence_list = list(set(inputs))
+            sequence_list = unique_sequences_in_batch_order(inputs)
         else:
             raise Exception('Invalid data type passed - expect a single sequence or a list or dictionary of sequences')
 
@@ -1381,16 +1445,11 @@ def predict_pLDDT(inputs,
         # check if we are disabling batch predictions. If we are, we need to
         # do all predictions individually
         if force_disable_batch==True:
-            tot_num_seqs=len(sequence_list)
             # see if a progress bar is wanted
             if show_progress_bar:
                 pbar = tqdm(total=len(sequence_list))
-                # set pbar update amount
-                pbar_update_amount=int(0.1*tot_num_seqs)
-                if pbar_update_amount==0:
-                    pbar_update_amount=1
             # iterate through sequence list
-            for cur_seq_num, seq in enumerate(sequence_list):
+            for seq in sequence_list:
                 # encode the sequence
                 seq_vector = encode_sequence.one_hot(seq)
                 seq_vector = seq_vector.to(device)
@@ -1423,17 +1482,17 @@ def predict_pLDDT(inputs,
                     if round_values==True:
                         # need to round again because the np.round doesn't 
                         # keep the rounded values when we convert to list. 
-                        outputs = [round(x, 4) for x in outputs.flatten()]
+                        outputs = [round(float(x), 4) for x in outputs.flatten()]
                     else:
                         # otherwise just return the flattened array as a list. 
                         outputs=outputs.flatten().tolist()
 
                 # add to dict
                 pred_dict[seq]=outputs
-                # update progress bar
+                # update progress bar one sequence at a time (tqdm itself limits
+                # how often the bar is redrawn, so this is cheap)
                 if show_progress_bar:
-                    if cur_seq_num % (pbar_update_amount)==0:
-                        pbar.update(pbar_update_amount)
+                    pbar.update(1)
 
         else:         
             # if we are disabling pack-n-pad functionalitity...
@@ -1478,7 +1537,7 @@ def predict_pLDDT(inputs,
                             elif normalized==True and round_values==False:
                                 prediction=np.squeeze(np.clip(outputs[j][0:len(seq)], a_min=0, a_max=max_val_clipped))
                             elif normalized==False and round_values==True:
-                                prediction=np.squeeze(np.round(outputs[j][0:len(seq)]))
+                                prediction=np.squeeze(np.round(outputs[j][0:len(seq)], 4))
                             else:
                                 prediction=np.squeeze(outputs[j][0:len(seq)])
 
@@ -1487,7 +1546,7 @@ def predict_pLDDT(inputs,
                                 if round_values==True:
                                     # need to round again because the np.round doesn't 
                                     # keep the rounded values when we convert to list. 
-                                    prediction = [round(x, 4) for x in prediction.flatten()]
+                                    prediction = [round(float(x), 4) for x in prediction.flatten()]
                                 else:
                                     # otherwise just return the flattened array as a list. 
                                     prediction=prediction.flatten().tolist()
@@ -1499,8 +1558,9 @@ def predict_pLDDT(inputs,
                     if show_progress_bar:
                         pbar.update(1)
             else:
-                # sort the seqs by length, makes pack-n-pad stuff more efficient
-                sequence_list.sort(key=len, reverse=True)
+                # sequence_list is already longest-first (see
+                # unique_sequences_in_batch_order), which keeps padding to a
+                # minimum and is the order pack_padded_sequence requires
                 # we will be using pack-n-pad.
                 # load seqs into DataLoader
                 seq_loader = DataLoader(sequence_list, batch_size=effective_batch_size, shuffle=False)
@@ -1569,7 +1629,7 @@ def predict_pLDDT(inputs,
                             if round_values==True:
                                 # need to round again because the np.round doesn't 
                                 # keep the rounded values when we convert to list. 
-                                curoutput = [round(x, 4) for x in curoutput.flatten()]
+                                curoutput = [round(float(x), 4) for x in curoutput.flatten()]
                             else:
                                 # otherwise just return the flattened array as a list. 
                                 curoutput=curoutput.flatten().tolist()

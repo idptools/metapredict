@@ -36,3 +36,7 @@ def main():
                         pLDDT_scores=pLDDT_scores, 
                         version=args.version,
                         pLDDT_version=args.pLDDT_version)
+
+
+if __name__ == "__main__":
+    main()

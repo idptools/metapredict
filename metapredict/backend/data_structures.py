@@ -12,8 +12,6 @@ class DisorderObject:
         """
         self.sequence = seq
 
-        self.disorder = meta 
-
         self.disordered_domain_boundaries = disordered_domains
 
         self.folded_domain_boundaries = folded_domains
@@ -21,18 +19,17 @@ class DisorderObject:
         # convert numerical vector types as per input argument
         if return_numpy:
             if not isinstance(meta, np.ndarray):
-                self.disorder = np.array(meta)
-
-            if not isinstance(meta, np.ndarray):
-                self.meta = np.array(meta)
-        
+                meta = np.array(meta)
         else:
-
             if isinstance(meta, np.ndarray):
-                self.disorder = meta.tolist()
+                meta = meta.tolist()
 
-            if isinstance(meta, np.ndarray):
-                self.meta = meta.tolist()        
+        self.disorder = meta
+
+        # .meta is kept as a backwards-compatible alias of .disorder. It is
+        # always set so it exists regardless of whether a type conversion was
+        # needed above.
+        self.meta = self.disorder
 
     @property
     def disordered_domains(self):

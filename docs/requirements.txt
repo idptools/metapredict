@@ -8,12 +8,11 @@ numpy>=2.0
 torch>=2.3
 argparse
 matplotlib
-protfasta>=0.1.19
+protfasta>=0.1.25
 scipy>=1.13
 urllib3
 tqdm
 getSequence
-pytorch_lightning>=2.0
 #
 ###### Requirements with Version Specifiers ######
 #   See https://www.python.org/dev/peps/pep-0440/#version-specifiers

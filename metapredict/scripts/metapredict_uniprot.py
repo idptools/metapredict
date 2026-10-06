@@ -91,5 +91,9 @@ def main():
                                 version=args.version,
                                 pLDDT_version=args.pLDDT_version)
         if not args.silent:
-            print('Saving predictions to: %s'%(os.path.abspath(args.output_file)))
+            print('Saving predictions to: %s'%(os.path.abspath(outname)))
 
+
+
+if __name__ == "__main__":
+    main()

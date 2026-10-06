@@ -383,7 +383,7 @@ def get_domains(sequence,
 
     list 
 
-        This function takes an amino acid sequence, a disorder score, and returns a 4-position tiple with
+        This function takes an amino acid sequence, a disorder score, and returns a 3-position list with
         the following information:
 
         [0] - Smoothed disorder score used to aid in domain boundary identification
@@ -406,8 +406,12 @@ def get_domains(sequence,
         window_size = polynomial_order+2
 
     if len(disorder) <= window_size:
-        print('Warning: length of disorder [%i] is <= window_size [%i]. This happens when you have a small IDR relative to the minimum IDR size. Updating windowsize to match sequence length.' % (
-            len(disorder), window_size))
+        # use warnings (not print) with a fixed message so that, under Python's
+        # default warning filter, this is reported once rather than once per short
+        # sequence when many short sequences are passed in batch mode
+        warnings.warn('One or more sequences are no longer than the smoothing window used for '
+                      'domain decomposition (2*minimum_IDR_size residues). For those sequences '
+                      'the window is shrunk to match the sequence length.', RuntimeWarning, stacklevel=2)
         window_size = len(disorder)
 
     if window_size % 2 == 0:

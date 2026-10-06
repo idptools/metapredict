@@ -780,7 +780,7 @@ To use other metapredict networks, simply set ``pLDDT_version=1`` to use the alp
 Predicting Disorder From a .fasta File:
 ========================================
 
-By using the ``predict_disorder_fasta()`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and the values are the consensus disorder predictions of the amino acid sequence associated with each fasta header in the original .fasta file.
+By using the ``predict_disorder_fasta()`` function, you can predict disorder values for the amino acid sequences in a .fasta file. By default, this function will return a dictionary where the keys in the dictionary are the fasta headers and each value is a two-element list: the amino acid sequence associated with that fasta header, followed by a list of its per-residue consensus disorder predictions.
 
 Example of usage:
 ~~~~~~~~~~~~~~~~~~
@@ -801,7 +801,7 @@ Additional Usage:
 
 Save the output values
 -------------------------
-By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a ``.csv`` file by specifying ``output_file = "location you want to save the file to"``. When specifying the file path, you also want to specify the file name. The first cell of each row will contain a fasta header and the subsequent cells in that row will contain predicted consensus disorder values for the protein associated with the fasta header.
+By default the predict_disorder_fasta function will immediately return a dictionary. However, you can also save the output to a ``.csv`` file by specifying ``output_file = "location you want to save the file to"``. When specifying the file path, you also want to specify the file name. The first cell of each row will contain a fasta header (with any commas replaced by spaces), the second cell will contain the amino acid sequence, and the subsequent cells in that row will contain the predicted consensus disorder value for each residue of that protein.
 
 **Example:**
 
@@ -1252,7 +1252,8 @@ When you need to predict disorder for a FASTA file that is too large to hold in 
 .. note::
 
    :code:`predict_disorder_stream()` relies on the streaming FASTA reader in
-   ``protfasta``, so it requires ``protfasta`` version 0.1.19 or later.
+   ``protfasta`` (added in version 0.1.19). metapredict itself requires
+   ``protfasta`` 0.1.25 or later.
 
 When should I use it?
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1489,7 +1490,7 @@ The ``predict_disorder_caid()`` function reads sequences from a FASTA file and w
 The parameters are:
 
 * ``input_fasta`` - path to the input FASTA file.
-* ``output_path`` - directory where the per-sequence ``.caid`` files are written.
+* ``output_path`` - directory where the per-sequence ``.caid`` files are written. Each file is named after the sequence's FASTA header, with any characters that aren't allowed in file names (such as the ``|`` in UniProt headers, or ``/ \ : * ? " < >``) replaced by ``_``, so for example ``>sp|P04637|P53_HUMAN`` is written to ``sp_P04637_P53_HUMAN.caid``. The header inside the file is unchanged. If two headers would give the same file name, metapredict raises an error rather than overwrite one of them.
 * ``version`` - the disorder network to use (V1, V2, or V3). Default = V3.
 * ``use_fixed_cutoff`` - if ``None`` (default), the per-residue binary disorder/order classification in the CAID output is taken from metapredict's domain-decomposition algorithm (residues inside an IDR are classified as 1, otherwise 0). If a float between 0 and 1 is passed, residues are instead classified by thresholding the per-residue disorder score against that value.
 * ``device`` - the device to run predictions on (see the device-selection notes above). Default = ``None``, which auto-selects a device in the order CUDA → MPS → CPU.

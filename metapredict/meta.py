@@ -407,11 +407,16 @@ def predict_disorder_domains_from_external_scores(disorder,
 
     # if a sequence was provided check it makes sense in terms of type and length...
     if sequence is not None:
+        # only the len() calls go inside the try, so the length-mismatch error
+        # below is not swallowed and replaced by the generic message
         try:
-            if len(sequence) != len(disorder):
-                raise MetapredictError(f'Disorder and sequence info are not length matched [disorder length = {len(disorder)}, sequence length = {len(sequence)}')
-        except Exception:
-            raise MetapredictError(f'Could not compare length of disorder and sequence parameters. Make sure sequence is a str and disorder a list')
+            sequence_length = len(sequence)
+            disorder_length = len(disorder)
+        except TypeError:
+            raise MetapredictError('Could not compare length of disorder and sequence parameters. Make sure sequence is a str and disorder a list')
+
+        if sequence_length != disorder_length:
+            raise MetapredictError(f'Disorder and sequence info are not length matched [disorder length = {disorder_length}, sequence length = {sequence_length}]')
 
         return_sequence = True
 
@@ -553,14 +558,16 @@ def predict_disorder_domains(sequence,
     Returns
     ---------
     list
-        However, if ``return_list`` == True. Then, the function returns a 
-        list with three elements, as outlined below.
+        However, if ``return_list`` == True. Then, the function returns a
+        list with four elements, as outlined below.
 
-        * [0] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding how IDRs/folded domains were identified, and will vary depending on the settings provided
+        * [0] - The per-residue disorder scores predicted by metapredict.
 
-        * [1] - a list of elements, where each element defines the start and end position of each IDR. If a sequence was provided the third element in each sub-element is the IDR sequence. If no sequence was provided, then each sub-element is simply len=2.
-        
-        * [2] - a list of elements, where each element defines the start and end position of each folded region. If a sequence was provided the third element in each sub-element is the folded domain sequence. If no sequence was provided, then each sub-element is simply len=2.    
+        * [1] - Smoothed disorder score used to aid in domain boundary identification. This can be useful for understanding how IDRs/folded domains were identified, and will vary depending on the settings provided
+
+        * [2] - a list of elements, where each element is itself a list where positions 0 and 1 define the start and end position of each IDR and position 2 is the IDR sequence.
+
+        * [3] - a list of elements, where each element is itself a list where positions 0 and 1 define the start and end position of each folded region and position 2 is the folded domain sequence.
 
     """
 
@@ -844,13 +851,14 @@ def predict_disorder_batch(input_sequences,
     return _predict(input_sequences,
                         version=version,
                         use_device=device,
+                        normalized=normalized,
                         round_values=round_values,
                         return_numpy=return_numpy,
-                        return_domains = return_domains,                          
+                        return_domains = return_domains,
                         disorder_threshold = disorder_threshold,
                         minimum_IDR_size = minimum_IDR_size,
                         minimum_folded_domain = minimum_folded_domain,
-                        override_folded_domain_minsize=False,
+                        override_folded_domain_minsize=override_folded_domain_minsize,
                         gap_closure = gap_closure,
                         show_progress_bar = show_progress_bar,
                         force_disable_batch = disable_batch,
@@ -901,7 +909,9 @@ def predict_disorder_stream(filepath,
     file and billion-record inputs stream fine. If you instead want duplicate
     headers to be detected, pass ``expect_unique_header=True``; that keeps a
     running ``O(records)`` set of headers and emits a one-time warning about the
-    memory cost (silence it with ``silence_warnings=True``).
+    memory cost (silence it with ``silence_warnings=True``). Every record in the
+    file is yielded, so with the default settings two records that share a
+    header are both yielded under that header.
 
     Because results are produced lazily, this function is a **generator** and must
     be iterated (it does not return a dictionary). Each item is a
@@ -1045,9 +1055,11 @@ def predict_disorder_stream(filepath,
 
     # --- the actual streaming happens lazily in this generator ---
     def _stream():
-        def _predict_chunk(chunk):
-            # chunk is an ordered {header: sequence} dict; predict it in one batch job
-            results = _predict(chunk,
+        def _predict_chunk(headers, sequences):
+            # headers and sequences are parallel lists in file order. We predict a
+            # list rather than a header-keyed dict so that records sharing a header
+            # are each predicted and yielded instead of overwriting one another.
+            results = _predict(sequences,
                                version=version,
                                use_device=device,
                                normalized=normalized,
@@ -1064,11 +1076,13 @@ def predict_disorder_stream(filepath,
                                disable_pack_n_pad=disable_pack_n_pad,
                                silence_warnings=silence_warnings,
                                batch_size=batch_size)
-            # yield in the order the records arrived in this chunk
-            for header in chunk:
-                yield header, results[header]
+            # list input gives a list of results in the same order as the
+            # sequences, so yield them in the order the records arrived
+            for header, prediction in zip(headers, results):
+                yield header, prediction
 
-        chunk = {}
+        headers = []
+        sequences = []
         for header, sequence in _protfasta.read_fasta_stream(
                 filepath,
                 invalid_sequence_action=invalid_sequence_action,
@@ -1076,14 +1090,22 @@ def predict_disorder_stream(filepath,
                 duplicate_record_action=duplicate_record_action,
                 duplicate_sequence_action=duplicate_sequence_action,
                 silence_warnings=silence_warnings):
-            chunk[header] = sequence
-            if len(chunk) >= chunk_size:
-                yield from _predict_chunk(chunk)
-                chunk = {}
+
+            # catch empty records here so the error names the FASTA header,
+            # rather than an anonymous position within the current chunk
+            if len(sequence) == 0:
+                raise MetapredictError(f'FASTA record "{header}" in {filepath} has an empty sequence')
+
+            headers.append(header)
+            sequences.append(sequence)
+            if len(headers) >= chunk_size:
+                yield from _predict_chunk(headers, sequences)
+                headers = []
+                sequences = []
 
         # predict and yield any trailing (partial) chunk
-        if chunk:
-            yield from _predict_chunk(chunk)
+        if headers:
+            yield from _predict_chunk(headers, sequences)
 
     return _stream()
 
@@ -1593,8 +1615,9 @@ def predict_disorder_fasta(filepath,
     --------
 
     dict or None
-        If output_file is set to None (as default) then this fiction returns 
-        a dictionary of sequence ID to disorder np.ndarrays(dtype=np.float32). 
+        If output_file is set to None (as default) then this function returns
+        a dictionary where each key is a FASTA header and each value is a
+        2-element list: [sequence, list of per-residue disorder scores].
 
         If output_file is set to a filename then a .csv file will instead 
         be written and no return data will be provided.         
@@ -1691,8 +1714,9 @@ def predict_pLDDT_fasta(filepath,
     --------
 
     dict or None
-        If output_file is set to None (as default) then this fiction returns a 
-        dictionary of sequence ID to pLDDT vector. If output_file is set to a 
+        If output_file is set to None (as default) then this function returns a
+        dictionary where each key is a FASTA header and each value is a
+        2-element list: [sequence, list of per-residue pLDDT scores]. If output_file is set to a
         filename then a .csv file will instead be written and no return data 
         will be provided.
     """

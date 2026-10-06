@@ -143,9 +143,9 @@ To clone the GitHub repository and gain the ability to modify a local copy of th
    cd metapredict
    pip install -e .
 
-Note you will need the -e flag to ensure the ``cython`` code compiles correctly, but this also means the installed version is linked to the local version of the code.    
+metapredict includes a compiled (Cython) extension that speeds up the IDR domain decomposition. The wheels published on PyPI already include it for Linux (x86_64 and aarch64), macOS (Apple silicon) and Windows (64-bit) on Python 3.9–3.14, so ``pip install metapredict`` needs no compiler on those platforms. Installing from source (from GitHub, from a local clone with or without ``-e``, or on any other platform) compiles the extension during installation, which needs a C compiler: the Xcode Command Line Tools on macOS (``xcode-select --install``), ``gcc`` on Linux (for example the ``build-essential`` package), or the Microsoft C++ Build Tools on Windows.
 
-This will install **metapredict** locally. If you modify the source code in the local repository, be sure to re-install with ``pip``.
+The ``-e`` flag links the installed version to your local copy of the code, so edits to the Python files take effect immediately. If you change the Cython code (``metapredict/backend/cython/domain_definition.pyx``), re-run ``pip install -e .`` to recompile it. If metapredict ever warns that it is falling back to a slower pure-Python implementation, its compiled extension could not be loaded; reinstalling metapredict fixes this.
 
 
 About metapredict

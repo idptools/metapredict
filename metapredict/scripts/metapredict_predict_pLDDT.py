@@ -4,6 +4,7 @@
 
 # import stuff for making CLI
 import os
+import sys
 import argparse
 
 import metapredict as meta
@@ -33,6 +34,7 @@ def main():
     
     if not os.path.isfile(args.data_file):
         print(f'Error: Could not find passed fasta file [{args.data_file:s}]')
+        sys.exit(1)
 
     if args.silent:
         show_progress_bar=False
@@ -52,3 +54,6 @@ def main():
     
     if not args.silent:
         print('Predictions saved to: %s'%(os.path.abspath(args.output_file)))
+
+if __name__ == "__main__":
+    main()

@@ -2,6 +2,7 @@
 
 import re
 import os
+import numbers
 import numpy as np
 import protfasta
 
@@ -9,8 +10,54 @@ import protfasta
 from metapredict.metapredict_exceptions import MetapredictError
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
 
+# when reporting empty sequences in an error message, list at most this many
+# offending keys/positions so the message stays readable for large inputs
+MAX_REPORTED_EMPTY_SEQUENCES = 10
+
+# Characters that cannot appear in a file name on Windows (and, in the case of
+# '/', on any platform), plus ASCII control characters. See
+# https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+INVALID_FILENAME_CHARACTERS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+# Device names Windows reserves, which can't be used as a file name with any
+# extension (same source as above)
+WINDOWS_RESERVED_NAMES = {'CON', 'PRN', 'AUX', 'NUL',
+                          *(f'COM{i}' for i in range(1, 10)),
+                          *(f'LPT{i}' for i in range(1, 10))}
+
 
 def valid_range(inval, minval, maxval):
+    """
+    Function that raises an exception if a value is not a number or falls
+    outside of the closed interval [minval, maxval].
+
+    Parameters
+    ------------
+    inval : float
+        The value to check.
+
+    minval : float
+        Smallest allowed value.
+
+    maxval : float
+        Largest allowed value.
+
+    Returns
+    ---------
+    None
+        No return value, but raises MetapredictError if the value is invalid.
+
+    Raises
+    ---------
+    MetapredictError
+        If inval is not a real number (a string such as '0.5' passed from a
+        command-line flag is rejected here rather than crashing a comparison
+        later on) or if inval is outside [minval, maxval].
+    """
+    # bool is a subclass of int, so exclude it explicitly
+    if isinstance(inval, bool) or not isinstance(inval, numbers.Real):
+        raise MetapredictError(f'Value {inval!r} must be a number between {minval} and {maxval}')
+
     if inval < minval or inval > maxval:
         raise MetapredictError(f'Value {inval:1.3f} is outside of range [{minval:1.3f}, {maxval:1.3f}]')
 
@@ -346,6 +393,47 @@ def raise_exception_on_zero_length(s):
             raise MetapredictError('Error: Passed iterable type is length 0')
 
 
+# ..........................................................................................
+#
+def raise_exception_on_empty_sequence(inputs):
+    """
+    Function that raises an exception if any sequence passed for prediction
+    is an empty string. Without this check an empty sequence inside a list or
+    dictionary fails deep inside PyTorch with an error that doesn't say which
+    input caused it.
+
+    Parameters
+    ------------
+    inputs : str, list, or dict
+        The sequence(s) passed for prediction: a single sequence, a list of
+        sequences, or a dictionary mapping names to sequences. Any other type
+        is ignored here (the predictor raises its own error for those).
+
+    Returns
+    ----------
+    None
+
+    Raises
+    ---------
+    MetapredictError
+        If any sequence is length 0. For list input the error reports the
+        offending positions, and for dictionary input the offending keys.
+    """
+    if isinstance(inputs, str):
+        if len(inputs) == 0:
+            raise MetapredictError('Error: Passed sequence is length 0')
+
+    elif isinstance(inputs, dict):
+        empty_keys = [k for k in inputs if len(inputs[k]) == 0]
+        if len(empty_keys) > 0:
+            raise MetapredictError(f'Error: {len(empty_keys)} sequence(s) in the passed dictionary are length 0. First offending key(s): {empty_keys[:MAX_REPORTED_EMPTY_SEQUENCES]}')
+
+    elif isinstance(inputs, list):
+        empty_positions = [i for i, s in enumerate(inputs) if len(s) == 0]
+        if len(empty_positions) > 0:
+            raise MetapredictError(f'Error: {len(empty_positions)} sequence(s) in the passed list are length 0. First offending position(s) (0-indexed): {empty_positions[:MAX_REPORTED_EMPTY_SEQUENCES]}')
+
+
 def valid_version(version_specified, prediction_type):
     '''
     Function to handle version specified by the user. 
@@ -403,6 +491,52 @@ def valid_version(version_specified, prediction_type):
 
 
 
+def caid_output_filename(entry_id):
+    """
+    Return the file name used for an entry's CAID output file.
+
+    The file is named after the entry ID (normally the FASTA header), so that
+    files are easy to match back to entries. FASTA headers often contain
+    characters that can't be used in file names, most commonly the '|' in
+    every UniProt header, which is not allowed on Windows (and '/' isn't
+    allowed anywhere). Those characters are replaced with '_'. Only the file
+    name changes: the header written inside the file is the original ID.
+
+    Parameters
+    ----------
+    entry_id : str
+        The entry ID, typically a FASTA header. A leading '>' is ignored.
+
+    Returns
+    -------
+    str
+        A file name, ending in '.caid', that is valid on Windows, macOS and
+        Linux.
+
+    Raises
+    ------
+    MetapredictError
+        If nothing usable is left of the entry ID (e.g. it is empty).
+    """
+    name = entry_id[1:] if entry_id.startswith('>') else entry_id
+
+    # characters not allowed in file names on Windows (or anywhere, for '/')
+    name = INVALID_FILENAME_CHARACTERS.sub('_', name)
+
+    # Windows silently drops trailing dots and spaces from file names
+    name = name.rstrip(' .')
+
+    if not name:
+        raise MetapredictError(f'Cannot make a CAID output file name from entry ID {entry_id!r}')
+
+    # Windows device names such as CON or NUL can't be used as file names,
+    # even with an extension
+    if name.split('.')[0].upper() in WINDOWS_RESERVED_NAMES:
+        name = name + '_'
+
+    return name + '.caid'
+
+
 def write_caid_format(input_dict, output_path, version, use_fixed_cutoff=None):
     '''
     Function that takes in a dictionary and outputs a file in the format as 
@@ -435,7 +569,10 @@ def write_caid_format(input_dict, output_path, version, use_fixed_cutoff=None):
     output_path : str
         the path where to save each generated file. The function will save a file
         for each entry in the input_dict. The file will be saved in the format
-        entry_id.caid
+        entry_id.caid, with any characters that aren't allowed in file names
+        (such as the '|' in UniProt headers) replaced by '_'; see
+        caid_output_filename(). The header inside each file is the original
+        entry_id.
 
     version : str
         The version of the network used to make the predictions. Options are 'v1', 'v2', 'v3'
@@ -453,10 +590,31 @@ def write_caid_format(input_dict, output_path, version, use_fixed_cutoff=None):
         Does not return anything to the user. Writes a file saved to either
         the current directory or to a specified file path.
 
+    Raises
+    ------
+    MetapredictError
+        If two entry IDs would be written to the same file name (checked
+        before anything is written, so no output is silently overwritten).
+
     '''
 
     # first make a list of all of the keys in the dict
     entry_ids = list(input_dict.keys())
+
+    # work out every output file name up front, and refuse to continue if two
+    # entries would share a file (one would silently overwrite the other)
+    filename_for_id = {}
+    ids_for_filename = {}
+    for entry_id in entry_ids:
+        filename = caid_output_filename(entry_id)
+        filename_for_id[entry_id] = filename
+        ids_for_filename.setdefault(filename, []).append(entry_id)
+    clashes = {name: ids for name, ids in ids_for_filename.items() if len(ids) > 1}
+    if clashes:
+        example_name, example_ids = next(iter(clashes.items()))
+        raise MetapredictError(f'{len(clashes)} CAID output file name(s) would be shared by more than one entry, '
+                               f'e.g. {example_ids} would all be written to {example_name}. '
+                               f'Please make the entry IDs (FASTA headers) distinct.')
 
     # Ensure output_path exists and is a directory
     if not os.path.exists(output_path):
@@ -505,7 +663,7 @@ def write_caid_format(input_dict, output_path, version, use_fixed_cutoff=None):
             ]
 
         # open the file to write to
-        with open(f'{output_path}/{cur_id}.caid', 'w') as current_output:
+        with open(os.path.join(output_path, filename_for_id[cur_id]), 'w') as current_output:
 
             # write entry id
             current_output.write(f'{write_cur_id_header}\n')

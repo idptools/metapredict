@@ -21,3 +21,7 @@ def main():
                                     normalized=True, 
                                     version=args.version, 
                                     return_numpy=False))[1:-1])
+
+
+if __name__ == "__main__":
+    main()

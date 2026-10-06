@@ -48,13 +48,12 @@ dependencies = [
     "torch >= 2.3",
     "numpy >= 2.0",
     "matplotlib",
-    "protfasta >= 0.1.19",
+    "protfasta >= 0.1.25",
     # scipy 1.13 is the oldest release compatible with NumPy 2.x (older scipy
     # requires NumPy < 2, so it will not resolve alongside numpy >= 2.0).
     "scipy >= 1.13",
     "urllib3",
     "tqdm",
-    "pytorch_lightning >= 2.0",
     "getSequence >= 2.2.1",
 ]
 
@@ -92,9 +91,42 @@ include-package-data = true
 namespaces = true
 where = ["."]
 include = ["metapredict", "metapredict.*"]  # Discover all sub-packages under metapredict
+# analysis/ holds development-only scripts (CAID benchmarking, training-score
+# generation) plus several MB of data, and needs packages that are not runtime
+# dependencies (scikit-learn, alphaPredict), so it is not shipped in the wheel.
+# MANIFEST.in prunes it from the sdist too.
+exclude = ["metapredict.analysis", "metapredict.analysis.*"]
 
 [tool.setuptools.package-data]
 metapredict = ["py.typed"]
+
+[tool.cibuildwheel]
+# Prebuilt wheels (built by .github/workflows/wheels.yml) mean users can install
+# metapredict, including its compiled Cython extension, without a C compiler.
+# One wheel per supported CPython, matching requires-python and the classifiers
+# above. Listed explicitly so a newly released Python isn't built before PyTorch
+# (a required dependency) publishes wheels for it.
+build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
+# Skip platforms PyTorch doesn't publish wheels for, where metapredict couldn't
+# be installed anyway: free-threaded CPython, musl Linux and 32-bit builds.
+skip = ["cp3??t-*", "*-musllinux_*", "*-manylinux_i686", "*-win32"]
+# Install each built wheel and check its compiled extension loads and gives the
+# same domains as the pure-Python fallback.
+test-sources = ["devtools/check_cython_extension.py"]
+test-command = "python devtools/check_cython_extension.py"
+
+[tool.cibuildwheel.linux]
+# PyPI's Linux PyTorch wheels pull in several GB of CUDA libraries; the CPU-only
+# build is all the wheel check needs
+before-test = "pip install torch --index-url https://download.pytorch.org/whl/cpu"
+
+[tool.cibuildwheel.macos]
+# PyTorch 2.3 and later (which metapredict requires) have no Intel macOS
+# wheels, so only build for Apple silicon
+archs = ["arm64"]
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]
 
 [tool.coverage.run]
 omit = [

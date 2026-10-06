@@ -98,7 +98,7 @@ smoothed_v3 = {
     # per-device default batch sizes: mps 512, cuda 256, cpu 256.
     'device_batch_size': {'cuda': 256, 'mps': 512, 'cpu': 256},
     'disorder_threshold': METAPREDICT_V3_THRESHOLD,
-    'info': 'Similar to v2 metapredict as far as training data except we used real pLDDT scores based on AF2 V4 structures instead of predicted pLDDT. In addition, values were smoothed over a 25 residue sliding window before being used for training. Depending on some additional testing, this is likely to be our next released network.',
+    'info': 'Similar to v2 metapredict as far as training data except we used real pLDDT scores based on AF2 V4 structures instead of predicted pLDDT. In addition, values were smoothed over a 25 residue sliding window before being used for training. This is the network released as metapredict V3.',
     'type': 'disorder'
 }
 

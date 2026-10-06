@@ -233,8 +233,8 @@ def test_stream_unique_header_promotion(tmp_path):
 def test_stream_duplicate_header_detection(tmp_path):
     """Default (flat) streaming does not track headers; expect_unique_header=True raises.
 
-    (chunk_size=1 keeps the two same-header records in separate chunks; within a
-    single chunk metapredict's header-keyed dict would otherwise collapse them.)
+    (chunk_size=1 puts the two same-header records in separate chunks; see
+    test_stream_duplicate_headers_within_chunk for the single-chunk case.)
     """
     f = tmp_path / "dup.fasta"
     f.write_text(">h\nMKKQ\n>h\nMKKQ\n")
@@ -245,3 +245,35 @@ def test_stream_duplicate_header_detection(tmp_path):
     with pytest.raises(Exception):
         list(meta.predict_disorder_stream(str(f), version="3", device="cpu",
                                           chunk_size=1, expect_unique_header=True))
+
+
+def test_stream_duplicate_headers_within_chunk(tmp_path):
+    """Records that share a header inside one chunk are each predicted and yielded
+    (previously the second record silently overwrote the first)."""
+    seq_1 = "MKAPSNGFLPSSNEGEKKPINSQLWHACAGPLVSLPKKGSLVVYFPQGHSEQVAKKISEH"
+    seq_2 = "MDEPTKGSSSKKRRSDSPPSGEGGSSGRKKPAEDDYWLQAGFKLVELMGHTAAIVPS"
+    f = tmp_path / "dup_in_chunk.fasta"
+    f.write_text(f">h\n{seq_1}\n>h\n{seq_2}\n>other\n{seq_1}\n")
+
+    out = list(meta.predict_disorder_stream(str(f), version="3", device="cpu",
+                                            round_values=False, chunk_size=5000))
+    assert [header for header, _ in out] == ["h", "h", "other"]
+    assert out[0][1][0] == seq_1
+    assert out[1][1][0] == seq_2
+
+    ref = meta.predict_disorder([seq_1, seq_2], version="3", device="cpu", round_values=False)
+    assert np.allclose(out[0][1][1], ref[0][1], atol=TOL)
+    assert np.allclose(out[1][1][1], ref[1][1], atol=TOL)
+
+
+def test_stream_empty_record_names_header(monkeypatch):
+    """An empty sequence from the reader raises an error that names the offending
+    record. (protfasta currently drops empty records itself, so a fake reader is
+    used to exercise metapredict's own guard.)"""
+    def fake_reader(*args, **kwargs):
+        yield "good", "MKKAADESEQ"
+        yield "empty_one", ""
+
+    monkeypatch.setattr(protfasta, "read_fasta_stream", fake_reader)
+    with pytest.raises(MetapredictError, match="empty_one"):
+        list(meta.predict_disorder_stream("unused.fasta", version="3", device="cpu"))

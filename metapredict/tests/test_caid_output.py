@@ -4,6 +4,7 @@ import shutil
 import pytest
 import metapredict as meta
 from metapredict.backend import meta_tools
+from metapredict.metapredict_exceptions import MetapredictError
 
 FASTA_CONTENT = ">seq1\nMEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLMLSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKTYQGSYGFRLGFLHSGTAKSVTCTYSPALNKMFCQLAKTCPVQLWVDSTPPPGTRVRAMAIYKQSQHMTEVVRRCPHHERCSDSDGLAPPQHLIRVEGNLRVEYLDDRNTFRHSVVVPYEPPEVGSDCTTIHYNYMCNSSCMGGMNRRPILTIITLEDSSGNLLGRNSFEVRVCACPGRDRRTEEENLRKKGEPHHELPPGSTKRALPNNTSSSPQPKKKPLDGEYFTLQIRGRERFEMFRELNEALELKDAQAGKEPGGSRAHSSHLKSKKGQSTSRHKKLMFKTEGPDSD\n>seq2\nMSEYIRVTEDENDEPIEIPSEDDGTVLLSTVTAQFPGACGLRYRNPVSQCMRGVRLVEGILHAPDAGWGNLVYVVNYPKDNKRKMDETDASSAVKVKRAVQKTSDLIVLGLPWKTTEQDLKEYFSTFGEVLMVQVKKDLKTGHSKGFGFVRFTEYETQVKVMSQRHMIDGRWCDCKLPNSKQSQDEPLRSRKVFVGRCTEDMTEDELREFFSQYGDVMDVFIPKPFRAFAFVTFADDQIAQSLCGEDLIIKGISVHISNAEPKHNSNRQLERSGRFGGNPGGFGNQGGFGNSRGGGAGLGNNQGSNMGGGMNFGAFSINPAMMAAAQAALQSSWGMMGMLASQQNQSGPSGNNQNQGNMQREPNQAFGSGNNSYSGSNSGAAIGWGSASNAGSGSGFNGGFGSSMDSKSSGWGM\n"
 
@@ -113,3 +114,38 @@ def test_caid_output_matches_reference(tmp_path):
             ref_lines = f1.readlines()
             out_lines = f2.readlines()
         assert ref_lines == out_lines, f"Output mismatch in {fname}"
+
+
+def test_caid_output_filename_is_valid_everywhere():
+    """CAID output files are named after the entry ID, with characters that
+    aren't allowed in file names (on Windows, or anywhere for '/') replaced."""
+    assert meta_tools.caid_output_filename('P04637') == 'P04637.caid'
+    assert meta_tools.caid_output_filename('>P04637') == 'P04637.caid'
+    assert meta_tools.caid_output_filename('sp|P0DMV8|HS71A_HUMAN Heat shock') == 'sp_P0DMV8_HS71A_HUMAN Heat shock.caid'
+    assert meta_tools.caid_output_filename('a/b\\c:d*e?f"g<h>i') == 'a_b_c_d_e_f_g_h_i.caid'
+    assert meta_tools.caid_output_filename('trailing. ') == 'trailing.caid'
+    assert meta_tools.caid_output_filename('CON') == 'CON_.caid'
+    with pytest.raises(MetapredictError):
+        meta_tools.caid_output_filename('>')
+
+
+def test_write_caid_format_uniprot_header(tmp_path):
+    """A UniProt-style header gives a valid file name, but is written unchanged
+    inside the file."""
+    header = 'sp|P04637|P53_HUMAN Cellular tumor antigen p53'
+    meta_tools.write_caid_format({header: ['MEEEKKKK', [0.1] * 8]}, str(tmp_path), version='v3', use_fixed_cutoff=0.5)
+
+    written = os.listdir(tmp_path)
+    assert written == ['sp_P04637_P53_HUMAN Cellular tumor antigen p53.caid']
+    with open(tmp_path / written[0]) as fh:
+        assert fh.readline() == f'>{header}\n'
+
+
+def test_write_caid_format_clashing_names_rejected(tmp_path):
+    """Two entries that would be written to the same file are an error, raised
+    before anything is written (rather than one silently overwriting the other)."""
+    out_dir = tmp_path / 'out'
+    entries = {'a|b': ['MEEK', [0.1] * 4], 'a/b': ['MEEK', [0.1] * 4]}
+    with pytest.raises(MetapredictError, match='a_b.caid'):
+        meta_tools.write_caid_format(entries, str(out_dir), version='v3', use_fixed_cutoff=0.5)
+    assert not out_dir.exists()
