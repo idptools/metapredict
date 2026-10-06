@@ -291,8 +291,8 @@ def test_pLDDT_v1_cpu_vs_gpu(sequences=sequences):
         cur_cpu_scores = cpu_scores[seq_name][1]
         cur_gpu_scores = gpu_scores[seq_name][1]
         for i in range(len(cur_cpu_scores)):
-            # plddt V1 scores are 100x bigger than plldt V2 (which are trained on plddt / 100)
-            # so we want to use 0.1 here instead of 0.001
+            # predict_pLDDT returns both V1 and V2 on the 0-100 pLDDT scale (V2 is trained
+            # on pLDDT / 100 and rescaled), so 0.1 here is looser than the 0.001 used for V2
             assert close_enough(cur_cpu_scores[i], cur_gpu_scores[i], allowed_error=0.1)==True
 
 @pytest.mark.skipif(not cuda_available, reason="CUDA is not available.")
@@ -493,8 +493,8 @@ def test_pLDDT_v1_cpu_vs_mps(sequences=sequences):
         cur_cpu = cpu_scores[seq_name][1]
         cur_mps = mps_scores[seq_name][1]
         for i in range(len(cur_cpu)):
-            # pLDDT v1 scores are ~100x larger than v2, so use a matching
-            # tolerance (0.1 vs 0.001) — mirrors the CUDA-side test above.
+            # same 0.1 tolerance as the CUDA-side V1 test above (both pLDDT
+            # versions are returned on the 0-100 scale).
             assert close_enough(cur_cpu[i], cur_mps[i], allowed_error=0.1) == True
 
 

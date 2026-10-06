@@ -7,8 +7,10 @@
 
 import numpy as np
 import pytest
+import torch
 
 import metapredict as meta
+from metapredict.backend import predictor
 from metapredict.backend.predictor import check_device
 from metapredict.backend.network_parameters import metapredict_networks
 from metapredict.metapredict_exceptions import MetapredictError
@@ -68,3 +70,40 @@ def test_default_device_plddt_matches_cpu(network_version):
     for i in range(len(_DEV_SEQS)):
         assert np.allclose(default[i][1], cpu[i][1], atol=_DEV_TOL), \
             f"pLDDT v{network_version}: default-device prediction differs from cpu"
+
+
+# --- predictions run with cuDNN TF32 off (it shifts CUDA results by up to ~0.1
+#     on the 0-100 pLDDT scale), and the caller's process-wide setting is
+#     restored afterwards. These need no GPU: the flag exists on every build ---
+
+@pytest.mark.parametrize("predict_function", [predictor.predict, predictor.predict_pLDDT])
+@pytest.mark.parametrize("caller_setting", [True, False])
+def test_prediction_runs_without_tf32_and_restores_setting(monkeypatch, predict_function, caller_setting):
+    seen_during_prediction = []
+    real_get_model = predictor.get_model
+
+    def recording_get_model(*args, **kwargs):
+        seen_during_prediction.append(torch.backends.cudnn.allow_tf32)
+        return real_get_model(*args, **kwargs)
+
+    monkeypatch.setattr(predictor, 'get_model', recording_get_model)
+    previous = torch.backends.cudnn.allow_tf32
+    torch.backends.cudnn.allow_tf32 = caller_setting
+    try:
+        predict_function(_DEV_SEQS[:2], use_device='cpu')
+        assert seen_during_prediction == [False]
+        assert torch.backends.cudnn.allow_tf32 == caller_setting
+    finally:
+        torch.backends.cudnn.allow_tf32 = previous
+
+
+@pytest.mark.parametrize("predict_function", [predictor.predict, predictor.predict_pLDDT])
+def test_tf32_setting_restored_when_prediction_raises(predict_function):
+    previous = torch.backends.cudnn.allow_tf32
+    torch.backends.cudnn.allow_tf32 = True
+    try:
+        with pytest.raises(MetapredictError):
+            predict_function([_DEV_SEQS[0], ''], use_device='cpu')
+        assert torch.backends.cudnn.allow_tf32 is True
+    finally:
+        torch.backends.cudnn.allow_tf32 = previous

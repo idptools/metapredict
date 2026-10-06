@@ -156,6 +156,19 @@ If you are predicting a single IDR, metapredict will just use the CPU. However, 
     sequences=['GSGSGSGSSGSGSGS', 'DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR']
     meta.predict_disorder(sequences, device='mps')
 
+.. note::
+
+   **GPU precision.** Scores predicted on a GPU can differ very slightly from
+   CPU scores because of floating-point differences between the devices, so
+   use ``device='cpu'`` if you need bit-for-bit reproducible scores. On NVIDIA
+   GPUs, PyTorch's default TF32 mode (Ampere-or-newer GPUs) would make that
+   difference much larger, up to ~1e-3 on disorder scores and ~0.1 on pLDDT
+   scores. metapredict therefore switches TF32 off while it predicts, which
+   keeps CUDA within ~1e-6 of CPU on disorder and ~1e-4 on pLDDT at no cost in
+   speed. TF32 is a process-wide PyTorch setting, so metapredict puts your own
+   setting back as soon as each prediction finishes; other PyTorch code in the
+   same session is unaffected.
+
 
 Returning a list instead of a np.array
 ---------------------------------------------
@@ -363,6 +376,8 @@ If you are predicting a single pLDDT score, metapredict will just use the CPU. H
 
     sequences=['GSGSGSGSSGSGSGS', 'DSSPEAPAEPPKDVPHDWLYSYVFLTHHPADFLR']
     meta.predict_pLDDT(sequences, device='mps')
+
+The note on GPU precision in the disorder device-selection section above applies to pLDDT predictions too.
 
 
 Returning a list instead of a np.array

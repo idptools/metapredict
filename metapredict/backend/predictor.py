@@ -8,6 +8,7 @@ Output data type also from the predict function.
 """
 
 # general imports
+import functools
 import os
 import re
 from packaging import version as packaging_version
@@ -473,8 +474,39 @@ def get_model(model_name, params, predictor_path, device):
     loaded_models[model_name] = model
     return model
 
+
+# ....................................................................................
+#
+def _without_tf32(func):
+    """
+    Decorator that runs func with cuDNN's TF32 mode switched off, then
+    restores whatever the caller had set.
+
+    On Ampere-or-newer NVIDIA GPUs, PyTorch lets cuDNN use TF32 by default.
+    TF32 keeps only ~3 significant digits in the LSTM matrix maths, which
+    shifted CUDA predictions away from CPU by up to ~1e-3 on disorder scores
+    and ~0.1 on the 0-100 pLDDT scale, by an amount that depends on which
+    sequences share a batch. With TF32 off, CUDA matches CPU to ~1e-4 on
+    pLDDT and ~1e-6 on disorder, and these networks run no slower.
+
+    allow_tf32 is a process-wide PyTorch setting, so the caller's value is
+    put back afterwards (even if prediction raises) to avoid changing the
+    behaviour of any other PyTorch code running in the same process.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        previous = torch.backends.cudnn.allow_tf32
+        torch.backends.cudnn.allow_tf32 = False
+        try:
+            return func(*args, **kwargs)
+        finally:
+            torch.backends.cudnn.allow_tf32 = previous
+    return wrapper
+
+
 # ....................................................................................
 
+@_without_tf32
 def predict(inputs,
             version=DEFAULT_NETWORK,
             use_device=None,
@@ -1132,6 +1164,7 @@ def predict(inputs,
 
 # ....................................................................................
 
+@_without_tf32
 def predict_pLDDT(inputs,
             version=DEFAULT_NETWORK_PLDDT,
             return_decimals=False,

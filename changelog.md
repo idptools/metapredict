@@ -28,6 +28,8 @@ Changes:
 
 * Batch predictions are exactly reproducible: sequences are batched in a fixed order (longest first, then alphabetical) instead of one that changed every session (scores shift only at ~1e-7).
 
+* Predictions on NVIDIA GPUs now match CPU much more closely. On Ampere-or-newer NVIDIA GPUs (e.g. RTX 30xx/A-series and later), PyTorch lets cuDNN use TF32 by default, a reduced-precision mode that keeps only ~3 significant digits in the network's matrix maths. This shifted CUDA predictions away from CPU by up to ~1e-3 on disorder scores and ~0.1 on pLDDT scores (0-100 scale), by an amount that depended on which sequences were batched together. metapredict now switches TF32 off while it predicts, so CUDA matches CPU to ~1e-4 on pLDDT and ~1e-6 on disorder; we measured no loss of speed for these networks. Because TF32 is a process-wide PyTorch setting, metapredict restores your own setting as soon as each prediction finishes, so any other PyTorch code you run in the same session is unaffected. CPU and Apple Silicon (MPS) predictions are unchanged.
+
 * Prebuilt wheels, including the compiled Cython extension, for Linux (x86_64, aarch64), macOS (Apple silicon), and Windows (64-bit) on Python 3.9–3.14, built by `.github/workflows/wheels.yml`, which installs every wheel and checks its compiled extension with the new `devtools/check_cython_extension.py`. CI (`.github/workflows/ci.yml`) now also runs on Windows and fails if the extension doesn't load.
 
 * Minimum `protfasta` is now 0.1.25, which raises an error for FASTA records with no sequence rather than silently dropping them.
