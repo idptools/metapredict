@@ -9,10 +9,10 @@
 [![Downloads](https://static.pepy.tech/badge/metapredict)](https://pepy.tech/project/metapredict)
 [![Last commit](https://img.shields.io/github/last-commit/idptools/metapredict.svg)](https://github.com/idptools/metapredict/commits/)
 
-### Last updated July 2026
+### Last updated October 2026
 
 ## Current default version: V3.1.0
-In November 2024, we changed the default version of metapredict from V2 to V3. Small increments (3.0.x) may be made as bug fixes or feature enhancements.
+In November 2024, we changed the default version of metapredict from V2 to V3. Small increments (3.0.x) may be made as bug fixes or feature enhancements, and in Oct. we released 3.1.0, which is the current default and introduces a number of small bug fixes and performance enhancements. 
 
 For context, V3 provides major improvements to V2. Metapredict V3 uses a **new network to predict disorder** that, in our benchmarks, is the most accurate version to date. In addition, *V3 is backward compatible with V2* and can be used as a drop-in replacement for V2. Although we've improved the Python API to massively simplify how you use metapredict, we've updated it so that all previously created functions *should still work*. If they don't, please raise an issue, and we will fix it ASAP!
 
