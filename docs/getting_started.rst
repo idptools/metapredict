@@ -8,11 +8,25 @@ What is metapredict?
 
 Our goal in building **metapredict** was to develop a robust, accurate, and high-performance predictor of intrinsic disorder that is also easy to install and use. As such, **metapredict** is implemented in Python and can be installed directly via `pip` (see below).
 
-metapredict is ALSO available via a `webserver for single sequence prediction <http://https://metapredict.net>`__ and `a Google Colab notebook for batch prediction <https://colab.research.google.com/drive/1UOrOxun9i23XDE8lFo_4I89Tw8P3Z1D-?usp=sharing>`__. However, this documentation here focuses on the Python package which provides both a set of Python library functions and a set of command-line tools.
+metapredict is ALSO available via a `webserver for single sequence prediction <https://metapredict.net>`__ and `a Google Colab notebook for batch prediction <https://colab.research.google.com/drive/1UOrOxun9i23XDE8lFo_4I89Tw8P3Z1D-?usp=sharing>`__. However, this documentation here focuses on the Python package which provides both a set of Python library functions and a set of command-line tools.
 
 
 Recent metapredict updates and news
 ====================================
+
+October 2026: metapredict 3.1.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In October 2026 we released metapredict 3.1.0, which adds new functionality, bug fixes, and performance improvements. The default networks are unchanged (V3 for disorder and V2 for pLDDT). The main changes are:
+
+#. **Per-network device selection**\ : If you don't specify a device, each disorder network now runs on the hardware that is fastest for it. A CUDA GPU is always used first when available; otherwise the small V1 and V2 networks run on the CPU (they are faster there than on Apple Silicon MPS), while V3 prefers MPS. You can still choose any device with ``device=``.
+#. **Control over batch size**\ : ``predict_disorder()``, ``predict_pLDDT()``, ``predict_disorder_batch()`` and ``predict_disorder_stream()`` take a ``batch_size`` option, which must be a power of two and at least 32. Batch size mainly changes speed and memory; floating-point rounding means scores can differ very slightly between batch sizes, which occasionally changes the fourth decimal place of a rounded score. When you don't set it, the default is now chosen per network and per device (256 on the CPU and CUDA GPUs and 512 on Apple Silicon, except pLDDT V1 on the CPU, which uses 32), which substantially speeds up V1 and V2 batch predictions. The new :doc:`faq` page shows how memory use scales with batch size and sequence length.
+#. **Streaming very large FASTA files**\ : The new ``predict_disorder_stream()`` function reads a FASTA file lazily, predicts sequences in chunks, and yields results one sequence at a time, so the memory it needs stays bounded however large the file is.
+#. **More reproducible predictions**\ : Batch predictions are now exactly reproducible from one session to the next, and predictions on NVIDIA GPUs now match CPU predictions much more closely.
+#. **Easier installation**\ : Prebuilt wheels that include the compiled Cython extension are available for Linux, macOS (Apple silicon) and Windows on Python 3.9–3.14, and ``pytorch_lightning`` is no longer a dependency. metapredict now requires PyTorch 2.3, NumPy 2.0 and scipy 1.13 or later.
+#. **Bug fixes**\ : Many bug fixes across the Python API and the command-line tools. ``MetapredictError`` can now also be imported directly from ``metapredict``.
+
+For the full list of changes, see the `changelog <https://github.com/idptools/metapredict/blob/master/changelog.md>`_.
 
 November 2024: Update to default version (metapredict V3)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -42,6 +56,8 @@ Installation
 Metapredict is a Python package published on `PyPI <https://pypi.org/project/metapredict/>`_. It supports Python 3.9-3.14; the instructions below use **Python 3.12**, which we recommend. Choose whichever of the three workflows - pip, conda, or uv - best matches your setup. If Python environments are new to you, we suggest reading up on Python package management and `conda <https://conda.io/projects/conda/en/latest/user-guide/getting-started.html>`_ first.
 
 Each option creates a clean, isolated Python 3.12 environment and then installs metapredict from PyPI.
+
+metapredict needs PyTorch 2.3 or later, NumPy 2.0 or later and scipy 1.13 or later, and pip and uv install these (along with metapredict's other dependencies) automatically. If you install them with conda (Option 2), make sure conda provides at least these versions; otherwise pip will install newer copies from PyPI over them, mixing the two ecosystems (see the segfault warning below). Note that PyPI has no builds of PyTorch 2.3 or later for Intel (x86_64) Macs, so on an Intel Mac pip cannot install the PyTorch that metapredict needs.
 
 Option 1 - pip (PyPI)
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -97,24 +113,24 @@ WARNING: Segfault when mixing ``conda`` and ``pip`` installs (March 2024)
 
 As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities between ``pip`` and ``conda`` versions of PyTorch and numpy. Therefore, it is essential your numpy and PyTorch installs are from the same package manager. metapredict will - by default - pull dependencies from PyPI. However, other packages installed from conda may require conda-dependent numpy installations, which can "brick" a previously-working installation.
 
-WARNING: Problems with installing Torch with propert CUDA version (November 2024).
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING: Problems with installing Torch with proper CUDA version (November 2024).
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**This is only relevent if you are trying to run metapredict on a CUDA-enabled GPU!**
+**This is only relevant if you are trying to run metapredict on a CUDA-enabled GPU!**
 
-If you are on an older version of CUDA, a torch version that *does not have the correct CUDA version* will be installed. This can cause a segfault when running metapredict. To fix this, you need to install torch for your specific CUDA version. For example, to install PyTorch on Linux using pip with a CUDA version of 12.1, you would run:
+On Linux, the PyTorch that pip installs from PyPI is built for a specific version of CUDA, and your NVIDIA driver must support that CUDA version. If your driver is older than that, a torch version that *does not have the correct CUDA version* will be installed. PyTorch then cannot use your GPU: ``torch.cuda.is_available()`` returns ``False``, so metapredict quietly runs on the CPU (or raises an error if you asked for ``device='cuda'``), and in some setups this can also cause a segfault. To fix this, you need to install torch for a CUDA version your driver supports. For example, to install PyTorch on Linux using pip with a CUDA version of 12.1, you would run:
 
 .. code-block:: bash
 
    pip install torch --index-url https://download.pytorch.org/whl/cu121
 
-To figure out which version of CUDA you currently have (assuming you have a CUDA-enabled GPU that is set up correctly), you need to run:
+To figure out which version of CUDA your driver supports (assuming you have a CUDA-enabled GPU that is set up correctly), you need to run:
 
 .. code-block:: bash
 
    nvidia-smi
 
-Which should return information about your GPU, NVIDIA driver version, and your CUDA version at the top.
+Which should return information about your GPU and NVIDIA driver version, and at the top the highest CUDA version your driver supports, so choose a PyTorch build for that CUDA version or an older one.
 
 Please see the `PyTorch install instructions <https://pytorch.org/get-started/locally/>`_ for more info. 
 
@@ -180,7 +196,7 @@ We note that V2-FF was released after CAID, so the performance reported there is
 What is new as far as the disorder prediction in V3?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-V2 and V3 are fairly similar given that they have the same underlying disorder prdiction approach in that both networks combine V1 consensus disorder scores and AlphaFold2 (AF2) pLDDT scores in some way to come up with a final 'disorder prediction score'. However, there are some important difference between V2 and V3 that allowed us to make a more accurate network. First, V3 was made at a time when **many more** AF2 structures (and therefore their AF2 pLDDT scores) were available. This allowed us to combine metapredict V1 scores with the *actual AF2 pLDDT scores* as opposed to V2 where we had to use *predicted pLDDT scores*. Second, we now have more powerful computational hardware available to us, allowing us to train on a larger dataset. Third, we used more advanced approaches to hyperparamter optimization during training. All of this allowed us to make a more accurate network for V3. 
+V2 and V3 are fairly similar given that they have the same underlying disorder prediction approach in that both networks combine V1 consensus disorder scores and AlphaFold2 (AF2) pLDDT scores in some way to come up with a final 'disorder prediction score'. However, there are some important difference between V2 and V3 that allowed us to make a more accurate network. First, V3 was made at a time when **many more** AF2 structures (and therefore their AF2 pLDDT scores) were available. This allowed us to combine metapredict V1 scores with the *actual AF2 pLDDT scores* as opposed to V2 where we had to use *predicted pLDDT scores*. Second, we now have more powerful computational hardware available to us, allowing us to train on a larger dataset. Third, we used more advanced approaches to hyperparameter optimization during training. All of this allowed us to make a more accurate network for V3. 
 
 
 Generating predicted pLDDT (AlphaFold2 confidence) scores in metapredict
@@ -201,7 +217,7 @@ We think **metapredict** is useful for three main reasons.
 
 1. It's highly accurate and provides strong boundaries between disordered and folded regions.
 2. It's incredibly fast; on CPUs one can predict every IDR in the human proteome in ~2.5 minutes. On modest GPUs one can predict every IDR in the human proteome in under 5 seconds. This stands in stark contrast to other predictors which place length caps on sequences and can take hours per sequence.
-3. It is easy to use and is distributed via a wide range of channels. In addition to this Python package, metapredict is distributed as a stand-alone webserver **(see: https://metapredict.net/ )**, colab notebooks for large-scale predictions, and as an `API for SHEPHARD <https://shephard.readthedocs.io/en/latest/apis.html#metapredict>`__, our general-purpose toolkit for working with an annotating large protein datasets. This Python package further implements metapredict as both Python modules and as a set of command-line tools. 
+3. It is easy to use and is distributed via a wide range of channels. In addition to this Python package, metapredict is distributed as a stand-alone webserver **(see: https://metapredict.net/ )**, colab notebooks for large-scale predictions, and as an `API for SHEPHARD <https://shephard.readthedocs.io/en/latest/apis.html#metapredict-api>`__, our general-purpose toolkit for working with an annotating large protein datasets. This Python package further implements metapredict as both Python modules and as a set of command-line tools. 
 
 In summary, we believe metapredict provides the three key ingredients of a useful disorder predictor: it's extremely accurate, it's incredibly fast, and it's very easy to use.
 
@@ -252,6 +268,14 @@ To see if your installation of **metapredict** is working properly, you can run 
 
 	$ pytest -v
 
+pytest is not installed along with metapredict, so you may need to install it first with ``pip install pytest``. To find the tests folder of your installation, run:
+
+.. code-block:: bash
+
+	$ python -c "import os, metapredict; print(os.path.join(os.path.dirname(metapredict.__file__), 'tests'))"
+
+For running the tests from a copy of the source code, and across every supported Python version, see :doc:`the troubleshooting page <usage/troubleshooting>`.
+
 Example datasets
 ==================
 
@@ -269,9 +293,9 @@ As of May 2023, we have pushed our improved version metapredict V2-FF. metapredi
 February 2022: Update to default version (metapredict V2)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As of February 15, 2022 we have updated metapredict to V2. This comes with important changes that improve the accuracy of metapredict. Please see the section on the update *Major update to metapredict predictions to increase overall accuracy* below. In addition, this update changes the functionality of the *predict_disorder_domains()* function, so please read the documentation on that function if you were using it previously. 
+As of February 15, 2022 we have updated metapredict to V2. This comes with important changes that improve the accuracy of metapredict. Please see the section `How was metapredict V2 trained?`_ above. In addition, this update changes the functionality of the *predict_disorder_domains()* function, so please read the documentation on that function if you were using it previously. 
 
-These changes are detailed in a `permanent preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ that lives on bioRxiv. We ask you still cite the original metapredict article rather than this preprint.
+These changes are detailed in a `permanent preprint <https://www.biorxiv.org/content/10.1101/2022.06.06.494887v2>`_ that lives on bioRxiv. We ask you still cite the original metapredict article, and you may additionally cite this preprint (see :doc:`how_to_cite`).
 
 July 2021: Initial version (metapredict v1)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

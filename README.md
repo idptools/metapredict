@@ -26,13 +26,15 @@ For context, V3 provides major improvements to V2. Metapredict V3 uses a **new n
 6. **Batch pLDDT predictions**: Batch predictions (and therefore the massive increases in prediction speed) are now available for pLDDT predictions using the `predict_pLDDT()` function. 
 7. **More device selection**: Newer versions of Torch (>2.0) support macOS GPU utilization through the Metal Performance Shaders (MPS) framework, so you can now choose to use mps on macOS. 
 8. **Clearer device selection**: Metapredict used to fall back to CPU for predictions if it failed to use the GPU for any reason. This was well-intentioned but made troubleshooting GPU usage very tricky. Now if you specify using a specific device and it does not work, metapredict will not automatically fall back to CPU.
-9. **Ability to get protein isoforms from UniProt**: We updated metapredict-uniprot to work with the new version of getSequence, which enables you to input a valid UniProt ID including designations for different protein isoforms. If you want to predict a sequence from the CLI using the name of the protein and the organism name (optional but recommended), please use ``metapredict-name`, as `metapredict-uniprot` will only work with valid UniProt accession numbers.
+9. **Ability to get protein isoforms from UniProt**: We updated metapredict-uniprot to work with the new version of getSequence, which enables you to input a valid UniProt ID including designations for different protein isoforms. If you want to predict a sequence from the CLI using the name of the protein and the organism name (optional but recommended), please use `metapredict-name`, as `metapredict-uniprot` will only work with valid UniProt accession numbers.
 
 
 ## Installation
 Metapredict is a Python package published on [PyPI](https://pypi.org/project/metapredict/). It supports Python 3.9–3.14; the instructions below use **Python 3.12**, which we recommend. Choose whichever of the three workflows — pip, conda, or uv — best matches your setup. If Python environments are new to you, we suggest reading up on Python package management and [conda](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) first.
 
 Each option creates a clean, isolated Python 3.12 environment and then installs metapredict from PyPI.
+
+metapredict needs PyTorch 2.3 or later, NumPy 2.0 or later and scipy 1.13 or later, and pip and uv install these (along with metapredict's other dependencies) automatically. If you install them with conda (Option 2), make sure conda provides at least these versions; otherwise pip will install newer copies from PyPI over them, mixing the two ecosystems (see the segfault warning below). Note that PyPI has no builds of PyTorch 2.3 or later for Intel (x86_64) Macs, so on an Intel Mac pip cannot install the PyTorch that metapredict needs.
 
 #### Option 1 — pip (PyPI)
 ```bash
@@ -75,20 +77,20 @@ from the command line; this should yield help info on the `metapredict-predict-d
 #### WARNING: Segfault when mixing `conda` and `pip` installs (March 2024)
 As of at least PyTorch 2.2.2 on macOS, there are binary incompatibilities between `pip` and `conda` versions of PyTorch and numpy. Therefore, it is essential your numpy and PyTorch installs are from the same package manager. metapredict will - by default - pull dependencies from PyPI. However, other packages installed from conda may require conda-dependent numpy installations, which can "brick" a previously-working installation.
 
-#### WARNING: Problems with installing Torch with propert CUDA version (November 2024).
-**This is only relevent if you are trying to run metapredict on a CUDA-enabled GPU!**
+#### WARNING: Problems with installing Torch with proper CUDA version (November 2024).
+**This is only relevant if you are trying to run metapredict on a CUDA-enabled GPU!**
 
-If you are on an older version of CUDA, a torch version that *does not have the correct CUDA version* will be installed. This can cause a segfault when running metapredict. To fix this, you need to install torch for your specific CUDA version. For example, to install PyTorch on Linux using pip with a CUDA version of 12.1, you would run:
+On Linux, the PyTorch that pip installs from PyPI is built for a specific version of CUDA, and your NVIDIA driver must support that CUDA version. If your driver is older than that, a torch version that *does not have the correct CUDA version* will be installed. PyTorch then cannot use your GPU: `torch.cuda.is_available()` returns `False`, so metapredict quietly runs on the CPU (or raises an error if you asked for `device='cuda'`), and in some setups this can also cause a segfault. To fix this, you need to install torch for a CUDA version your driver supports. For example, to install PyTorch on Linux using pip with a CUDA version of 12.1, you would run:
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu121
 ```
 
-To figure out which version of CUDA you currently have (assuming you have a CUDA-enabled GPU that is set up correctly), you need to run:
+To figure out which version of CUDA your driver supports (assuming you have a CUDA-enabled GPU that is set up correctly), you need to run:
 ```bash
 nvidia-smi
 ```
-Which should return information about your GPU, NVIDIA driver version, and your CUDA version at the top.
+Which should return information about your GPU and NVIDIA driver version, and at the top the highest CUDA version your driver supports, so choose a PyTorch build for that CUDA version or an older one.
 
 Please see the [PyTorch install instructions](https://pytorch.org/get-started/locally/) for more info. 
 
@@ -117,7 +119,7 @@ metapredict includes a compiled (Cython) extension that speeds up the IDR domain
 The `-e` flag links the installed version to your local copy of the code, so edits to the Python files take effect immediately. If you change the Cython code (`metapredict/backend/cython/domain_definition.pyx`), re-run `pip install -e .` to recompile it. If metapredict ever warns that it is falling back to a slower pure-Python implementation, its compiled extension could not be loaded; reinstalling metapredict fixes this.
 
 ## Documentation
-Documentation for metapredict V3 automatically builds from the `/doc` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
+Documentation for metapredict V3 automatically builds from the `/docs` directory in this repository and is hosted at [https://metapredict.readthedocs.io/](https://metapredict.readthedocs.io/). 
 
 In brief, metapredict provides both command-line tools and a set of user-face functions from the metapredict python module. Both sets of tools are fully documented online.
 

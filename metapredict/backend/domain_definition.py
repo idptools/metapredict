@@ -220,7 +220,7 @@ def __build_domains_from_values(values,
 
     B_string = B_string+'-'
 
-    # for sizes of contigous stretches that are up minimum_IDR_size + 1
+    # for sizes of contiguous stretches that are up minimum_IDR_size + 1
     # replace with empty ('0') strings
     for i in range(1, minimum_IDR_size + 1):
 
@@ -360,8 +360,8 @@ def get_domains(sequence,
 
     gap_closure : int
         Defines the largest gap that would be 'closed'. Gaps here refer to a scenario in which you have two groups
-        of disordered residues seprated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
-        larger contigous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_region_size becomes
+        of disordered residues separated by a 'gap' of un-disordered residues. In general large gap sizes will favour 
+        larger contiguous IDRs. It's worth noting that gap_closure becomes relevant only when minimum_IDR_size becomes
         very small (i.e. < 5) because really gaps emerge when the smoothed disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default = 10.
 

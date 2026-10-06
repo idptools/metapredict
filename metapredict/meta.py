@@ -60,8 +60,7 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
 
     With V3, you can now input a single sequence, a list of sequences, or
     a dictionary where key:value pairings are a name for a sequence
-    and the values are the actual sequence into this single function
-    into this single function.
+    and the values are the actual sequence into this single function.
 
     We are keeping the 'predict_disorder_batch' function available
     to avoid breaking peoples' code, but that function isn't strictly
@@ -86,7 +85,7 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
         .sequence : str    
             Amino acid sequence 
 
-        .disorder : list or np.ndaarray
+        .disorder : list or np.ndarray
             Hybrid disorder score
 
         .disordered_domain_boundaries : list
@@ -117,25 +116,29 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
 
     device : int or str
         Identifier for the device to be used for predictions.
-        Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
+        Possible inputs: 'cpu', 'mps', 'cuda', 'cuda:int', or an int that corresponds to
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
         cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
         using CUDA as you were expecting.
         Default: None
-        When set to None, metapredict picks a device automatically in
-        the order cuda -> mps -> cpu (first available wins). Note that
+        When set to None, metapredict picks a device automatically,
+        using the first available device in a per-network order: the
+        small V1 and V2 networks try cuda -> cpu -> mps (they run faster
+        on the CPU than on MPS, so they never pick MPS automatically),
+        while V3 tries cuda -> mps -> cpu. Note that
         for a single-sequence string input this function forces the CPU
         path regardless of what's available, since using a GPU for one
-        sequence is not worthwhile; batch (list/dict) inputs honour
-        the auto-selection.
+        sequence is not worthwhile; the device name is still checked
+        (an unrecognised name raises a MetapredictError) but the device
+        does not need to be available. Batch (list/dict) inputs honour
+        the device argument and the auto-selection.
         If you set the value to be an int, we will use cuda:int as the device
         where int is the int you specify. The GPU numbering is 0 indexed, so 0
         corresponds to the first GPU and so on. Only specify this if you
         know which GPU you want to use.
-        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
-        right it might have been beta-supported in 2.0. MPS is still fairly
-        new, so use at your own risk.
+        MPS (Apple Silicon GPUs) is available in every PyTorch version
+        metapredict supports (2.3 or later).
 
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1.
@@ -146,11 +149,14 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
         Default : True
 
     return_numpy : bool
-        Whether to return a numpy array or a list for single predictions. 
+        Whether to return scores as numpy arrays (True) or as lists of
+        floats (False). This applies to single-sequence, list and
+        dictionary inputs, and to the .disorder scores of DisorderObjects
+        when return_domains is True.
         Default : True 
 
     return_domains : bool
-        Flag which, if set to true, means we return DisorderDomain
+        Flag which, if set to true, means we return DisorderObject
         objects instead of simply the disorder scores. These
         domain objects include the boundaries between IDRs and 
         folded domains, the disorder scores, and the individual
@@ -162,7 +168,7 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
         Used only if return_domains = True.
         Default is set to None because there are different threshold
         values depending on the network (V1 = 0.42, V2=0.5, V3=0.5). You can
-        override this value. 
+        override this value. Must be a number between 0 and 1.
 
     minimum_IDR_size : int
         Used only if return_domains = True.
@@ -194,10 +200,10 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
 
         Defines the largest gap that would be 'closed'. Gaps here 
         refer to a scenario in which you have two groups of 
-        disordered residues seprated by a 'gap' of un-disordered 
+        disordered residues separated by a 'gap' of un-disordered 
         residues. In general large gap sizes will favour larger 
-        contigous IDRs. It's worth noting that gap_closure becomes 
-        relevant only when minimum_region_size becomes very small 
+        contiguous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_IDR_size becomes very small
         (i.e. < 5) because really gaps emerge when the smoothed 
         disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
@@ -223,7 +229,7 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
     show_progress_bar : bool
         Flag which, if set to True, means a progress bar is printed as 
         predictions are made, while if False no progress bar is printed.
-        Default  =  True
+        Default = False
 
     force_disable_batch : bool
         Whether to override any use of batch predictions and predict
@@ -239,6 +245,7 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
     silence_warnings : bool
         whether to silence warnings such as the one about compatibility
         to use pack-n-pad due to torch version restrictions. 
+        Default = False
 
     batch_size : int or None
         Number of sequences processed per forward pass during batch prediction.
@@ -262,7 +269,9 @@ def predict_disorder(inputs, version=DEFAULT_NETWORK, device=None,
         Depending on your input and specified desired output, can return a 
         np.array, list, or DisorderObject. If you input a string, you will
         get back a single np.array, list, or DisorderObject. If you input a list,
-        you will get a list of your specified return value. If you input a dict, 
+        you will get back a list in the same order as your input, where each
+        element is a two-element list of [sequence, disorder scores], or a
+        DisorderObject if you set return_domains=True. If you input a dict,
         if you do not set return_domains=True, you will get back a dictionary 
         where the key is the same as the key for your input dict and the corresponding
         value is a nested list where the first element in that list is the sequence for
@@ -327,7 +336,10 @@ def predict_disorder_domains_from_external_scores(disorder,
 
     sequence : str
         The protein sequence as a string. If no sequence is passed, 
-        calling DisorderObject.sequence will return an fake sequence.
+        calling DisorderObject.sequence will return an fake sequence
+        (a string of alanines of the same length as disorder). If a
+        sequence is passed it must be the same length as disorder,
+        otherwise a MetapredictError is raised.
 
     disorder_threshold : float
         Value that defines what 'disordered' is based on the input predictor 
@@ -355,10 +367,10 @@ def predict_disorder_domains_from_external_scores(disorder,
 
     gap_closure : int
         Defines the largest gap that would be 'closed'. Gaps here refer to a 
-        scenario in which you have two groups of disordered residues seprated 
+        scenario in which you have two groups of disordered residues separated 
         by a 'gap' of un-disordered residues. In general large gap sizes will 
-        favour larger contigous IDRs. It's worth noting that gap_closure 
-        becomes  relevant only when minimum_region_size becomes very small 
+        favour larger contiguous IDRs. It's worth noting that gap_closure 
+        becomes  relevant only when minimum_IDR_size becomes very small
         (i.e. < 5)  because  really gaps emerge when the smoothed disorder 
         fit is "noisy", but when smoothed gaps are increasingly rare. 
         Default = 10.
@@ -375,18 +387,19 @@ def predict_disorder_domains_from_external_scores(disorder,
 
     return_numpy : bool
         Flag which if set to true means all numerical types are returned
-        as numpy.ndlist. Default is True
+        as numpy.ndarray (if False, they are returned as lists). Default is True
 
     Returns
     ---------
     DisorderObject
-        Returns a DisorderObject. DisorderObject has 7 dot variables:
+        Returns a DisorderObject. DisorderObject has 6 dot variables
+        (plus .meta, a backwards-compatible alias of .disorder):
 
         .sequence : str    
             Amino acid sequence 
 
-        .disorder : list or np.ndaarray
-            Hybrid disorder score
+        .disorder : list or np.ndarray
+            The disorder scores that were passed in
 
         .disordered_domain_boundaries : list
             List of domain boundaries for IDRs using Python indexing
@@ -471,7 +484,7 @@ def predict_disorder_domains(sequence,
     object are defined below.
 
     The previous version of metapredict returned a list of values,
-    which can be obtained instead of the DisorderedObject if 
+    which can be obtained instead of the DisorderObject if
     return_list is set to True.
 
     Parameters
@@ -481,8 +494,9 @@ def predict_disorder_domains(sequence,
         Amino acid sequence
 
     disorder_threshold : float
-        Set to None such that it will change to 0.42 for legacy
-        and 0.5 for metapredict. Can still manually set value.
+        Set to None by default, which uses the default threshold for
+        the chosen network (0.42 for V1, 0.5 for V2 and V3). Can still
+        manually set value (must be a number between 0 and 1).
 
     minimum_IDR_size : int
         Defines the smallest possible IDR. This is a hard limit - 
@@ -507,10 +521,10 @@ def predict_disorder_domains(sequence,
     gap_closure : int
         Defines the largest gap that would be 'closed'. Gaps here 
         refer to a scenario in which you have two groups of 
-        disordered residues seprated by a 'gap' of un-disordered 
+        disordered residues separated by a 'gap' of un-disordered 
         residues. In general large gap sizes will favour larger 
-        contigous IDRs. It's worth noting that gap_closure becomes 
-        relevant only when minimum_region_size becomes very small 
+        contiguous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_IDR_size becomes very small
         (i.e. < 5) because really gaps emerge when the smoothed 
         disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
@@ -521,7 +535,7 @@ def predict_disorder_domains(sequence,
 
     return_numpy : bool
         Flag which if set to true means all numerical types are returned
-        as numpy.ndlist. Default is True
+        as numpy.ndarray (if False, they are returned as lists). Default is True
 
     version : str
         Which version of metapredict to use. Default is DEFAULT_NETWORK which 
@@ -529,18 +543,21 @@ def predict_disorder_domains(sequence,
         or 'V3' can be specified to access a specific version of metapredict
 
     return_list : bool
-        Flag that determines i to return the old format where a 
-        tuple is returned. This is retained for backwards compatibility
+        Flag which, if set to True, means the old format (a list with
+        four elements, see Returns) is returned instead of a
+        DisorderObject. This is retained for backwards compatibility.
+        Default = False
 
     Returns
     ---------
-    DisorderObject
-        By default, the function returns a DisorderObject. A DisorderObject has 7 dot variables:
+    DisorderObject or list
+        By default, the function returns a DisorderObject. A DisorderObject has 6 dot variables
+        (plus .meta, a backwards-compatible alias of .disorder):
 
         .sequence : str    
             Amino acid sequence 
 
-        .disorder : list or np.ndaarray
+        .disorder : list or np.ndarray
             disorder scores
 
         .disordered_domain_boundaries : list
@@ -555,9 +572,6 @@ def predict_disorder_domains(sequence,
         .folded_domains : list
             List of the actual sequences for folded domains
 
-    Returns
-    ---------
-    list
         However, if ``return_list`` == True. Then, the function returns a
         list with four elements, as outlined below.
 
@@ -683,8 +697,10 @@ def predict_disorder_batch(input_sequences,
     GPU for a single sequence is not worthwhile), so if you leave the
     default device=None here (which picks a GPU when one is available)
     you are comparing a GPU batch result to a CPU single-sequence
-    result. The cuDNN/MPS LSTM diverges from CPU by ~1e-4 in most
+    result. The MPS LSTM diverges from CPU by ~1e-4 in most
     positions and can be larger near saturation (scores near 0 or 1).
+    On CUDA, metapredict switches cuDNN's TF32 mode off while it
+    predicts, which keeps CUDA within ~1e-6 of CPU on disorder scores.
     Pin device='cpu' if you need bit-for-bit-comparable outputs across
     the two paths.
 
@@ -702,14 +718,17 @@ def predict_disorder_batch(input_sequences,
 
     device : int or str
         Identifier for the device to be used for predictions.
-        Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
+        Possible inputs: 'cpu', 'mps', 'cuda', 'cuda:int', or an int that corresponds to
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
         cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
         using CUDA as you were expecting.
         Default: None
-        When set to None, metapredict picks a device automatically in
-        the order cuda -> mps -> cpu (first available wins). Set
+        When set to None, metapredict picks a device automatically,
+        using the first available device in a per-network order: the
+        small V1 and V2 networks try cuda -> cpu -> mps (they run faster
+        on the CPU than on MPS, so they never pick MPS automatically),
+        while V3 tries cuda -> mps -> cpu. Set
         device='cpu' explicitly if you need results that are
         bit-for-bit reproducible across machines, or that exactly
         match the CPU-only predict_disorder(single_string) path.
@@ -717,8 +736,8 @@ def predict_disorder_batch(input_sequences,
         where int is the int you specify. The GPU numbering is 0 indexed, so 0
         corresponds to the first GPU and so on. Only specify this if you
         know which GPU you want to use.
-        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
-        right it might have been beta-supported in 2.0.
+        MPS (Apple Silicon GPUs) is available in every PyTorch version
+        metapredict supports (2.3 or later).
 
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1.
@@ -729,11 +748,13 @@ def predict_disorder_batch(input_sequences,
         Default : True
 
     return_numpy : bool
-        Whether to return a numpy array or a list for single predictions.
+        Whether to return scores as numpy arrays (True) or as lists of
+        floats (False). When return_domains is True, this sets the type
+        of the .disorder scores of each DisorderObject.
         Default : True
 
     return_domains : bool
-        Flag which, if set to true, means we return DisorderDomain
+        Flag which, if set to true, means we return DisorderObject
         objects instead of simply the disorder scores. These
         domain objects include the boundaries between IDRs and
         folded domains, the disorder scores, and the individual
@@ -744,8 +765,9 @@ def predict_disorder_batch(input_sequences,
     disorder_threshold : float
         Used only if return_domains = True.
         Threshold used to deliniate between folded and disordered
-        regions. We use a value of 0.5 because predict_disorder_batch
-        does not support legacy. 
+        regions. Default is None, which uses the default threshold for
+        the chosen network (V1 = 0.42, V2 = 0.5, V3 = 0.5). Must be a
+        number between 0 and 1.
 
     minimum_IDR_size : int
         Used only if return_domains = True.
@@ -776,10 +798,10 @@ def predict_disorder_batch(input_sequences,
 
         Defines the largest gap that would be 'closed'. Gaps here 
         refer to a scenario in which you have two groups of 
-        disordered residues seprated by a 'gap' of un-disordered 
+        disordered residues separated by a 'gap' of un-disordered 
         residues. In general large gap sizes will favour larger 
-        contigous IDRs. It's worth noting that gap_closure becomes 
-        relevant only when minimum_region_size becomes very small 
+        contiguous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_IDR_size becomes very small
         (i.e. < 5) because really gaps emerge when the smoothed 
         disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
@@ -824,25 +846,27 @@ def predict_disorder_batch(input_sequences,
         If a list was provided as input, the function returns a list
         of the same length as the input list, where each element is 
         itself a sublist where element 0 = sequence and element 1 is
-        a numpy array of disorder scores. The order of the return list
-        matches the order of the input list.
+        a numpy array (or a list, if return_numpy is False) of disorder
+        scores. The order of the return list matches the order of the
+        input list.
 
         If a dictionary was provided as input, the function returns
         a dictionary, where the same input keys map to values which are
         lists of 2 elements, where element 0 = sequence and element 1 is
-        a numpy array of disorder scores.
+        a numpy array (or a list, if return_numpy is False) of disorder
+        scores.
 
         IF RETURN DOMAINS == TRUE: this function returns either a list
         or a dictionary.
 
         If a list was provided as input, the function returns a list
         of the same length as the input list, where each element is 
-        a DisorderDomain object. The order of the return list matches 
+        a DisorderObject. The order of the return list matches
         the order of the input list.
 
         If a dictionary was provided as input, the function returns
-        a dictionary, where the same input keys map to a DisorderDomain
-        object that corresponds to the input dictionary sequence.
+        a dictionary, where the same input keys map to a DisorderObject
+        that corresponds to the input dictionary sequence.
 
     """
     # check version and make sure it is an uppercase string
@@ -976,7 +1000,9 @@ def predict_disorder_stream(filepath,
         Disable pack-n-pad batching. Default = False.
 
     silence_warnings : bool
-        Silence prediction warnings. Default = False.
+        Silence prediction warnings, and protfasta's one-time warning about
+        memory use when expect_unique_header or a 'fail'/'remove' duplicate
+        action is used. Default = False.
 
     batch_size : int or None
         Batch size for each chunk's forward pass. Must be a power of two and
@@ -1141,38 +1167,41 @@ def graph_disorder(sequence,
         Options currently include V1, V2, or V3. 
 
     pLDDT_version : string
-        The network to use for pLDDT prediction. Default is DEFAULT_NETWORK,
+        The network to use for pLDDT prediction. Default is DEFAULT_NETWORK_PLDDT,
         which is defined at the top of /parameters.
         Options currently include V1, V2.
 
     title : str
         Sets the title of the generated figure. Default = "Predicted protein 
-        disorder"
+        disorder" (if pLDDT_scores is True, this default title becomes
+        "Predicted protein disorder / AF2pLDDT").
 
     disorder_threshold : float
-        Set to None by default such that if the user chooses to set
-        legacy=True, the threshhold line will be at 0.3 and if legacy
-        is set to false (default) then the threshold line will be at 0.5.
+        Set to None by default, which puts the threshold line at the
+        default threshold for the chosen network (0.42 for V1, 0.5 for
+        V2 and V3).
 
         Sets a threshold which draws a horizontal black line as a visual 
         guide along the length of the figure. Must be a value between 0 
-        and 1. Default = 0.3 for legacy and 0.5 for new version of metapredict.
+        and 1.
             
     pLDDT_scores : Bool
         Sets whether to include the predicted pLDDT scores in the figure
 
     shaded_regions : list of lists
         A list of lists, where sub-elements are of length 2 and contain 
-        start and end values for regions to be shaded. Assumes that sanity 
-        checking on positions has already been done. Default is None, but 
+        start and end values for regions to be shaded. Positions are
+        residue numbers starting at 1 (as on the x-axis of the graph), and
+        positions outside 1 to len(sequence)+1 raise a MetapredictError.
+        Default is None, but
         if there were specific regions you wanted to highlight this might, 
         for example, look like shaded_regions=[[1,10],[40,50]], which would 
         shade between 1 and 10 and then between 40 and 50. This can be useful
         to either highlight specific IDRs or specific folded domains
 
-    shaded_region_color : str or list of sts
+    shaded_region_color : str or list of strs
         String that defines the color of the shaded region. The shaded region 
-        is always set with an alpha of 0.3 but the color can be any valid 
+        is always set with an alpha of 0.2 but the color can be any valid 
         matplotlib color name or a hex color string (i.e. "#ff0000" is red).
         Alternatively a list where number of elements matches number in 
         shaded_regions, assigning a color-per-shaded regions.
@@ -1260,7 +1289,7 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
 
     device : int or str
         Identifier for the device to be used for predictions.
-        Possible inputs: 'cpu', 'mps', 'cuda', or an int that corresponds to
+        Possible inputs: 'cpu', 'mps', 'cuda', 'cuda:int', or an int that corresponds to
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
         cuda.is_available() returns False, instead of falling back to CPU,
         metapredict will raise an Exception so you know that you are not
@@ -1270,17 +1299,21 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
         the order cuda -> mps -> cpu (first available wins). Note that
         for a single-sequence string input this function forces the CPU
         path regardless of what's available, since using a GPU for one
-        sequence is not worthwhile; batch (list/dict) inputs honour
-        the auto-selection.
+        sequence is not worthwhile; the device name is still checked
+        (an unrecognised name raises a MetapredictError) but the device
+        does not need to be available. Batch (list/dict) inputs honour
+        the device argument and the auto-selection.
         If you set the value to be an int, we will use cuda:int as the device
         where int is the int you specify. The GPU numbering is 0 indexed, so 0
         corresponds to the first GPU and so on. Only specify this if you
         know which GPU you want to use.
-        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
-        right it might have been beta-supported in 2.0.
+        MPS (Apple Silicon GPUs) is available in every PyTorch version
+        metapredict supports (2.3 or later).
 
     normalized : bool
-        Whether or not to normalize disorder values to between 0 and 1. 
+        Whether or not to clip the scores so they lie between 0 and 100
+        (or between 0 and 1 if return_decimals or return_as_disorder_score
+        is True).
         Default : True
     
     round_values : bool
@@ -1288,7 +1321,9 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
         Default : True
 
     return_numpy : bool
-        Whether to return a numpy array or a list for single predictions. 
+        Whether to return scores as numpy arrays (True) or as lists of
+        floats (False). This applies to single-sequence, list and
+        dictionary inputs.
         Default : True    
                 
     print_performance : bool
@@ -1299,7 +1334,7 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
     show_progress_bar : bool
         Flag which, if set to True, means a progress bar is printed as 
         predictions are made, while if False no progress bar is printed.
-        Default  =  True
+        Default = False
 
     force_disable_batch : bool
         Whether to override any use of batch predictions and predict
@@ -1315,6 +1350,7 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
     silence_warnings : bool
         whether to silence warnings such as the one about compatibility
         to use pack-n-pad due to torch version restrictions. 
+        Default = False
 
     return_as_disorder_score : bool
         Whether to return as a disorder score.
@@ -1322,7 +1358,10 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
         it looks like a disorder score (higher value=disordereed and lower
         value = not disordered). This is similar to the approach that we used
         to generate the scores that were combined with legacy metapredict to make
-        V2 and V3.
+        V2 and V3. Setting this to True also sets return_decimals to True. With
+        normalized=True, pLDDT scores of 35 or below become 1, scores of 95 or
+        above become 0, and scores in between are scaled linearly.
+        Default = False
 
     batch_size : int or None
         Number of sequences processed per forward pass during batch prediction.
@@ -1334,10 +1373,16 @@ def predict_pLDDT(inputs, pLDDT_version=DEFAULT_NETWORK_PLDDT, return_decimals=F
     Returns
     --------
 
-    list or np.ndarray
-        Returns a list (or np.ndarray) of floats that corresponds to the 
-        per-residue pLDDT score. Return type depends on the flag 
-        return_numpy
+    np.ndarray, list or dict
+        For a single sequence, returns a list (or np.ndarray) of floats that
+        corresponds to the per-residue pLDDT score. Return type depends on
+        the flag return_numpy.
+
+        If a list of sequences was provided, returns a list in the same
+        order as the input, where each element is a two-element list of
+        [sequence, pLDDT scores]. If a dictionary was provided, returns a
+        dictionary with the same keys, where each value is a two-element
+        list of [sequence, pLDDT scores].
 
     """
 
@@ -1385,24 +1430,29 @@ def graph_pLDDT(sequence,
         Default = "Predicted AF2 pLDDT Confidence Score"
 
     disorder_scores : Bool
-        Whether to include disorder scores. Can set to False if you
+        Whether to include disorder scores (predicted with the default
+        disorder network). Can set to False if you
         just want the AF2 confidence scores. 
         Default = False
 
     shaded_regions : list of lists
         A list of lists, where sub-elements are of length 2 and contain 
-        start and end values for regions to be shaded. Assumes that sanity 
-        checking on positions has already been done. Default is None, but 
+        start and end values for regions to be shaded. Positions are
+        residue numbers starting at 1 (as on the x-axis of the graph), and
+        positions outside 1 to len(sequence)+1 raise a MetapredictError.
+        Default is None, but
         if there were specific regions you wanted to highlight this might, 
         for example, look like shaded_regions=[[1,10],[40,50]], which would 
         shade between 1 and 10 and then between 40 and 50. This can be useful
         to either highlight specific IDRs or specific folded domains.
         Default = None
 
-    shaded_region_color : str
+    shaded_region_color : str or list of strs
         String that defines the color of the shaded region. The shaded region 
-        is always set with an alpha of 0.3 but the color can be any valid 
+        is always set with an alpha of 0.2 but the color can be any valid
         matplotlib color name or a hex color string (i.e. "#ff0000" is red).
+        Alternatively a list where number of elements matches number in
+        shaded_regions, assigning a color-per-shaded regions.
 
     DPI : int
         Dots-per-inch. Defines the resolution of the generated figure. 
@@ -1452,16 +1502,16 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold',
                     version=DEFAULT_NETWORK):
     """
     Function that returns the percent disorder for any given protein.
-    By default, uses 0.5 as a cutoff for the new version of metapredict
-    and 0.3 for the legacy version of metapredict (values greater than or equal
-    to 0.5 will be considered disordered). If a value for cutoff is specified,
-    that value will be used.
+    By default, uses the default threshold for the chosen network as the
+    cutoff (0.5 for V2 and V3, 0.42 for V1); residues with a disorder score
+    greater than or equal to the cutoff are considered disordered. If a
+    value for disorder_threshold is specified, that value will be used.
 
     Mode lets you toggle between 'threshold' and 'disorder_domains'. If 
     threshold is used a simple per-residue logic operation is applied
     and the fraction of residues above the disorder_threshold is used.
     If 'disorder_domains' is used then the sequence is divided into
-    IDRs and folded domains using the predict_disordered_domains() 
+    IDRs and folded domains using the predict_disorder_domains()
     function. 
 
     
@@ -1472,12 +1522,12 @@ def percent_disorder(sequence, disorder_threshold=None, mode='threshold',
         Input amino acid sequence (as string) to be predicted.
 
     disorder_threshold : float
-        Set to None by default such that it will change depending
-        on whether legacy is set to True or False.
+        Set to None by default, which uses the default threshold for the
+        chosen network.
 
         Sets a threshold which defines if a residue is considered disordered
-        or not. Default for new metapredict = 0.5. Default for legacy metapredict
-        is 0.3.
+        or not. Default for V2 and V3 = 0.5. Default for V1 (legacy) metapredict
+        is 0.42. Must be a value between 0 and 1.
 
     mode : str
         Selector which lets you choose which mode to calculate percent disorder
@@ -1567,7 +1617,8 @@ def predict_disorder_fasta(filepath,
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of disorder values where the key is the 
-    fasta header and the values are the predicted disorder values.
+    fasta header and the value is a two-element list of the sequence
+    and its predicted disorder values.
     
     Parameters
     -------------
@@ -1580,6 +1631,8 @@ def predict_disorder_fasta(filepath,
         By default, a dictionary of predicted values is returned 
         immediately. However, you can specify an output filename and path 
         and a .csv file will be saved. This should include any file extensions.
+        Each row holds the fasta header (with any commas replaced by spaces),
+        the sequence, and then the per-residue disorder scores.
         Default = None.
 
     normalized : bool
@@ -1594,14 +1647,17 @@ def predict_disorder_fasta(filepath,
         rules. See https://protfasta.readthedocs.io/en/latest/read_fasta.html 
         for more information.
 
-     version : string
+    version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,
         which is defined at the top of /parameters.
         Options currently include V1, V2, or V3. 
 
-    device : string
+    device : string or int
         the device to use for prediction. Default is None, which means
-        the function will try to use a GPU if one is available. 
+        the function will try to use a GPU if one is available, choosing
+        the device in the same per-network order as predict_disorder()
+        (V1 and V2 use cuda if available and otherwise the cpu; V3 tries
+        cuda -> mps -> cpu).
         Options include 'cpu', 'cuda', 'mps', or an int that corresponds
         to the index of a specific cuda-enabled GPU. To specify by index, 
         use 'cuda:int' where int is the index of the GPU you want to use.
@@ -1671,7 +1727,8 @@ def predict_pLDDT_fasta(filepath,
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of pLDDT values where the key is the 
-    fasta header and the values are the predicted pLDDT values.
+    fasta header and the value is a two-element list of the sequence
+    and its predicted pLDDT values.
     
     Parameters
     -------------
@@ -1685,6 +1742,8 @@ def predict_pLDDT_fasta(filepath,
         By default, a dictionary of predicted values is returned 
         immediately. However, you can specify an output filename and path 
         and a .csv file will be saved. This should include any file extensions.
+        Each row holds the fasta header (with any commas replaced by spaces),
+        the sequence, and then the per-residue pLDDT scores.
         Default = None.
 
     invalid_sequence_action : str
@@ -1698,7 +1757,7 @@ def predict_pLDDT_fasta(filepath,
         which is defined at the top of /parameters.
         Options currently include V1 or V2 
 
-    device : string
+    device : string or int
         the device to use for prediction. Default is None, which means
         the function will try to use a GPU if one is available. 
         Options include 'cpu', 'cuda', 'mps', or an int that corresponds
@@ -1770,8 +1829,9 @@ def graph_disorder_fasta(filepath,
 
     """
     Function to make graphs of predicted disorder from the sequences
-    in a specified .fasta file. By default will save the generated
-    graphs to the location output_path specified in filepath.
+    in a specified .fasta file. By default the graphs are displayed one
+    at a time; if output_dir is given, they are saved to that directory
+    instead.
 
     **WARNING**: It is unadvisable to not include an output directory if you are reading in a .fasta 
     file with many sequences! This is because each graph must be closed individually before the next 
@@ -1797,20 +1857,23 @@ def graph_disorder_fasta(filepath,
 
     disorder_threshold : float
         Sets a threshold which draws a horizontal black line as a visual guide along
-        the length of the figure. Must be a value between 0 and 1.
+        the length of the figure. Must be a value between 0 and 1. Default is None,
+        which uses the default threshold for the chosen network (0.42 for V1, 0.5 for
+        V2 and V3).
     
     DPI : int
         Dots-per-inch. Defines the resolution of the generated figure. Passed to the
         dpi argument in ``matplotlib.pyplot.savefig()``.
 
     output_dir : str
-        If provided, the output_dir variable defines the directory where file should besaved
-        to be saved. This should be a writeable filepath. Default is None. Output files are 
+        If provided, the output_dir variable defines the directory where files should be
+        saved. This should be a writeable filepath. Default is None. Output files are
         saved with filename as first 14 chars of fasta header (minus bad characters) plus the
-        appropriate file extension, as defined by filetype.
+        appropriate file extension, as defined by output_filetype.
 
     output_filetype : str
         String that defines the output filetype to be used. Must be one of pdf, png, jpg.
+        Give it without a leading dot (e.g. 'pdf', not '.pdf'). Default = 'png'.
 
     invalid_sequence_action : str
         Tells the function how to deal with sequences that lack standard amino acids. Default is 
@@ -1917,8 +1980,9 @@ def graph_pLDDT_fasta(filepath,
 
     """
     Function to make graphs of predicted pLDDT from the sequences
-    in a specified .fasta file. By default will save the generated
-    graphs to the location output_path specified in filepath.
+    in a specified .fasta file. By default the graphs are displayed one
+    at a time; if output_dir is given, they are saved to that directory
+    instead.
 
     **WARNING**: It is unadvisable to not include an output directory if you are reading in a .fasta 
     file with many sequences! This is because each graph must be closed individually before the next 
@@ -1943,13 +2007,14 @@ def graph_pLDDT_fasta(filepath,
         dpi argument in ``matplotlib.pyplot.savefig()``.
 
     output_dir : str
-        If provided, the output_dir variable defines the directory where file should besaved
-        to be saved. This should be a writeable filepath. Default is None. Output files are 
+        If provided, the output_dir variable defines the directory where files should be
+        saved. This should be a writeable filepath. Default is None. Output files are
         saved with filename as first 14 chars of fasta header (minus bad characters) plus the
-        appropriate file extension, as defined by filetype.
+        appropriate file extension, as defined by output_filetype.
 
     output_filetype : str
         String that defines the output filetype to be used. Must be one of pdf, png, jpg.
+        Give it without a leading dot (e.g. 'pdf', not '.pdf'). Default = 'png'.
 
     invalid_sequence_action : str
         Tells the function how to deal with sequences that lack standard amino acids. Default is 
@@ -2028,16 +2093,17 @@ def graph_pLDDT_fasta(filepath,
 def predict_disorder_uniprot(uniprot_id, normalized=True, version=DEFAULT_NETWORK):
     """
     Function to return disorder of a single input sequence. Uses a 
-    Uniprot ID to get the sequence.
+    Uniprot ID to get the sequence (this needs an internet connection).
 
     Parameters
     ------------
 
-    uniprot_ID : str
+    uniprot_id : str
          The uniprot ID of the sequence to predict
 
-    no_ID : str
-         The uniprot ID of the sequence to predict
+    normalized : bool
+        Whether or not to normalize disorder values to between 0 and 1.
+        Default = True
 
     version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,
@@ -2047,8 +2113,8 @@ def predict_disorder_uniprot(uniprot_id, normalized=True, version=DEFAULT_NETWOR
     Returns
     ----------
 
-    None
-        No return object, but, the graph is saved to disk or displayed locally.
+    np.ndarray
+        The per-residue disorder scores for the sequence.
     
     """
     # check version and make sure it is an uppercase string
@@ -2071,7 +2137,7 @@ def predict_pLDDT_uniprot(uniprot_id, pLDDT_version=DEFAULT_NETWORK_PLDDT):
     Parameters
     ------------
 
-    uniprot_ID : str
+    uniprot_id : str
          The uniprot ID of the sequence to predict
 
     pLDDT_version : string
@@ -2082,8 +2148,8 @@ def predict_pLDDT_uniprot(uniprot_id, pLDDT_version=DEFAULT_NETWORK_PLDDT):
     Returns
     ----------
 
-    None
-        No return object, but, the graph is saved to disk or displayed locally.
+    np.ndarray
+        The per-residue pLDDT scores (between 0 and 100) for the sequence.
     
     """
     # fetch sequence from Uniprot
@@ -2110,13 +2176,14 @@ def graph_disorder_uniprot(uniprot_id,
                            pLDDT_version=DEFAULT_NETWORK_PLDDT):
 
     """
-    Function to plot the disorder of an input sequece. Displays immediately.
+    Function to plot the disorder of a protein, using its Uniprot ID to
+    get the sequence. Displays immediately.
 
     Parameters
     -------------
 
-    sequence : str 
-        Input amino acid sequence (as string) to be predicted.
+    uniprot_id : str
+        The uniprot ID of the protein to graph.
 
     title : str
         Sets the title of the generated figure. Default = "Predicted protein disorder"
@@ -2126,8 +2193,8 @@ def graph_disorder_uniprot(uniprot_id,
         AlphaFold2
 
     disorder_threshold : float
-        Set to None by default such that it will change depending of if the user
-        sets legacy to True of if legacy remains = False. Can still be set manually.
+        Set to None by default, which uses the default threshold for the chosen
+        network (0.42 for V1, 0.5 for V2 and V3). Can still be set manually.
 
         Sets a threshold which draws a horizontal black line as a visual guide along
         the length of the figure. Must be a value between 0 and 1.
@@ -2142,7 +2209,7 @@ def graph_disorder_uniprot(uniprot_id,
 
     shaded_region_color : str
         String that defines the color of the shaded region. The shaded region is always
-        set with an alpha of 0.3 but the color can be any valid matplotlib color name
+        set with an alpha of 0.2 but the color can be any valid matplotlib color name
         or a hex color string (i.e. "#ff0000" is red).
     
     DPI : int
@@ -2205,16 +2272,17 @@ def graph_pLDDT_uniprot(uniprot_id,
                            pLDDT_version=DEFAULT_NETWORK_PLDDT):
 
     """
-    Function to plot the disorder of an input sequece. Displays immediately.
+    Function to plot the predicted AF2 pLDDT scores of a protein, using its
+    Uniprot ID to get the sequence. Displays immediately.
 
     Parameters
     -------------
 
-    sequence : str 
-        Input amino acid sequence (as string) to be predicted.
+    uniprot_id : str
+        The uniprot ID of the protein to graph.
 
     title : str
-        Sets the title of the generated figure. Default = "Predicted protein disorder"
+        Sets the title of the generated figure. Default = "Predicted AF2 pLDDT Scores"
     
     shaded_regions : list of lists
         A list of lists, where sub-elements are of length 2 and contain start and end
@@ -2226,7 +2294,7 @@ def graph_pLDDT_uniprot(uniprot_id,
 
     shaded_region_color : str
         String that defines the color of the shaded region. The shaded region is always
-        set with an alpha of 0.3 but the color can be any valid matplotlib color name
+        set with an alpha of 0.2 but the color can be any valid matplotlib color name
         or a hex color string (i.e. "#ff0000" is red).
     
     DPI : int
@@ -2276,23 +2344,19 @@ def predict_disorder_domains_uniprot(uniprot_id,
                              version=DEFAULT_NETWORK):
     """
 
-    This function takes an amino acid sequence, a disorder score, and 
-    returns either a DisorderObjec 4-position tuple with the information
-    listed below.
+    This function takes a Uniprot ID, gets the protein's sequence from
+    Uniprot, and returns a DisorderObject with the information listed
+    below.
 
     Parameters
     -------------
 
-    uniprot_ID : String
+    uniprot_id : String
         The uniprot ID of the sequence to predict
 
-    sequence : str
-        Amino acid sequence
-
     disorder_threshold : float
-        Set to None by default such that the threshold value is is dependent
-        on whether legacy is set to True. The default for legacy is 0.42, the
-        default for the new metapredict is 0.5.
+        Set to None by default, which uses the default threshold for the
+        chosen network: 0.42 for V1 (legacy) and 0.5 for V2 and V3.
 
         Value that defines what 'disordered' is based on the metapredict 
         disorder score. 
@@ -2316,16 +2380,20 @@ def predict_disorder_domains_uniprot(uniprot_id,
 
     gap_closure : int
         Defines the largest gap that would be 'closed'. Gaps here refer to a 
-        scenario in which you have two groups of disordered residues seprated 
+        scenario in which you have two groups of disordered residues separated 
         by a 'gap' of un-disordered residues. In general large gap sizes will 
-        favour larger contigous IDRs. It's worth noting that gap_closure becomes 
-        relevant only when minimum_region_size becomes very small (i.e. < 5) 
+        favour larger contiguous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_IDR_size becomes very small (i.e. < 5)
         because really gaps emerge when the smoothed disorder fit is "noisy", but 
         when smoothed gaps are increasingly rare. Default=10.
 
+    normalized : bool
+        Whether or not to normalize disorder values to between 0 and 1.
+        Default = True
+
     return_numpy : bool
         Flag which if set to true means all numerical types are returned
-        as numpy.ndlist. Default is True
+        as numpy.ndarray (if False, they are returned as lists). Default is True
 
     version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,
@@ -2335,12 +2403,13 @@ def predict_disorder_domains_uniprot(uniprot_id,
     Returns
     ---------
     DisorderObject
-        Returns a DisorderObject. DisorderObject has 7 dot variables:
+        Returns a DisorderObject. DisorderObject has 6 dot variables
+        (plus .meta, a backwards-compatible alias of .disorder):
 
         .sequence : str    
             Amino acid sequence 
 
-        .disorder : list or np.ndaarray
+        .disorder : list or np.ndarray
             Hybrid disorder score
 
         .disordered_domain_boundaries : list
@@ -2390,7 +2459,10 @@ def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
         the file name if the file is not in the curdir
 
     output_path : str
-        the path where to save the output files.
+        the path where to save the output files. This is a directory,
+        which is created if it doesn't exist. One .caid file is written
+        per sequence, named after its FASTA header with any characters
+        that aren't allowed in file names replaced by '_'.
 
     version : string
         The network to use for prediction. Default is DEFAULT_NETWORK,

@@ -16,9 +16,9 @@ How does metapredict work?
 
 metapredict uses a deep-learning network to generate per-residue disorder scores directly from amino acid sequence. The name reflects the original training strategy: metapredict V1 was trained to reproduce the *consensus* disorder assigned by a panel of independent disorder predictors (as compiled by `MobiDB <https://mobidb.bio.unipd.it/>`_), so each score approximates what a collection of predictors would agree on — things got pretty "meta", hence the name.
 
-Later networks build on this idea. V2 combines the V1 consensus disorder signal with predicted AlphaFold2 pLDDT scores, while V3 — the current default and most accurate network — combines consensus disorder with *experimental* AlphaFold2 pLDDT scores trained on a much larger dataset. All three networks remain available, and V3 is a drop-in replacement for the earlier versions. A more detailed description of each network is given in :doc:`getting_started`.
+Later networks build on this idea. V2 combines the V1 consensus disorder signal with predicted AlphaFold2 pLDDT scores, while V3 — the current default and most accurate network — combines consensus disorder with *actual* (rather than predicted) AlphaFold2 pLDDT scores trained on a much larger dataset. All three networks remain available, and V3 is a drop-in replacement for the earlier versions. A more detailed description of each network is given in :doc:`getting_started`.
 
-Because metapredict is a lightweight sequence-based network, it is also extremely fast — it can predict disorder for entire proteomes in minutes on a CPU and in seconds on a GPU, with no length limit on the sequences it can handle.
+Because metapredict is a lightweight sequence-based network, it is also extremely fast — it can predict disorder for entire proteomes in minutes on a CPU and in seconds on a GPU, with no length limit on the sequences it can handle on a CPU (on an NVIDIA GPU, sequences can be up to 65,535 residues long).
 
 
 How to cite
@@ -41,5 +41,6 @@ You may additionally cite the preprints describing later updates to metapredict;
    usage/api
    usage/acknowledgements
    usage/troubleshooting
+   faq
    changes
    how_to_cite
