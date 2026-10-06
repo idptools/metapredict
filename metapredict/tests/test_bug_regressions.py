@@ -310,3 +310,54 @@ def test_package_file_names_are_valid_on_windows():
             if has_invalid_character or has_trailing_dot_or_space or is_reserved:
                 invalid_names.append(os.path.relpath(os.path.join(root, name), package_dir))
     assert invalid_names == []
+
+
+# --------------------------------------------------------------------------- #
+# Vectorized rounding of list outputs
+# --------------------------------------------------------------------------- #
+
+def test_scores_to_rounded_list_matches_python_round():
+    """The vectorized rounding used for list outputs must give exactly what
+    per-value round(float(x), 4) gives, including on 4-decimal halfway points,
+    for disorder-scale and pLDDT-scale float32 scores."""
+    rng = np.random.default_rng(REPRO_SEED)
+    halfway_points = (np.arange(-20000, 20000) + 0.5) / 10000
+    values = np.concatenate([rng.uniform(-0.5, 1.5, 200_000),
+                             rng.uniform(0, 100, 200_000),
+                             halfway_points]).astype(np.float32)
+
+    vectorized = predictor.scores_to_rounded_list(values)
+    assert vectorized == [round(float(x), 4) for x in values]
+    assert all(type(x) is float for x in vectorized)
+
+
+LIST_OUTPUT_CASES = [
+    ('disorder single', predictor.predict, dict(version='V3'), True),
+    ('disorder V3 batch', predictor.predict, dict(version='V3'), False),
+    ('disorder V1 batch', predictor.predict, dict(version='V1'), False),
+    ('disorder unnormalized', predictor.predict, dict(version='V3', normalized=False), False),
+    ('disorder no pack-n-pad', predictor.predict, dict(version='V3', disable_pack_n_pad=True), False),
+    ('disorder unbatched', predictor.predict, dict(version='V3', force_disable_batch=True), False),
+    ('pLDDT V2 batch', predictor.predict_pLDDT, dict(version='V2'), False),
+    ('pLDDT V1 decimals', predictor.predict_pLDDT, dict(version='V1', return_decimals=True), False),
+    ('pLDDT as disorder', predictor.predict_pLDDT, dict(version='V2', return_as_disorder_score=True), False),
+    ('pLDDT no pack-n-pad', predictor.predict_pLDDT, dict(version='V2', disable_pack_n_pad=True), False),
+]
+
+
+@pytest.mark.parametrize('label, prediction_function, options, single_sequence', LIST_OUTPUT_CASES,
+                         ids=[case[0] for case in LIST_OUTPUT_CASES])
+def test_list_output_matches_rounded_array_output(label, prediction_function, options, single_sequence):
+    """return_numpy=False must give exactly the per-value Python rounding of
+    the return_numpy=True scores, on every prediction path."""
+    if single_sequence:
+        as_array = prediction_function(P53_SEQ, return_numpy=True, **options)
+        as_list = prediction_function(P53_SEQ, return_numpy=False, **options)
+        assert as_list == [round(float(x), 4) for x in as_array]
+        return
+
+    sequences = [P53_SEQ, DISORDERED_SEQ] + _repro_sequences()[:10]
+    as_array = prediction_function(sequences, use_device='cpu', return_numpy=True, **options)
+    as_list = prediction_function(sequences, use_device='cpu', return_numpy=False, **options)
+    for (_, array_scores), (_, list_scores) in zip(as_array, as_list):
+        assert list_scores == [round(float(x), 4) for x in array_scores]

@@ -1312,10 +1312,10 @@ Tuning speed and memory
 
 :code:`predict_disorder_stream()` accepts the same prediction options as :code:`predict_disorder()` (``version``, ``device``, ``normalized``, ``round_values``, ``return_numpy``, ``batch_size`` and so on), plus two streaming-specific options:
 
-* ``chunk_size`` — the number of sequences read from the file and predicted together as one batch job before their results are yielded (default 5000). Larger values improve batching efficiency (fewer, larger prediction calls) at the cost of higher peak memory; smaller values reduce memory further. The chunk size only affects speed and memory — it never changes the predicted scores.
+* ``chunk_size`` — the number of sequences read from the file and predicted together as one batch job before their results are yielded (default 20000). Larger chunks let a GPU form more evenly sized batches, which makes streaming faster (on Apple-silicon MPS, 20000 was 1.5 times faster than 5000 on a proteome-sized file; on the CPU chunk size makes no difference), at the cost of somewhat higher peak memory; smaller values reduce memory. The chunk size only affects speed and memory: scores can differ by around 1e-7 between chunk sizes, far below the 4 decimal places they are reported to.
 * ``invalid_sequence_action`` — how non-standard residues are handled while the file is read (passed through to ``protfasta``; default ``'convert'``).
 
-For example, to stream predictions from the V2 network on the CPU with a larger chunk and batch size:
+For example, to stream predictions from the V2 network on the CPU with a larger chunk and an explicit batch size:
 
 .. code-block:: python
 
@@ -1324,7 +1324,7 @@ For example, to stream predictions from the V2 network on the CPU with a larger 
     stream = meta.predict_disorder_stream("huge_proteome.fasta",
                                           version=2,
                                           device="cpu",
-                                          chunk_size=20000,
+                                          chunk_size=50000,
                                           batch_size=256)
     for header, (sequence, scores) in stream:
         ...

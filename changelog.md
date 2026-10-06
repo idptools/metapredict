@@ -1,8 +1,8 @@
 ## Changelog
-This section is a log of recent changes with metapredict. My hope is that as I change things, this section can help you figure out why a change was made and if it will break any of your current workflows. The first major changes were made for the 0.56 release, so tracking will start there. Reasons are not provided for bug fixes for because the reason can assumed to be fixing the bug...
+This section is a log of recent changes to metapredict. My hope is that as I make changes, this section helps you understand why they were made and whether they will break any of your current workflows. The first major changes were made in the 0.56 release, so tracking starts there. Reasons are not provided for bug fixes because the reason can be assumed to be fixing the bug...
 
-#### V3.1.0 (July 2026)
-Version 3.1.0 represents a "major" update, inasmuch as new functionality is added, and performance increases noted.
+#### V3.1.0 (Oct. 2026)
+Version 3.1.0 is a "major" update that adds new functionality, bug fixes, and performance improvements.
 
 Changes:
 
@@ -12,7 +12,7 @@ Changes:
 
 * Default batch sizes are now selected per network and per device (used when you don't pass `batch_size`). This substantially speeds up batch prediction for V1 and V2, where the previous small default left things badly underutilized. This increases the memory footprint (V1 and V2 batch sizes were previously fixed at 32; now they default to 512), but if memory is an issue, you can tune the footprint with the `batch_size` option.
 
-* Added `predict_disorder_stream()`, a streaming version of `predict_disorder()` for FASTA files that are too large to fit in memory. It reads the file lazily, predicts sequences in chunks (so batch-mode speed is retained), and yields `(header, prediction)` results one sequence at a time, keeping peak memory bounded by the chunk size rather than by the size of the file. This makes it possible to predict disorder for files with tens or hundreds of millions of sequences on a normal machine. This feature relies on `protfasta`'s streaming reader (added in `protfasta` 0.1.19). Every record is yielded, including records that share a header, and a record with no sequence raises an error that names it.
+* Added `predict_disorder_stream()`, a streaming version of `predict_disorder()` for FASTA files that are too large to fit in memory. It reads the file lazily, predicts sequences in chunks (so batch-mode speed is retained), and yields `(header, prediction)` results one sequence at a time, keeping peak memory bounded by the chunk size rather than by the size of the file. This makes it possible to predict disorder for files with tens or hundreds of millions of sequences on a normal machine. This feature relies on `protfasta`'s streaming reader (added in `protfasta` 0.1.19). Every record is yielded, including records that share a header, and a record with no sequence raises an error that names it. The default `chunk_size` is 20,000 sequences, which on an Apple-silicon GPU streamed 1.5x faster than 5,000 for little extra memory.
 
 * Speed up per-residue sequence encoding used for every prediction by fully vectorizing it and encoding sequences directly as 32-bit floats (instead of 64-bit floats). This also removes an incompatibility that could prevent predictions from running on the MPS (Apple Silicon) backend.
 
@@ -23,6 +23,8 @@ Changes:
 * Fixed the `split_fasta()` helper, which previously failed on every call.
 
 * `pytorch_lightning` is no longer a dependency: the V3 and pLDDT V2 checkpoints are read with plain PyTorch via the new `BRNN_MtM_lightning.from_checkpoint()` (identical predictions, `import metapredict` ~1/3 faster).
+
+* Returning scores as lists (`return_numpy=False`, used by the FASTA functions and command-line tools) is faster: the rounding is now vectorized (about 8x faster for that step) and gives exactly the same values.
 
 * Batch predictions are exactly reproducible: sequences are batched in a fixed order (longest first, then alphabetical) instead of one that changed every session (scores shift only at ~1e-7).
 

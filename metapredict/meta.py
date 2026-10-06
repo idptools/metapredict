@@ -885,7 +885,7 @@ def predict_disorder_stream(filepath,
                             silence_warnings=False,
                             batch_size=None,
                             legacy=False,
-                            chunk_size=5000,
+                            chunk_size=20000,
                             invalid_sequence_action='convert',
                             expect_unique_header=False,
                             duplicate_record_action='ignore',
@@ -987,9 +987,12 @@ def predict_disorder_stream(filepath,
 
     chunk_size : int
         Number of sequences accumulated from the stream and predicted together
-        as one batch job before their results are yielded. Larger values give
-        better batching efficiency at the cost of higher peak memory. Must be a
-        positive integer. Default = 5000.
+        as one batch job before their results are yielded. Larger chunks let
+        the GPU form more evenly sized batches: streaming a proteome-sized file
+        on Apple-silicon MPS was 1.5x faster with 20000 than with 5000, while
+        on the CPU chunk size made no difference. Peak memory grows only
+        modestly with chunk size (about 0.2 GB more for 20000 than for 5000 in
+        the same test). Must be a positive integer. Default = 20000.
 
     invalid_sequence_action : str
         How ``protfasta.read_fasta_stream`` handles non-standard residues while
