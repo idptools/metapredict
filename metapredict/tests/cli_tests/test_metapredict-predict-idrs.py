@@ -106,12 +106,12 @@ def test_predict_idrs_shephard_uniprot_bad_header():
     # 'Q8N6T3' and 'p53' are not UniProt-style headers, so the tool should stop with an error
     result = run_cli('metapredict-predict-idrs', [THREE_SEQS_FASTA, '-o', OUTFILE_TSV, '-d', 'cpu', '-s', '--mode', 'shephard-domains-uniprot'], OUTFILE_TSV)
     assert result.returncode == 1
-    assert 'Error parsing header line' in result.stdout
+    assert 'Error parsing header line' in result.stderr
 
 
 def test_predict_idrs_missing_input_file():
     missing_fasta = os.path.join(OUTPUT_DIR, 'does_not_exist.fasta')
     result = run_cli('metapredict-predict-idrs', [missing_fasta, '-o', OUTFILE_FASTA, '-s'], OUTFILE_FASTA)
     assert result.returncode == 1
-    assert 'Could not find passed fasta file' in result.stdout
+    assert 'Could not find passed fasta file' in result.stderr
     assert not os.path.isfile(OUTFILE_FASTA)

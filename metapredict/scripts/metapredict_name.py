@@ -4,10 +4,12 @@
 # import stuff for making CLI
 
 import os
+import sys
 import argparse
 
 from metapredict.metapredict_exceptions import MetapredictError
 from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
+from metapredict.scripts import exit_if_invalid_version
 import metapredict as meta
 from getSequence import getseq
 
@@ -33,6 +35,9 @@ def main():
 
     args = parser.parse_args()
 
+    exit_if_invalid_version(args.version, 'disorder', '--version')
+    exit_if_invalid_version(args.pLDDT_version, 'pLDDT', '--pLDDT_version')
+
 
     # get protein name 
     if len(args.name) == 1:
@@ -46,8 +51,13 @@ def main():
         final_name = final_name[:len(final_name)-1]
         just_protein_name = False
 
-    # sequence and name
-    seq_and_name = getseq(final_name)
+    # sequence and name. getSequence raises an exception if UniProt doesn't return a
+    # sequence, which happens if nothing matches the name, or if UniProt can't be reached
+    try:
+        seq_and_name = getseq(final_name)
+    except Exception as e:
+        print(f'Error: Could not get a sequence from UniProt for [{final_name}] ({e}). Check the protein name and that you are connected to the internet.', file=sys.stderr)
+        sys.exit(1)
 
     # get the uniprot ID
     full_uniprot_id = seq_and_name[0]
@@ -81,12 +91,16 @@ def main():
         print(f'Graphing disorder for {full_uniprot_id}')
 
     # graph it
-    meta.graph_disorder(sequence, 
-                        version=args.version,
-                        pLDDT_version=args.pLDDT_version,
-                        title=final_title, 
-                        pLDDT_scores=pLDDT_scores, 
-                        DPI=args.dpi)
+    try:
+        meta.graph_disorder(sequence, 
+                            version=args.version,
+                            pLDDT_version=args.pLDDT_version,
+                            title=final_title, 
+                            pLDDT_scores=pLDDT_scores, 
+                            DPI=args.dpi)
+    except Exception as e:
+        print(f'Error: Could not graph disorder for {full_uniprot_id}: {e}', file=sys.stderr)
+        sys.exit(1)
     
 
 

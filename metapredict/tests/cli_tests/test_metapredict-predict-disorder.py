@@ -86,8 +86,8 @@ def test_predict_disorder_integer_device():
         assert result.returncode == 0, result.stderr + result.stdout
     else:
         assert result.returncode == 1
-        assert 'cuda:0 was specified as the device' in result.stdout
-        assert "shouldn't be able to see this message" not in result.stdout
+        assert 'cuda:0 was specified as the device' in result.stderr
+        assert "shouldn't be able to see this message" not in result.stderr
 
 
 def test_predict_disorder_missing_input_file():

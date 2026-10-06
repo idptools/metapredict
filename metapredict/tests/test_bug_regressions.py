@@ -220,6 +220,44 @@ def test_invalid_device_gives_clear_error(bad_device):
     assert "shouldn't be able to see this message" not in str(error_info.value)
 
 
+@pytest.mark.parametrize('device_name, expected', [('CPU', 'cpu'), (' mps ', 'mps'), ('cuda', 'cuda'),
+                                                   ('cuda:1', 'cuda:1'), (0, 'cuda:0'), ('2', 'cuda:2')])
+def test_parse_device_name_does_not_check_availability(device_name, expected):
+    """Device names are put in standard form without checking that the device
+    exists, so this gives the same answer on every machine."""
+    assert predictor.parse_device_name(device_name) == expected
+
+
+@pytest.mark.parametrize('prediction_function', [meta.predict_disorder, meta.predict_pLDDT])
+@pytest.mark.parametrize('bad_device', ['bogus', 'cuda0', True])
+def test_single_sequence_rejects_invalid_device_name(prediction_function, bad_device):
+    """A single sequence always runs on the CPU, and its device used to be
+    silently ignored, so even device='bogus' worked. An invalid name must now
+    raise the same error it does for a list."""
+    with pytest.raises(MetapredictError) as single_error:
+        prediction_function(P53_SEQ, device=bad_device)
+    with pytest.raises(MetapredictError) as list_error:
+        prediction_function([P53_SEQ, DISORDERED_SEQ], device=bad_device)
+    assert str(single_error.value) == str(list_error.value)
+
+
+@pytest.mark.parametrize('prediction_function', [meta.predict_disorder, meta.predict_pLDDT])
+@pytest.mark.parametrize('unavailable_device', ['cuda', 'cuda:1', 0, 'mps'])
+def test_single_sequence_valid_device_need_not_be_available(monkeypatch, prediction_function,
+                                                            unavailable_device):
+    """A single sequence still runs on the CPU, so a valid device name must keep
+    working when that device isn't available (e.g. device='cuda' on a Mac).
+    CUDA and MPS are faked as unavailable so this runs the same everywhere."""
+    monkeypatch.setattr(predictor.torch.cuda, 'is_available', lambda: False)
+    monkeypatch.setattr(predictor, 'mps_is_available', lambda: False)
+    scores = prediction_function(P53_SEQ, device=unavailable_device)
+    assert np.array_equal(scores, prediction_function(P53_SEQ, device='cpu'))
+
+    # a list really runs on the requested device, so there it must be available
+    with pytest.raises(MetapredictError):
+        prediction_function([P53_SEQ, DISORDERED_SEQ], device=unavailable_device)
+
+
 # --------------------------------------------------------------------------- #
 # Performance helpers
 # --------------------------------------------------------------------------- #

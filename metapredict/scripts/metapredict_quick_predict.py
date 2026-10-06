@@ -6,6 +6,7 @@
 import argparse
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.scripts import exit_if_invalid_version
 
 def main():
     # Parse command line arguments.
@@ -15,6 +16,8 @@ def main():
     parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
 
     args = parser.parse_args()
+
+    exit_if_invalid_version(args.version, 'disorder', '--version')
 
     # print the sequence
     print(str(meta.predict_disorder(inputs=args.sequence, 

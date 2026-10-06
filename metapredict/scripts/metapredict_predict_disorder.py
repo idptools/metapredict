@@ -8,6 +8,7 @@ import argparse
 import sys
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version
 
 def main():
 
@@ -16,7 +17,7 @@ def main():
 
     parser.add_argument('data_file', help='Path to fasta file containing sequences to be predicted.')
 
-    parser.add_argument('-o', '--output-file', help='Filename for where to save the csv disorder scores. Default = disorder.csv ', default='disorder_scores.csv')
+    parser.add_argument('-o', '--output-file', help='Filename for where to save the csv disorder scores. Default = disorder_scores.csv ', default='disorder_scores.csv')
 
     parser.add_argument('-v', '--version', default=DEFAULT_NETWORK, help='Optional. Use this flag to specify the version of metapredict. Options are V1, V2, or V3.')                            
 
@@ -28,10 +29,14 @@ def main():
 
     args = parser.parse_args()
 
+    exit_if_invalid_version(args.version, 'disorder', '--version')
     
     if not os.path.isfile(args.data_file):
-        print('Error: Could not find passed fasta file [%s]'%(args.data_file))
+        print('Error: Could not find passed fasta file [%s]'%(args.data_file), file=sys.stderr)
         sys.exit(1)
+
+    # stop if there is nothing to predict, rather than writing an empty file
+    exit_if_no_sequences(args.data_file, args.invalid_sequence_action)
 
     if args.silent:
         show_progress_bar=False
@@ -47,7 +52,7 @@ def main():
                                     device=args.device,
                                     show_progress_bar=show_progress_bar)
     except Exception as e:
-        print('Error durring prediction: %s'%(str(e)))
+        print('Error during prediction: %s'%(str(e)), file=sys.stderr)
         sys.exit(1)
 
     if not args.silent:

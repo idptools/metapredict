@@ -9,6 +9,7 @@ import argparse
 
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK_PLDDT
+from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version
 
 
 def main():
@@ -31,10 +32,15 @@ def main():
 
     args = parser.parse_args()
 
+    exit_if_invalid_version(args.pLDDT_version, 'pLDDT', '--pLDDT-version')
+
     
     if not os.path.isfile(args.data_file):
-        print(f'Error: Could not find passed fasta file [{args.data_file:s}]')
+        print(f'Error: Could not find passed fasta file [{args.data_file:s}]', file=sys.stderr)
         sys.exit(1)
+
+    # stop if there is nothing to predict, rather than writing empty output
+    exit_if_no_sequences(args.data_file, args.invalid_sequence_action)
 
     if args.silent:
         show_progress_bar=False
@@ -44,13 +50,17 @@ def main():
     if not args.silent:
         print('Predicting pLDDT scores for sequences in %s'%(args.data_file))
 
-    # run predict disorder fasta
-    meta.predict_pLDDT_fasta(filepath=args.data_file, 
-                                output_file = args.output_file,
-                                invalid_sequence_action=args.invalid_sequence_action,
-                                pLDDT_version=args.pLDDT_version,
-                                device=args.device,
-                                show_progress_bar=show_progress_bar)
+    # run predict pLDDT fasta
+    try:
+        meta.predict_pLDDT_fasta(filepath=args.data_file, 
+                                    output_file = args.output_file,
+                                    invalid_sequence_action=args.invalid_sequence_action,
+                                    pLDDT_version=args.pLDDT_version,
+                                    device=args.device,
+                                    show_progress_bar=show_progress_bar)
+    except Exception as e:
+        print('Error during prediction: %s'%(str(e)), file=sys.stderr)
+        sys.exit(1)
     
     if not args.silent:
         print('Predictions saved to: %s'%(os.path.abspath(args.output_file)))

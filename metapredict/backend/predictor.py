@@ -232,6 +232,69 @@ def mps_is_available():
     return hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
 
 
+def parse_device_name(use_device):
+    '''
+    Function to check that a device name is valid and put it in a standard
+    form, without checking whether that device is available. check_device()
+    uses this before it checks availability, and predict() and
+    predict_pLDDT() use it on its own for a single sequence, which always
+    runs on the cpu but should still reject a device name that is not valid.
+
+    Parameters
+    ---------------
+    use_device : int or str
+        Identifier for the device to be used for predictions.
+        Possible inputs: 'cpu', 'mps', 'cuda', 'cuda:int', or an int that corresponds to
+        the index of a specific cuda-enabled GPU. A string of digits (e.g. '0', which is
+        how the command-line tools pass a GPU index) is treated the same way as an int.
+        Strings are case-insensitive and surrounding whitespace is ignored.
+
+    Returns
+    ---------------
+    device_string : str
+        The device name in standard form: 'cpu', 'mps', 'cuda' or 'cuda:int'.
+
+    Raises
+    ---------------
+    MetapredictError
+        If use_device is not a valid device name.
+    '''
+    # bool is a subclass of int, so reject it explicitly rather than
+    # silently turning True into 'cuda:True'
+    if isinstance(use_device, bool):
+        raise MetapredictError(f'Invalid device {use_device!r}. Device can only be set to: None, a string equal to cpu, mps, cuda, or cuda:int, or an int that is the index of a specific CUDA-enabled GPU')
+
+    # if input is an int, make it a string and then do checks.
+    if isinstance(use_device, int)==True:
+        use_device=f'cuda:{use_device}'
+
+    # by now a valid device name must be a string
+    if isinstance(use_device, str)==False:
+        raise MetapredictError("Device can only be set to: None, a string equal to 'cpu', 'mps', 'cuda', 'cuda:int' where int is some positive integer, or an int that is equal to the index of a specific CUDA-enabled GPU")
+
+    # make use_device lowercase
+    use_device=use_device.lower().strip()
+
+    # the command-line tools pass a GPU index as a string (e.g. '0'), so
+    # treat an all-digit string the same way as an int GPU index
+    if use_device.isdigit():
+        use_device=f'cuda:{use_device}'
+
+    if use_device in ('cpu', 'mps'):
+        return use_device
+
+    if use_device.startswith('cuda'):
+        # make sure the device string is either 'cuda' or 'cuda:int' before
+        # checking availability, so typos like 'cuda0' get a clear message
+        pattern = r"^cuda(:\d+)?$"
+        if re.match(pattern, use_device)==None:
+            error_message = f'{use_device} was specified as the device, but it does not match the pattern of cuda or cuda:int where int is a positive integer.'
+            raise MetapredictError(error_message)
+        return use_device
+
+    raise MetapredictError(f"Invalid device '{use_device}'. Device can only be set to: None, a string equal to 'cpu', 'mps', 'cuda', 'cuda:int' where int is some positive integer, or an int that is equal to the index of a specific CUDA-enabled GPU")
+
+
 def check_device(use_device, default_device='gpu'):
     '''
     Function to check the device was correctly set.
@@ -295,60 +358,35 @@ def check_device(use_device, default_device='gpu'):
 
 
     else:
-        # bool is a subclass of int, so reject it explicitly rather than
-        # silently turning True into 'cuda:True'
-        if isinstance(use_device, bool):
-            raise MetapredictError(f'Invalid device {use_device!r}. Device can only be set to: None, a string equal to cpu, mps, cuda, or cuda:int, or an int that is the index of a specific CUDA-enabled GPU')
+        # check the device name first (this raises for an unrecognised name),
+        # then check that the named device is actually available
+        use_device = parse_device_name(use_device)
 
-        # if input is an int, make it a string and then do checks.
-        if isinstance(use_device, int)==True:
-            use_device=f'cuda:{use_device}'
-
-        # if input is a string (it should be...)
-        if isinstance(use_device, str)==True:
-            # make use_device lowercase
-            use_device=use_device.lower().strip()
-
-            # the command-line tools pass a GPU index as a string (e.g. '0'), so
-            # treat an all-digit string the same way as an int GPU index
-            if use_device.isdigit():
-                use_device=f'cuda:{use_device}'
-
-            # if CPU specified, use CPU
-            if use_device=='cpu':
+        # if CPU specified, use CPU
+        if use_device=='cpu':
+            return use_device
+        elif use_device=='mps':
+            # check if mps is available.
+            if mps_is_available():
                 return use_device
-            elif use_device=='mps':
-                # check if mps is available.
-                if mps_is_available():
-                    return use_device
-                else:
-                    raise MetapredictError('mps was specified, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
-            elif use_device.startswith('cuda'):
-                # make sure the device string is either 'cuda' or 'cuda:int' before
-                # checking availability, so typos like 'cuda0' get a clear message
-                pattern = r"^cuda(:\d+)?$"
-                if re.match(pattern, use_device)==None:
-                    error_message = f'{use_device} was specified as the device, but it does not match the pattern of cuda or cuda:int where int is a positive integer.'
-                    raise MetapredictError(error_message)
-
-                # make sure cuda is available.
-                if torch.cuda.is_available()==False:
-                    error_message = f'{use_device} was specified as the device, but torch.cuda.is_available() returned False.'
-                    raise MetapredictError(error_message) 
-                if use_device == 'cuda':
-                    return use_device
-                else:
-                    # make sure there are enough devices such that it is possible that the specified device index works.
-                    device_index = int(use_device.split(":")[1])
-                    num_devices = torch.cuda.device_count()
-                    if device_index >= num_devices:
-                        error_message = f'{use_device} was specified as the device, but there are only {num_devices} cuda-enabled GPUs available.\nRemember, GPU indices are 0-indexed, so cuda:0 is for the first GPU and so on.\nThe max device index you can use based on torch.cuda.device_count() is {num_devices-1}.'
-                        raise MetapredictError(error_message)
-                    return use_device
             else:
-                raise MetapredictError(f"Invalid device '{use_device}'. Device can only be set to: None, a string equal to 'cpu', 'mps', 'cuda', 'cuda:int' where int is some positive integer, or an int that is equal to the index of a specific CUDA-enabled GPU")
+                raise MetapredictError('mps was specified, but mps is not available. Be sure you are running a Mac with mps-supported GPUs and a Pytorch version with mps support (>=2.1)')
         else:
-            raise MetapredictError("Device can only be set to: None, a string equal to 'cpu', 'mps', 'cuda', 'cuda:int' where int is some positive integer, or an int that is equal to the index of a specific CUDA-enabled GPU")
+            # parse_device_name only returns 'cpu', 'mps', 'cuda' or 'cuda:int',
+            # so this is a cuda device. Make sure cuda is available.
+            if torch.cuda.is_available()==False:
+                error_message = f'{use_device} was specified as the device, but torch.cuda.is_available() returned False.'
+                raise MetapredictError(error_message)
+            if use_device == 'cuda':
+                return use_device
+            else:
+                # make sure there are enough devices such that it is possible that the specified device index works.
+                device_index = int(use_device.split(":")[1])
+                num_devices = torch.cuda.device_count()
+                if device_index >= num_devices:
+                    error_message = f'{use_device} was specified as the device, but there are only {num_devices} cuda-enabled GPUs available.\nRemember, GPU indices are 0-indexed, so cuda:0 is for the first GPU and so on.\nThe max device index you can use based on torch.cuda.device_count() is {num_devices-1}.'
+                    raise MetapredictError(error_message)
+                return use_device
 
     # if we made it here, raise error
     raise MetapredictError("There is a problem with the check_device function in metapredict/backend/predictor.py.\nPlease raise an issue because you shouldn't be able to see this message.")
@@ -551,31 +589,35 @@ def predict(inputs,
         the index of a specific cuda-enabled GPU. If 'cuda' is specified and
         cuda.is_available() returns False, instead of falling back to CPU, 
         metapredict will raise an Exception so you know that you are not
-        using CUDA as you were expecting. 
+        using CUDA as you were expecting.
         Default: None
-        When set to None, we will check if there is a cuda-enabled
-        GPU. If there is, we will try to use that GPU. 
+        When set to None, the first available device in the network's
+        device order is used (see default_to_device): V1 and V2 try cuda,
+        then cpu, then mps, while V3 tries cuda, then mps, then cpu.
         If you set the value to be an int, we will use cuda:int as the device
-        where int is the int you specify. The GPU numbering is 0 indexed, so 0 
+        where int is the int you specify. The GPU numbering is 0 indexed, so 0
         corresponds to the first GPU and so on. Only specify this if you
-        know which GPU you want to use. 
-        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
-        right it might have been beta-supported in 2.0.
+        know which GPU you want to use.
+        A single sequence (passed as a string) is always predicted on the
+        cpu. The device name is still checked, so an unrecognised name
+        raises an exception, but the device does not need to be available.
+        MPS (Apple Silicon GPUs) is available in every PyTorch version
+        metapredict supports (2.3 or later).
 
     normalized : bool
-        Whether or not to normalize disorder values to between 0 and 1. 
+        Whether or not to normalize disorder values to between 0 and 1.
         Default : True
-    
+
     round_values : bool
-        Whether to round the values to 4 decimal places. 
+        Whether to round the values to 4 decimal places.
         Default : True
 
     return_numpy : bool
-        Whether to return a numpy array or a list for single predictions. 
-        Default : True    
+        Whether to return a numpy array or a list for single predictions.
+        Default : True
 
     return_domains : bool
-        Flag which, if set to true, means we return DisorderDomain
+        Flag which, if set to true, means we return DisorderObject
         objects instead of simply the disorder scores. These
         domain objects include the boundaries between IDRs and 
         folded domains, the disorder scores, and the individual
@@ -586,8 +628,8 @@ def predict(inputs,
     disorder_threshold : float
         Used only if return_domains = True.
         Default is set to None because there are different threshold
-        values depending on the network (V1 = 0.42, V2=0.5). You can
-        override this value. 
+        values depending on the network (V1 = 0.42, V2 = 0.5, V3 = 0.5).
+        You can override this value.
 
     minimum_IDR_size : int
         Used only if return_domains = True.
@@ -619,10 +661,10 @@ def predict(inputs,
 
         Defines the largest gap that would be 'closed'. Gaps here 
         refer to a scenario in which you have two groups of 
-        disordered residues seprated by a 'gap' of un-disordered 
+        disordered residues separated by a 'gap' of un-disordered 
         residues. In general large gap sizes will favour larger 
-        contigous IDRs. It's worth noting that gap_closure becomes 
-        relevant only when minimum_region_size becomes very small 
+        contiguous IDRs. It's worth noting that gap_closure becomes 
+        relevant only when minimum_IDR_size becomes very small
         (i.e. < 5) because really gaps emerge when the smoothed 
         disorder fit is "noisy", but when smoothed gaps
         are increasingly rare. Default=10.
@@ -654,7 +696,7 @@ def predict(inputs,
     show_progress_bar : bool
         Flag which, if set to True, means a progress bar is printed as 
         predictions are made, while if False no progress bar is printed.
-        Default  =  True
+        Default = False
 
     force_disable_batch : bool
         Whether to override any use of batch predictions and predict
@@ -689,7 +731,7 @@ def predict(inputs,
 
     Returns
     -------------
-    DisorderDomain object str dict or list
+    DisorderObject, numpy.ndarray, list or dict
 
         IF RETURN DOMAINS == FALSE: this function returns either
         a list or a dictionary.
@@ -710,12 +752,12 @@ def predict(inputs,
 
         If a list was provided as input, the function returns a list
         of the same length as the input list, where each element is 
-        a DisorderDomain object. The order of the return list matches 
+        a DisorderObject. The order of the return list matches
         the order of the input list.
 
         If a dictionary was provided as input, the function returns
-        a dictionary, where the same input keys map to a DisorderDomain
-        object that corresponds to the input dictionary sequence.
+        a dictionary, where the same input keys map to a DisorderObject
+        that corresponds to the input dictionary sequence.
 
     Raises
     ------
@@ -773,7 +815,11 @@ def predict(inputs,
     ## ....................................................................................    
 
     # if a single sequence, just use cpu. Using GPU for a single sequence would be silly.
+    # The device name is still checked (but not whether it is available), so a
+    # name that is not valid raises here instead of being silently ignored.
     if isinstance(inputs, str)==True:
+        if use_device is not None:
+            parse_device_name(use_device)
         device_string='cpu'
     else:
         # resolve the auto-select preference: an explicit default_to_device wins,
@@ -1196,7 +1242,7 @@ def predict_pLDDT(inputs,
         a dictionary of key-value pairs where values are sequences.
 
     version : string
-        The network to use for prediction. Default is DEFAULT_NETWORK,
+        The network to use for prediction. Default is DEFAULT_NETWORK_PLDDT,
         which is defined at the top of /parameters.
         Options currently include V1 or V2. V1 is the version used
         to make legacy metapredict and is from 'alphaPredict'. V2 
@@ -1216,14 +1262,17 @@ def predict_pLDDT(inputs,
         metapredict will raise an Exception so you know that you are not
         using CUDA as you were expecting. 
         Default: None
-        When set to None, we will check if there is a cuda-enabled
-        GPU. If there is, we will try to use that GPU. 
+        When set to None, the first available device is used, trying
+        cuda, then mps, then cpu (see default_to_device).
         If you set the value to be an int, we will use cuda:int as the device
-        where int is the int you specify. The GPU numbering is 0 indexed, so 0 
+        where int is the int you specify. The GPU numbering is 0 indexed, so 0
         corresponds to the first GPU and so on. Only specify this if you
-        know which GPU you want to use. 
-        Note that MPS is only supported in PyTorch 2.1 or later. If I remember
-        right it might have been beta-supported in 2.0.
+        know which GPU you want to use.
+        A single sequence (passed as a string) is always predicted on the
+        cpu. The device name is still checked, so an unrecognised name
+        raises an exception, but the device does not need to be available.
+        MPS (Apple Silicon GPUs) is available in every PyTorch version
+        metapredict supports (2.3 or later).
 
     normalized : bool
         Whether or not to normalize disorder values to between 0 and 1. 
@@ -1245,7 +1294,7 @@ def predict_pLDDT(inputs,
     show_progress_bar : bool
         Flag which, if set to True, means a progress bar is printed as 
         predictions are made, while if False no progress bar is printed.
-        Default  =  True
+        Default = False
 
     force_disable_batch : bool
         Whether to override any use of batch predictions and predict
@@ -1284,10 +1333,9 @@ def predict_pLDDT(inputs,
 
     default_to_device : str, list or None
         Overrides how the device is auto-selected when use_device is None.
-        Default = None, which uses the per-network device preference defined in
-        network_parameters (the small V1/V2 disorder networks prefer cpu over
-        mps, since cpu is faster for them, while V3 prefers mps). Can instead be
-        set to 'gpu' (cuda -> mps -> cpu), 'cuda', 'mps', 'cpu', or an explicit
+        Default = None, which tries cuda, then mps, then cpu (the pLDDT
+        networks do not define their own device order in network_parameters).
+        Can instead be set to 'gpu' (cuda -> mps -> cpu), 'cuda', 'mps', 'cpu', or an explicit
         ordered list of devices to try; the first available device in the chosen
         order is used, otherwise cpu.
 
@@ -1296,17 +1344,17 @@ def predict_pLDDT(inputs,
     dict or list
 
         This function returns either a list or a dictionary.
-    
+
         If a list was provided as input, the function returns a list
-        of the same length as the input list, where each element is 
+        of the same length as the input list, where each element is
         itself a sublist where element 0 = sequence and element 1 is
-        a numpy array of disorder scores. The order of the return list
+        a numpy array of pLDDT scores. The order of the return list
         matches the order of the input list.
 
         If a dictionary was provided as input, the function returns
         a dictionary, where the same input keys map to values which are
         lists of 2 elements, where element 0 = sequence and element 1 is
-        a numpy array of disorder scores.
+        a numpy array of pLDDT scores.
 
     Raises
     ------
@@ -1371,7 +1419,11 @@ def predict_pLDDT(inputs,
     ## ....................................................................................    
 
     # if a single sequence, just use cpu. Using GPU for a single sequence would be silly.
+    # The device name is still checked (but not whether it is available), so a
+    # name that is not valid raises here instead of being silently ignored.
     if isinstance(inputs, str)==True:
+        if use_device is not None:
+            parse_device_name(use_device)
         device_string='cpu'
     else:
         # resolve the auto-select preference: an explicit default_to_device wins,
