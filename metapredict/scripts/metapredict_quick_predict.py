@@ -6,6 +6,7 @@
 import argparse
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK
+from metapredict.scripts import exit_if_invalid_version
 
 def main():
     # Parse command line arguments.
@@ -16,8 +17,14 @@ def main():
 
     args = parser.parse_args()
 
+    exit_if_invalid_version(args.version, 'disorder', '--version')
+
     # print the sequence
     print(str(meta.predict_disorder(inputs=args.sequence, 
                                     normalized=True, 
                                     version=args.version, 
                                     return_numpy=False))[1:-1])
+
+
+if __name__ == "__main__":
+    main()

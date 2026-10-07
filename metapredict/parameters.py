@@ -12,3 +12,9 @@ DEFAULT_NETWORK_PLDDT = 'V2'
 
 # various constraints on predictions we've run across
 MAX_CUDA_LENGTH=65535
+
+# Default batch size to use per device when the caller does not pass an explicit
+# batch_size. Larger batches better amortise per-batch overhead on MPS, while
+# CUDA does well with a more moderate batch. Any device not listed here (e.g.
+# cpu) falls back to the network's configured batch_size.
+DEFAULT_BATCH_SIZE_BY_DEVICE = {'cuda': 256, 'mps': 512}

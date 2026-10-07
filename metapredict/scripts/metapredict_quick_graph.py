@@ -6,6 +6,7 @@
 import argparse
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT
+from metapredict.scripts import exit_if_invalid_version
 
 
 def main():
@@ -25,6 +26,9 @@ def main():
 
     args = parser.parse_args()
 
+    exit_if_invalid_version(args.version, 'disorder', '--version')
+    exit_if_invalid_version(args.pLDDT_version, 'pLDDT', '--pLDDT_version')
+
     if args.pLDDT == True:
         pLDDT_scores = True
     else:
@@ -36,3 +40,7 @@ def main():
                         pLDDT_scores=pLDDT_scores, 
                         version=args.version,
                         pLDDT_version=args.pLDDT_version)
+
+
+if __name__ == "__main__":
+    main()
