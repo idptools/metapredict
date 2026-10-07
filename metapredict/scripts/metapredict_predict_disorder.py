@@ -8,7 +8,7 @@ import argparse
 import sys
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK
-from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version
+from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version, exit_if_invalid_batch_size, batch_size_help
 
 def main():
 
@@ -27,9 +27,12 @@ def main():
 
     parser.add_argument('-d', '--device', default=None, help='Optional. Use this flag to specify device to use. Options are cpu, mps, cuda, or cuda:int, or an int specifying the index of a CUDA-enabled GPU.')
 
+    parser.add_argument('-b', '--batch-size', type=int, default=None, help=batch_size_help('disorder'))
+
     args = parser.parse_args()
 
     exit_if_invalid_version(args.version, 'disorder', '--version')
+    exit_if_invalid_batch_size(args.batch_size, '--batch-size')
     
     if not os.path.isfile(args.data_file):
         print('Error: Could not find passed fasta file [%s]'%(args.data_file), file=sys.stderr)
@@ -50,7 +53,8 @@ def main():
                                     invalid_sequence_action=args.invalid_sequence_action,
                                     version=args.version,
                                     device=args.device,
-                                    show_progress_bar=show_progress_bar)
+                                    show_progress_bar=show_progress_bar,
+                                    batch_size=args.batch_size)
     except Exception as e:
         print('Error during prediction: %s'%(str(e)), file=sys.stderr)
         sys.exit(1)

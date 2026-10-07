@@ -1613,7 +1613,8 @@ def predict_disorder_fasta(filepath,
                            invalid_sequence_action='convert',
                            version=DEFAULT_NETWORK,
                            device=None,
-                           show_progress_bar=True):
+                           show_progress_bar=True,
+                           batch_size=None):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of disorder values where the key is the 
@@ -1670,6 +1671,13 @@ def predict_disorder_fasta(filepath,
         Flag which, if set to True, means a progress bar is printed as 
         predictions are made, while if False no progress bar is printed.
 
+    batch_size : int or None
+        Number of sequences run through the network together in each batch.
+        Must be a power of two and at least 32 (e.g. 32, 64, 128, 256, 512,
+        1024), or None (default) to use metapredict's default for the network
+        and device. Batch size mainly affects speed and memory; see
+        predict_disorder() for details.
+
     Returns
     --------
 
@@ -1704,7 +1712,8 @@ def predict_disorder_fasta(filepath,
     disorder_dict = _predict(protfasta_seqs, version=version, 
                             normalized=normalized, return_numpy=False,
                             show_progress_bar=show_progress_bar, 
-                            use_device=device)
+                            use_device=device,
+                            batch_size=batch_size)
 
     # if we did not request an output file 
     if output_file is None:
@@ -1723,7 +1732,8 @@ def predict_pLDDT_fasta(filepath,
                         invalid_sequence_action='convert',
                         pLDDT_version=DEFAULT_NETWORK_PLDDT,
                         device=None,
-                        show_progress_bar=True):
+                        show_progress_bar=True,
+                        batch_size=None):
     """
     Function to read in a .fasta file from a specified filepath.
     Returns a dictionary of pLDDT values where the key is the 
@@ -1772,6 +1782,13 @@ def predict_pLDDT_fasta(filepath,
         Flag which, if set to True, means a progress bar is printed as 
         predictions are made, while if False no progress bar is printed.
 
+    batch_size : int or None
+        Number of sequences run through the network together in each batch.
+        Must be a power of two and at least 32 (e.g. 32, 64, 128, 256, 512,
+        1024), or None (default) to use metapredict's default for the network
+        and device. Batch size mainly affects speed and memory; see
+        predict_disorder() for details.
+
     Returns
     --------
 
@@ -1803,7 +1820,8 @@ def predict_pLDDT_fasta(filepath,
                                     version=pLDDT_version, 
                                     return_numpy=False, 
                                     show_progress_bar=show_progress_bar, 
-                                    use_device=device)
+                                    use_device=device,
+                                    batch_size=batch_size)
 
     # if we did not request an output file 
     if output_file is None:
@@ -2447,7 +2465,7 @@ def predict_disorder_domains_uniprot(uniprot_id,
 # ..........................................................................................
 #
 def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
-                          use_fixed_cutoff=None, device=None):
+                          use_fixed_cutoff=None, device=None, batch_size=None):
     '''
     executing script for generating a caid-compliant output file for disorder
     predictions using a .fasta file as the input.
@@ -2483,6 +2501,13 @@ def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
         the predictor picks a device automatically. Pin to 'cpu' if you need
         byte-identical CAID output across machines with different accelerators.
 
+    batch_size : int or None
+        Number of sequences run through the network together in each batch.
+        Must be a power of two and at least 32 (e.g. 32, 64, 128, 256, 512,
+        1024), or None (default) to use metapredict's default for the network
+        and device. Batch size mainly affects speed and memory; see
+        predict_disorder() for details.
+
     Returns
     --------
     None
@@ -2506,7 +2531,8 @@ def predict_disorder_caid(input_fasta, output_path, version=DEFAULT_NETWORK,
     # assign the binary disorder classifications in the CAID output.
     return_domains = use_fixed_cutoff is None
     predictions = _predict(entry_id_and_seqs, version=version, return_numpy=False,
-                           return_domains=return_domains, use_device=device)
+                           return_domains=return_domains, use_device=device,
+                           batch_size=batch_size)
 
     # write the output file
     _meta_tools.write_caid_format(predictions, output_path, version=version,

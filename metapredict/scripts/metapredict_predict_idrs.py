@@ -9,7 +9,7 @@ import argparse
 import protfasta
 
 from metapredict.parameters import DEFAULT_NETWORK
-from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version
+from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version, exit_if_invalid_batch_size, batch_size_help
 import metapredict as meta
 
 # --threshold is a disorder score, so it must lie in the range disorder scores take
@@ -39,6 +39,8 @@ def main():
 
     parser.add_argument('-d', '--device', default=None, help='Optional. Use this flag to specify device to use. Options are cpu, mps, cuda, or cuda:int, or an int specifying the index of a CUDA-enabled GPU.')
 
+    parser.add_argument('-b', '--batch-size', type=int, default=None, help=batch_size_help('disorder'))
+
     args = parser.parse_args()
 
     if args.mode not in ['fasta', 'shephard-domains','shephard-domains-uniprot', ]:
@@ -53,6 +55,7 @@ def main():
             sys.exit(1)
 
     exit_if_invalid_version(args.version, 'disorder', '--version')
+    exit_if_invalid_batch_size(args.batch_size, '--batch-size')
 
     if args.output_file is None:
         if args.mode == 'fasta':
@@ -105,7 +108,8 @@ def main():
                                     device=args.device,
                                     return_domains=True, 
                                     disorder_threshold=args.threshold, 
-                                    show_progress_bar=show_progress_bar)
+                                    show_progress_bar=show_progress_bar,
+                                    batch_size=args.batch_size)
     except Exception as e:
         print('Error during prediction: %s'%(str(e)), file=sys.stderr)
         sys.exit(1)

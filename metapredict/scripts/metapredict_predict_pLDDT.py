@@ -9,7 +9,7 @@ import argparse
 
 import metapredict as meta
 from metapredict.parameters import DEFAULT_NETWORK_PLDDT
-from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version
+from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version, exit_if_invalid_batch_size, batch_size_help
 
 
 def main():
@@ -29,10 +29,13 @@ def main():
 
     parser.add_argument('-d', '--device', default=None, help='Optional. Use this flag to specify device to use. Options are cpu, mps, cuda, or cuda:int, or an int specifying the index of a CUDA-enabled GPU.')
 
+    parser.add_argument('-b', '--batch-size', type=int, default=None, help=batch_size_help('pLDDT'))
+
 
     args = parser.parse_args()
 
     exit_if_invalid_version(args.pLDDT_version, 'pLDDT', '--pLDDT-version')
+    exit_if_invalid_batch_size(args.batch_size, '--batch-size')
 
     
     if not os.path.isfile(args.data_file):
@@ -57,7 +60,8 @@ def main():
                                     invalid_sequence_action=args.invalid_sequence_action,
                                     pLDDT_version=args.pLDDT_version,
                                     device=args.device,
-                                    show_progress_bar=show_progress_bar)
+                                    show_progress_bar=show_progress_bar,
+                                    batch_size=args.batch_size)
     except Exception as e:
         print('Error during prediction: %s'%(str(e)), file=sys.stderr)
         sys.exit(1)

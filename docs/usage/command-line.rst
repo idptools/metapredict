@@ -12,7 +12,7 @@ Over three iterations we have updated the network behind metapredict to improve 
 A quick note on memory use and batch size
 ===========================================
 
-The tools that predict scores for a whole FASTA file (``metapredict-predict-disorder``, ``metapredict-predict-idrs``, ``metapredict-predict-pLDDT`` and ``metapredict-caid``) run the sequences through the network in batches. They always use metapredict's default batch size for the network and device you are using, and there is no command-line option to change it. If you run out of memory, or want to know how much memory a prediction will need, see the :doc:`FAQ <../faq>`, which explains how memory use scales with batch size and sequence length. If you need to set the batch size yourself, use the ``batch_size`` option in Python instead.
+The tools that predict scores for a whole FASTA file (``metapredict-predict-disorder``, ``metapredict-predict-idrs``, ``metapredict-predict-pLDDT`` and ``metapredict-caid``) run the sequences through the network in batches. By default they use metapredict's default batch size for the network and device you are using (each tool's ``--help`` lists these defaults), and you can change it with the ``-b`` or ``--batch-size`` option, which takes a power of two of at least 32 (32, 64, 128, 256, 512, 1024, ...). Larger batches are usually faster on a GPU but need more memory; if you run out of memory, use a smaller batch size. To see how much memory a prediction will need, and how that scales with batch size and sequence length, see the :doc:`FAQ <../faq>`.
 
 
 Running the tools with ``python -m``
@@ -85,6 +85,17 @@ By default, ``metapredict`` automatically selects a device for you. A CUDA GPU i
 .. code-block:: bash
 
     $ metapredict-predict-disorder interestingProteins.fasta -d cuda:0
+
+Setting the Batch Size
+----------------------
+
+Use the ``-b`` or ``--batch-size`` flag to set how many sequences are run through the network together. It must be a power of two of at least 32. By default ``metapredict-predict-disorder`` uses metapredict's default for the network and device; running the tool with ``--help`` lists the default batch size for each network on each device (and the :doc:`FAQ <../faq>` explains how batch size affects memory use). Larger batches are usually faster on a GPU but use more memory, so use a smaller batch size if you run out of memory.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-predict-disorder interestingProteins.fasta -b 1024
 
 Silencing Output
 -----------------
@@ -200,6 +211,17 @@ By default, ``metapredict-predict-idrs`` automatically selects a device in the s
 .. code-block:: bash
 
     $ metapredict-predict-idrs interestingProteins.fasta -d cuda:0
+
+Setting the Batch Size
+~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``-b`` or ``--batch-size`` flag to set how many sequences are run through the network together. It must be a power of two of at least 32. By default ``metapredict-predict-idrs`` uses metapredict's default for the network and device; running the tool with ``--help`` lists the default batch size for each network on each device (and the :doc:`FAQ <../faq>` explains how batch size affects memory use). Larger batches are usually faster on a GPU but use more memory, so use a smaller batch size if you run out of memory.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-predict-idrs interestingProteins.fasta -b 1024
 
 
 
@@ -330,6 +352,17 @@ To specify the device to run the prediction on (CPU, MPS, CUDA), use the ``-d`` 
 .. code-block:: bash
 
     $ metapredict-predict-pLDDT input_sequences.fasta -d cuda:0
+
+Setting the Batch Size
+----------------------
+
+Use the ``-b`` or ``--batch-size`` flag to set how many sequences are run through the network together. It must be a power of two of at least 32. By default ``metapredict-predict-pLDDT`` uses metapredict's default for the network and device; running the tool with ``--help`` lists the default batch size for each network on each device (and the :doc:`FAQ <../faq>` explains how batch size affects memory use). Larger batches are usually faster on a GPU but use more memory, so use a smaller batch size if you run out of memory.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-predict-pLDDT input_sequences.fasta -b 1024
 
 Handling Non-Standard Amino Acids
 ----------------------------------
@@ -877,6 +910,17 @@ The third argument specifies the version of Metapredict to use. The options are:
 .. code-block:: bash
 
     $ metapredict-caid proteins.fasta output/ v3
+
+Setting the Batch Size
+----------------------
+
+Use the ``-b`` or ``--batch-size`` flag to set how many sequences are run through the network together. It must be a power of two of at least 32. By default ``metapredict-caid`` uses metapredict's default for the network and device; running the tool with ``--help`` lists the default batch size for each network on each device (and the :doc:`FAQ <../faq>` explains how batch size affects memory use). Larger batches are usually faster on a GPU but use more memory, so use a smaller batch size if you run out of memory.
+
+**Example**:
+
+.. code-block:: bash
+
+    $ metapredict-caid proteins.fasta output/ v3 -b 1024
 
 CAID Output Binarization: Algorithmic Domain Assignment
 -------------------------------------------------------

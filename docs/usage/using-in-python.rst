@@ -21,7 +21,7 @@ Update to metapredict V3.1 (October 2026)
 V3.1 adds new functionality and changes a few defaults. The main changes for Python users are:
 
 * **Automatic device selection now depends on the network.** When you don't set ``device``, a CUDA GPU is always used first if one is available. After that, the default V3 disorder network and the pLDDT networks use an Apple Silicon GPU (MPS) if there is one, while the much smaller V1 and V2 disorder networks use the CPU, because they run faster on the CPU than on MPS. Single sequences are still always predicted on the CPU. See *Selecting a specific device to use for predictions* below.
-* **New** ``batch_size`` **option** for :code:`predict_disorder()`, :code:`predict_pLDDT()`, :code:`predict_disorder_batch()` and :code:`predict_disorder_stream()`, along with new default batch sizes chosen per network and per device. Several defaults are now larger (most notably for the V1 and V2 disorder networks, which used to use batches of 32), which makes batch prediction faster but uses more memory; see *Setting the batch size* below and the :doc:`FAQ <../faq>`.
+* **New** ``batch_size`` **option** for :code:`predict_disorder()`, :code:`predict_pLDDT()`, :code:`predict_disorder_batch()`, :code:`predict_disorder_stream()`, :code:`predict_disorder_fasta()`, :code:`predict_pLDDT_fasta()` and :code:`predict_disorder_caid()` (and ``-b``/``--batch-size`` on the matching command-line tools), along with new default batch sizes chosen per network and per device. Several defaults are now larger (most notably for the V1 and V2 disorder networks, which used to use batches of 32), which makes batch prediction faster but uses more memory; see *Setting the batch size* below and the :doc:`FAQ <../faq>`.
 * **New** :code:`predict_disorder_stream()` **function** for predicting disorder from FASTA files that are too large to fit in memory (see *Streaming disorder predictions for very large FASTA files* below).
 * Empty sequences now raise a :code:`MetapredictError` that names them, and :code:`MetapredictError` can now be imported directly from ``metapredict`` (see *Handling errors* below).
 * ``override_folded_domain_minsize`` is now honoured when ``return_domains=True``, and :code:`predict_disorder_batch()` now honours ``normalized``.
@@ -980,11 +980,21 @@ The sequences are predicted in batches, choosing a device automatically in the s
 
     meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", device='cpu', show_progress_bar=False)
 
+Setting the batch size
+--------------------------
+As with :code:`predict_disorder()`, ``batch_size`` sets how many sequences are predicted together in each batch. It must be a power of two and at least 32; leave it as ``None`` (the default) to use metapredict's default for the network and device. Larger batches are usually faster on a GPU but need more memory, so use a smaller batch size if you run out of memory (see the :doc:`FAQ <../faq>`).
+
+**Example:**
+
+.. code-block:: python
+
+    meta.predict_disorder_fasta("/Users/thisUser/Desktop/coolSequences.fasta", batch_size=1024)
+
 
 Predicting AlphaFold2 confidence scores From a .fasta File
 ===========================================================
 
-Just like with ``predict_disorder_fasta``, you can use ``predict_pLDDT_fasta`` to get predicted AlphaFold2 pLDDT confidence scores from a fasta file. By default it returns a dictionary where each key is a fasta header and each value is a two-element list: the amino acid sequence, followed by a list of its per-residue pLDDT scores (on the 0 to 100 scale). ``predict_pLDDT_fasta`` accepts the same ``output_file``, ``invalid_sequence_action``, ``device`` and ``show_progress_bar`` options as ``predict_disorder_fasta`` (but not ``normalized``), and the network is chosen with ``pLDDT_version`` rather than ``version``.
+Just like with ``predict_disorder_fasta``, you can use ``predict_pLDDT_fasta`` to get predicted AlphaFold2 pLDDT confidence scores from a fasta file. By default it returns a dictionary where each key is a fasta header and each value is a two-element list: the amino acid sequence, followed by a list of its per-residue pLDDT scores (on the 0 to 100 scale). ``predict_pLDDT_fasta`` accepts the same ``output_file``, ``invalid_sequence_action``, ``device``, ``show_progress_bar`` and ``batch_size`` options as ``predict_disorder_fasta`` (but not ``normalized``), and the network is chosen with ``pLDDT_version`` rather than ``version``.
 
 Example of usage:
 ~~~~~~~~~~~~~~~~~~
@@ -1721,6 +1731,7 @@ The parameters are:
 * ``version`` - the disorder network to use (V1, V2, or V3). Default = V3.
 * ``use_fixed_cutoff`` - if ``None`` (default), the per-residue binary disorder/order classification in the CAID output is taken from metapredict's domain-decomposition algorithm (residues inside an IDR are classified as 1, otherwise 0). If a float between 0 and 1 is passed, residues are instead classified by thresholding the per-residue disorder score against that value.
 * ``device`` - the device to run predictions on (see the device-selection notes above). Default = ``None``, which auto-selects a device in the same way as :code:`predict_disorder()` (for the default V3 network, in the order CUDA → MPS → CPU).
+* ``batch_size`` - the number of sequences predicted together in each batch, which must be a power of two and at least 32. Default = ``None``, which uses metapredict's default for the network and device (see the :doc:`FAQ <../faq>`).
 
 Each output file starts with the sequence's header line, followed by one tab-separated line per residue giving the residue number (starting at 1), the amino acid, the disorder score (to 3 decimal places) and the binary classification (1 = disordered, 0 = not disordered). Non-standard residues in the FASTA file are converted to standard amino acids using protfasta's conversion rules before prediction.
 

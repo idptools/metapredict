@@ -8,9 +8,14 @@ import sys
 
 import protfasta
 
-from metapredict.backend.meta_tools import valid_version
+from metapredict.backend.meta_tools import valid_batch_size, valid_version
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
+from metapredict.backend.predictor import resolve_batch_size
 from metapredict.metapredict_exceptions import MetapredictError
+
+# Devices described in the --batch-size help text, in the order they are
+# listed, with the names shown to users
+BATCH_SIZE_HELP_DEVICES = [('cpu', 'CPU'), ('cuda', 'CUDA'), ('mps', 'MPS (Apple Silicon)')]
 
 
 def fasta_has_records(filename, invalid_sequence_action='ignore'):
@@ -158,3 +163,127 @@ def exit_if_invalid_version(version, prediction_type, option_name):
     except MetapredictError:
         print(f"Error: {option_name} must be one of {', '.join(valid_networks)} (got '{version}')", file=sys.stderr)
         sys.exit(1)
+
+
+def exit_if_invalid_batch_size(batch_size, option_name):
+    """
+    Stop the tool with a clear error if a batch size isn't allowed.
+
+    The batch size is checked with the same function the prediction code uses
+    (it must be a power of two of at least 32), so a bad value is reported
+    before any file is read, rather than partway through a prediction.
+
+    Parameters
+    ----------
+    batch_size : int or None
+        The batch size passed on the command line, or None if the option
+        wasn't given (metapredict then picks a default for the network and
+        device).
+
+    option_name : str
+        The command-line option the batch size came from, e.g.
+        '--batch-size', which is named in the error message.
+
+    Returns
+    -------
+    None
+        Returns normally if the batch size is valid or None. Otherwise prints
+        a one-line error to stderr and exits with status 1.
+    """
+    try:
+        valid_batch_size(batch_size)
+    except MetapredictError:
+        print(f'Error: {option_name} must be a power of two of at least 32, e.g. 32, 64, 128, 256, 512 or 1024 (got {batch_size})', file=sys.stderr)
+        sys.exit(1)
+
+
+def _join_words(words, conjunction='and'):
+    """
+    Join words as English prose: 'a', 'a and b', or 'a, b and c'.
+
+    Parameters
+    ----------
+    words : list of str
+        The words to join; must not be empty.
+
+    conjunction : str
+        The word placed before the last item. Default = 'and'.
+
+    Returns
+    -------
+    str
+        The joined words.
+    """
+    if len(words) == 1:
+        return words[0]
+    return ', '.join(words[:-1]) + f' {conjunction} ' + words[-1]
+
+
+def describe_default_batch_sizes(networks):
+    """
+    Describe, in one sentence, each network's default batch size on each device.
+
+    The defaults are worked out with resolve_batch_size(), the same function
+    the predictor uses when no batch size is given, so the description always
+    matches what is actually used. Networks with identical defaults are
+    described together.
+
+    Parameters
+    ----------
+    networks : dict
+        Maps a network version (e.g. 'V1') to its entry in
+        metapredict_networks or pplddt_networks (a dict with a 'parameters'
+        entry).
+
+    Returns
+    -------
+    str
+        For example 'V1, V2 and V3 use 256 on CPU or CUDA and 512 on MPS
+        (Apple Silicon).'
+    """
+    # versions whose defaults are described the same way are grouped together
+    versions_by_description = {}
+    for version, network in networks.items():
+        devices_by_size = {}
+        for device, device_name in BATCH_SIZE_HELP_DEVICES:
+            size = resolve_batch_size(None, device, network['parameters'])
+            devices_by_size.setdefault(size, []).append(device_name)
+
+        size_phrases = [f"{size} on {_join_words(device_names, 'or')}" for size, device_names in devices_by_size.items()]
+        description = _join_words(size_phrases)
+        versions_by_description.setdefault(description, []).append(version)
+
+    clauses = []
+    for description, versions in versions_by_description.items():
+        verb = 'uses' if len(versions) == 1 else 'use'
+        clauses.append(f'{_join_words(versions)} {verb} {description}')
+    return '; '.join(clauses) + '.'
+
+
+def batch_size_help(prediction_type):
+    """
+    The --batch-size help text for a command-line tool, including the default
+    batch size of each network on each device.
+
+    Parameters
+    ----------
+    prediction_type : str
+        'disorder' for a tool that predicts disorder, or 'pLDDT' for a tool
+        that predicts pLDDT scores.
+
+    Returns
+    -------
+    str
+        The help text.
+    """
+    if prediction_type == 'disorder':
+        networks = metapredict_networks
+    elif prediction_type == 'pLDDT':
+        networks = pplddt_networks
+    else:
+        raise ValueError(f"prediction_type must be 'disorder' or 'pLDDT' (got {prediction_type!r})")
+
+    return ('Optional. Number of sequences run through the network together in each batch. '
+            'Must be a power of two of at least 32 (e.g. 32, 64, 128, 256, 512, 1024). '
+            'Larger batches are usually faster on a GPU but use more memory. '
+            'Default batch size, by network: ' + describe_default_batch_sizes(networks))
