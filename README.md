@@ -35,7 +35,7 @@ Metapredict is a Python package published on [PyPI](https://pypi.org/project/met
 Each option creates a clean, isolated Python 3.12 environment and then installs metapredict from PyPI.
 
 metapredict needs PyTorch 2.3 or later, NumPy 2.0 or later and scipy 1.13 or later, and pip and uv install these (along with metapredict's other dependencies) automatically. If you install them with conda (Option 2), make sure conda provides at least these versions; otherwise pip will install newer copies from PyPI over them, mixing the two ecosystems (see the segfault warning below). Note that PyPI has no builds of PyTorch 2.3 or later for Intel (x86_64) Macs, so on an Intel Mac pip cannot install the PyTorch that metapredict needs.
-
+ 
 #### Option 1 — pip (PyPI)
 ```bash
 # create and activate a Python 3.12 virtual environment
