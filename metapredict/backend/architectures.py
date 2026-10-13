@@ -2,15 +2,17 @@
 """
 previously called 'brnn_architecture.py'. This holds the architectures
 used for metapredict. This includes the original achitecture used for
-metapredict V1 (legacy), V2, and the new architecture based on pytorch-
-lightning (V3). 
+metapredict V1 (legacy), V2, and the newer architecture used for V3, which
+was trained with pytorch-lightning. Lightning is only used for training;
+the V3 architecture here is a plain PyTorch module that reads the
+Lightning-format checkpoints directly, so metapredict does not depend on
+pytorch-lightning.
 
 BRNN_MtM code originally written by Dan Griffith for PARROT.
-See idptools-parrot. 
+See idptools-parrot.
 """
 import torch
 import torch.nn as nn
-import pytorch_lightning as L
 
 '''
 USED BY V1 and V2 disorder predictors!
@@ -118,7 +120,7 @@ USED BY V3 disorder predictor!
 USED BY V2 pLDDT predictor!
 '''
 
-class BRNN_MtM_lightning(L.LightningModule):
+class BRNN_MtM_lightning(nn.Module):
     """A PyTorch many-to-many bidirectional recurrent neural network
 
     A class containing the PyTorch implementation of a BRNN. The network consists
@@ -126,6 +128,11 @@ class BRNN_MtM_lightning(L.LightningModule):
     in both the foward and reverse directions. A final fully connected layer
     aggregates the deepest hidden layers of both directions and produces the
     outputs.
+
+    These networks were trained with pytorch-lightning (hence the name, kept so
+    that existing code importing this class keeps working), but the class is a
+    plain torch.nn.Module. Use from_checkpoint() to build one from a
+    Lightning-format .ckpt file; pytorch-lightning is not needed to do so.
 
     "Many-to-many" refers to the fact that the network will produce outputs 
     corresponding to every item of the input sequence. For example, an input 
@@ -215,6 +222,53 @@ class BRNN_MtM_lightning(L.LightningModule):
                 self.linear_layers.append(nn.Linear(self.linear_hidden_size, num_classes))
             else:
                 raise ValueError("Invalid number of linear layers. Must be greater than 0.")
+
+
+    @classmethod
+    def from_checkpoint(cls, checkpoint_path, map_location='cpu'):
+        """
+        Build the network from a pytorch-lightning checkpoint without needing
+        pytorch-lightning.
+
+        A Lightning .ckpt file is a regular torch-saved dictionary. Its
+        'hyper_parameters' entry holds the arguments the network was built
+        with, and its 'state_dict' entry holds the trained weights (the rest is
+        training state such as optimizer and loop progress, which is ignored).
+        This mirrors what LightningModule.load_from_checkpoint() does for this
+        network.
+
+        Parameters
+        ----------
+        checkpoint_path : str
+            Path to the Lightning-format .ckpt file.
+
+        map_location : str or torch.device
+            Device the weights are loaded onto. Default 'cpu'.
+
+        Returns
+        -------
+        BRNN_MtM_lightning
+            The network with its trained weights loaded.
+
+        Raises
+        ------
+        KeyError
+            If the file is missing the 'hyper_parameters' or 'state_dict'
+            entries of a Lightning checkpoint.
+
+        RuntimeError
+            If the stored weights do not exactly match the network built from
+            the stored hyperparameters (load_state_dict is strict).
+        """
+        # weights_only=True only allows plain tensors and containers to be
+        # unpickled, so loading a checkpoint can never execute arbitrary code
+        checkpoint = torch.load(checkpoint_path, map_location=map_location, weights_only=True)
+
+        # extra training-only hyperparameters (momentum, max_epoch, ...) are
+        # accepted and ignored by __init__ via **kwargs
+        model = cls(**checkpoint['hyper_parameters'])
+        model.load_state_dict(checkpoint['state_dict'])
+        return model
 
 
     def forward(self, x):

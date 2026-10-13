@@ -87,7 +87,7 @@ def graph(sequence,
         Dots-per-inch. Defines the resolution of the generated .png figure.
         Note that if an alternative filetype is pathed the matplotlib 
         backened will automatically generate a file of the relevant type (e.g. 
-       .pdf, .jpg, or .eps).
+        .pdf, .jpg, or .eps).
         
         
     output_file : str
@@ -221,7 +221,7 @@ def graph(sequence,
     else:
         if len(shaded_region_color) == 1:
             pass
-        elif len(shaded_region_color) == len(shaded_regions):
+        elif shaded_regions is not None and len(shaded_region_color) == len(shaded_regions):
             pass
         else:
             raise MetapredictError('Invalid number of colors passed. If a list is used for shaded_region_color, then the number of elements must be either 1 OR equal the number of shaded regions')

@@ -1,0 +1,106 @@
+name: Wheels
+
+# Builds metapredict wheels, with the compiled Cython extension, for every
+# supported Python (3.9-3.14) on Linux (x86_64 and aarch64), macOS (Apple
+# silicon) and Windows (64-bit), plus the source distribution. Every wheel is
+# installed and checked that its compiled extension loads (see
+# [tool.cibuildwheel] in pyproject.toml and devtools/check_cython_extension.py).
+#
+# Publishing a GitHub release uploads the wheels and sdist to PyPI. This uses
+# PyPI trusted publishing, which needs a one-time setup on PyPI: add this
+# repository and the workflow file name "wheels.yml" (environment "pypi") as a
+# trusted publisher for the metapredict project.
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  # also build whenever something that affects the build changes
+  push:
+    branches: [master, main]
+    paths:
+      - "setup.py"
+      - "pyproject.toml"
+      - "MANIFEST.in"
+      - "metapredict/backend/cython/**"
+      - "devtools/check_cython_extension.py"
+      - ".github/workflows/wheels.yml"
+  pull_request:
+    paths:
+      - "setup.py"
+      - "pyproject.toml"
+      - "MANIFEST.in"
+      - "metapredict/backend/cython/**"
+      - "devtools/check_cython_extension.py"
+      - ".github/workflows/wheels.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build_wheels:
+    name: Wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-24.04-arm builds the Linux aarch64 wheels natively, and
+        # macos-latest is Apple silicon
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          # versioningit sets the package version from the git tags
+          fetch-depth: 0
+
+      - name: Build and test the wheels
+        uses: pypa/cibuildwheel@v4.3.0
+
+      - name: Upload the wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+          if-no-files-found: error
+
+  build_sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Build the sdist
+        run: pipx run build --sdist
+
+      - name: Upload the sdist
+        uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels, build_sdist]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/metapredict
+    permissions:
+      # required for PyPI trusted publishing
+      id-token: write
+    steps:
+      - name: Download the wheels and sdist
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.14.2

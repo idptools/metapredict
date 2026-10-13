@@ -4,8 +4,13 @@
 
 # import stuff for making CLI
 import os
+import sys
 import argparse
 import metapredict as meta
+from metapredict.scripts import exit_if_no_sequences, exit_if_invalid_version, exit_if_invalid_batch_size, batch_size_help
+
+# predict_disorder_caid() always reads the FASTA file with this --invalid-sequence-action
+CAID_INVALID_SEQUENCE_ACTION = 'convert'
 
 
 def _fixed_cutoff_type(value):
@@ -46,12 +51,33 @@ def main():
               '(default 0.5 if the flag is given with no value).'),
     )
 
+    parser.add_argument('-b', '--batch-size', type=int, default=None, help=batch_size_help('disorder'))
+
     args = parser.parse_args()
 
+    exit_if_invalid_version(args.version, 'disorder', 'version')
+    exit_if_invalid_batch_size(args.batch_size, '--batch-size')
+
+    if not os.path.isfile(args.data_file):
+        print(f'Error: Could not find passed fasta file [{args.data_file:s}]', file=sys.stderr)
+        sys.exit(1)
+
+    # stop if there is nothing to predict, rather than writing empty output. The whole file
+    # is read now so that a bad record anywhere in it gives the same clear error
+    exit_if_no_sequences(args.data_file, CAID_INVALID_SEQUENCE_ACTION, read_whole_file=True)
+
     # carry out predictions
-    meta.predict_disorder_caid(
-        input_fasta=args.data_file,
-        output_path=args.output_path,
-        version=args.version,
-        use_fixed_cutoff=args.use_fixed_cutoff,
-    )
+    try:
+        meta.predict_disorder_caid(
+            input_fasta=args.data_file,
+            output_path=args.output_path,
+            version=args.version,
+            use_fixed_cutoff=args.use_fixed_cutoff,
+            batch_size=args.batch_size,
+        )
+    except Exception as e:
+        print('Error during prediction: %s'%(str(e)), file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

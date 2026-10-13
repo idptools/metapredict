@@ -156,19 +156,24 @@ def test_metapredict_functions():
         assert round(meta.percent_disorder(ARFGAP1, disorder_threshold=thresh, mode='disorder_domains', version=3), 1) == expected[thresh]
 
     
+    # Reference disorder scores were generated on CPU; pin device='cpu' so
+    # these comparisons stay reproducible across CPU/CUDA/MPS backends
+    # (cuDNN LSTM diverges from CPU by ~1e-4, which is enough to trip
+    # np.allclose's default rtol=1e-5 for v3).
+
     # make sure fasta stuff works for legacy
     # updated May 2023 to deal with the fact that predict_disorder_fasta now returns a dictionary where values are np.ndarrays
     # updated 2024 to change legacy=False to version = 1
-    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, version=1)['Q8N6T3'][1], np.array(local_data.disorder_Q8N6T3_legacy, dtype=np.float32))
+    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, version=1, device='cpu')['Q8N6T3'][1], np.array(local_data.disorder_Q8N6T3_legacy, dtype=np.float32))
 
     # make sure FASTA stuff works for non-legacy predictions
     # updated May 2023 to deal with the fact that predict_disorder_fasta now returns a dictionary where values are np.ndarrays
     # updated 2024 to change legacy=False to version = 2
-    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, version=2)['Q8N6T3'][1], np.array(local_data.disorder_Q8N6T3_2, dtype=np.float32))
+    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, version=2, device='cpu')['Q8N6T3'][1], np.array(local_data.disorder_Q8N6T3_2, dtype=np.float32))
 
 
     # added 2024 to change for v3
-    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, version=3)['Q8N6T3'][1], np.array(local_data.disorder_Q8N6T3_3, dtype=np.float32))
+    assert np.allclose(meta.predict_disorder_fasta(fasta_filepath, version=3, device='cpu')['Q8N6T3'][1], np.array(local_data.disorder_Q8N6T3_3, dtype=np.float32))
 
 
 def test_predict_disorder_fail():

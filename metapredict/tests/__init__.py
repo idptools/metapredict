@@ -7,6 +7,11 @@ Empty init file in case you choose a package besides PyTest such as Nose which m
 import os
 import numpy as np
 
+# Scratch directory for files written by the tests. This is anchored to the
+# tests directory itself (not the current working directory) so that importing
+# the tests can never clear an unrelated 'output/' folder elsewhere on disk.
+TEST_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output')
+
 
 VALID_AA = ['A',
             'C',
@@ -44,11 +49,10 @@ def build_seq(min_count=10,max_count=50):
     s = "".join(s)
     return s
 
-if 'output' not in os.listdir():
-    os.mkdir('output/')
+os.makedirs(TEST_OUTPUT_DIR, exist_ok=True)
 
-dir = 'output/'
-for f in os.listdir(dir):
-    os.remove(os.path.join(dir, f))
-
-    
+# clear out files left over from a previous run (sub-directories are left alone)
+for filename in os.listdir(TEST_OUTPUT_DIR):
+    filepath = os.path.join(TEST_OUTPUT_DIR, filename)
+    if os.path.isfile(filepath):
+        os.remove(filepath)
