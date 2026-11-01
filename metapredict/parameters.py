@@ -18,3 +18,14 @@ MAX_CUDA_LENGTH=65535
 # CUDA does well with a more moderate batch. Any device not listed here (e.g.
 # cpu) falls back to the network's configured batch_size.
 DEFAULT_BATCH_SIZE_BY_DEVICE = {'cuda': 256, 'mps': 512}
+
+# Number of PyTorch intra-op threads used while predicting on the CPU. The
+# metapredict networks are small LSTMs that step along the sequence one residue
+# position at a time, so every step works on tiny tensors. PyTorch splits some
+# of those operations across all cores (tanh on anything over 2,048 elements),
+# and coordinating the threads costs several times the work itself, so every
+# extra thread makes prediction slower. Single-threaded, the human proteome on
+# an Apple M3 Max CPU takes 10 s instead of 23 s (V2) and 36 s instead of 56 s
+# (V3), and pLDDT prediction is 1.4-2.3x faster. The caller's own thread count
+# is restored after each prediction.
+CPU_PREDICTION_THREADS = 1
