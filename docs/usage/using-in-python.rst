@@ -15,6 +15,13 @@ Once metapredict is imported, you can work with individual sequences or .fasta f
 Important updates
 ====================
 
+Update to metapredict V3.2 (November 2026)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+V3.2 makes predictions on the CPU much faster. The main change for Python users is:
+
+* **Faster CPU predictions.** While it predicts on the CPU, metapredict now runs PyTorch single-threaded, which is faster for its small networks. Predicted scores are unchanged. Because the number of threads is a process-wide PyTorch setting, metapredict puts your own setting back as soon as each prediction finishes, so any other PyTorch code you run is unaffected. Predictions on a GPU (CUDA or MPS) are unchanged.
+
 Update to metapredict V3.1 (October 2026)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

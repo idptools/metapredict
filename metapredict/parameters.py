@@ -25,7 +25,7 @@ DEFAULT_BATCH_SIZE_BY_DEVICE = {'cuda': 256, 'mps': 512}
 # of those operations across all cores (tanh on anything over 2,048 elements),
 # and coordinating the threads costs several times the work itself, so every
 # extra thread makes prediction slower. Single-threaded, the human proteome on
-# an Apple M3 Max CPU takes 10 s instead of 23 s (V2) and 36 s instead of 56 s
+# an Apple M3 Max CPU takes 10 s instead of 21 s (V2) and 35 s instead of 58 s
 # (V3), and pLDDT prediction is 1.4-2.3x faster. The caller's own thread count
 # is restored after each prediction.
 CPU_PREDICTION_THREADS = 1

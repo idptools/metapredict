@@ -1,6 +1,14 @@
 ## Changelog
 This section is a log of recent changes to metapredict. My hope is that as I make changes, this section helps you understand why they were made and whether they will break any of your current workflows. The first major changes were made in the 0.56 release, so tracking starts there. Reasons are not provided for bug fixes because the reason can be assumed to be fixing the bug...
 
+#### V3.2.0 (Nov. 2026)
+Version 3.2.0 makes predictions on the CPU much faster. The default networks are unchanged (V3 for disorder and V2 for pLDDT).
+
+Changes:
+
+* CPU predictions are much faster: metapredict now runs PyTorch single-threaded while it predicts on the CPU. The networks are small LSTMs that work through a sequence one residue position at a time, and PyTorch was splitting each step's tiny calculations across every core, where coordinating the threads cost far more than the work itself. This also made CPU speed jump up and down with batch size. On an Apple M3 Max CPU, predicting the human proteome now takes ~10 s instead of ~21 s (V2) and ~35 s instead of ~58 s (V3), and pLDDT prediction is 1.4-2.3x faster. Predicted scores are bit-for-bit identical. Because the thread count is a process-wide PyTorch setting, metapredict restores your own setting as soon as each prediction finishes. GPU (CUDA/MPS) predictions are unchanged.
+
+
 #### V3.1.0 (Oct. 2026)
 Version 3.1.0 is a "major" update that adds new functionality, bug fixes, and performance improvements.
 
@@ -11,8 +19,6 @@ Changes:
 * Added a `batch_size` option to `predict_disorder()`, `predict_pLDDT()`, `predict_disorder_batch()`, `predict_disorder_fasta()`, `predict_pLDDT_fasta()` and `predict_disorder_caid()`, and a matching `-b`/`--batch-size` option to `metapredict-predict-disorder`, `metapredict-predict-idrs`, `metapredict-predict-pLDDT` and `metapredict-caid` (their `--help` lists each network's default batch size on each device). This controls how many sequences are processed per forward pass and can be tuned for your hardware — larger batches are typically much faster on a GPU/MPS. It must be a power of two and at least 32. Changing the batch size mainly affects speed and memory; because floating-point rounding depends on which sequences share a batch, scores can differ very slightly between batch sizes (up to ~1e-6 for disorder, ~3e-4 for pLDDT on the 0-100 scale), which occasionally changes the fourth decimal place of a rounded score.
 
 * Default batch sizes are now selected per network and per device (used when you don't pass `batch_size`): 256 sequences on CPU and CUDA GPUs and 512 on Apple Silicon (MPS), except pLDDT V1 on CPU, which uses 32. This substantially speeds up batch prediction for V1 and V2, where the previous small default left things badly underutilized. This increases the memory footprint (V1 and V2 batch sizes were previously fixed at 32; now they default to 256, or 512 on MPS), but if memory is an issue, you can tune the footprint with the `batch_size` option. The new FAQ page in the documentation shows how memory use scales with batch size and sequence length.
-
-* CPU predictions are much faster: metapredict now runs PyTorch single-threaded while it predicts on the CPU. The networks are small LSTMs that work through a sequence one residue position at a time, and PyTorch was splitting each step's tiny calculations across every core, where coordinating the threads cost far more than the work itself. This also made CPU speed jump up and down with batch size. On an Apple M3 Max CPU, predicting the human proteome now takes ~10 s instead of ~20 s (V2) and ~36 s instead of ~57 s (V3), and pLDDT prediction is 1.4-2.3x faster. Predicted scores are bit-for-bit identical. Because the thread count is a process-wide PyTorch setting, metapredict restores your own setting as soon as each prediction finishes. GPU (CUDA/MPS) predictions are unchanged.
 
 * Added `predict_disorder_stream()`, a streaming version of `predict_disorder()` for FASTA files that are too large to fit in memory. It reads the file lazily, predicts sequences in chunks (so batch-mode speed is retained), and yields `(header, prediction)` results one sequence at a time, keeping peak memory bounded by the chunk size rather than by the size of the file. This makes it possible to predict disorder for files with tens or hundreds of millions of sequences on a normal machine. This feature relies on `protfasta`'s streaming reader (added in `protfasta` 0.1.19). Every record is yielded, including records that share a header, and a record with no sequence raises an error that names it. The default `chunk_size` is 20,000 sequences, which on an Apple-silicon GPU streamed 1.5x faster than 5,000 for little extra memory.
 

@@ -14,6 +14,13 @@ metapredict is ALSO available via a `webserver for single sequence prediction <h
 Recent metapredict updates and news
 ====================================
 
+November 2026: metapredict 3.2.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In November 2026 we released metapredict 3.2.0, which makes predictions on the CPU much faster. The default networks are unchanged (V3 for disorder and V2 for pLDDT), and predicted scores are identical to those from 3.1.0. The main change is:
+
+#. **Faster CPU predictions**\ : metapredict now runs PyTorch single-threaded while it predicts on the CPU, which is faster for these small networks (on an Apple M3 Max, the human proteome takes ~10 s instead of ~21 s with V2 and ~35 s instead of ~58 s with V3). Scores are unchanged, and your own PyTorch thread setting is restored after each prediction.
+
 October 2026: metapredict 3.1.0
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -21,7 +28,6 @@ In October 2026 we released metapredict 3.1.0, which adds new functionality, bug
 
 #. **Per-network device selection**\ : If you don't specify a device, each disorder network now runs on the hardware that is fastest for it. A CUDA GPU is always used first when available; otherwise the small V1 and V2 networks run on the CPU (they are faster there than on Apple Silicon MPS), while V3 prefers MPS. You can still choose any device with ``device=``.
 #. **Control over batch size**\ : ``predict_disorder()``, ``predict_pLDDT()``, ``predict_disorder_batch()``, ``predict_disorder_stream()`` and the FASTA functions take a ``batch_size`` option, and the command-line tools that predict a whole FASTA file take ``-b``/``--batch-size``. It must be a power of two and at least 32. Batch size mainly changes speed and memory; floating-point rounding means scores can differ very slightly between batch sizes, which occasionally changes the fourth decimal place of a rounded score. When you don't set it, the default is now chosen per network and per device (256 on the CPU and CUDA GPUs and 512 on Apple Silicon, except pLDDT V1 on the CPU, which uses 32), which substantially speeds up V1 and V2 batch predictions. The new :doc:`faq` page shows how memory use scales with batch size and sequence length.
-#. **Faster CPU predictions**\ : metapredict now runs PyTorch single-threaded while it predicts on the CPU, which is faster for these small networks (on an Apple M3 Max, the human proteome takes ~10 s instead of ~20 s with V2 and ~36 s instead of ~57 s with V3). Scores are unchanged, and your own PyTorch thread setting is restored after each prediction.
 #. **Streaming very large FASTA files**\ : The new ``predict_disorder_stream()`` function reads a FASTA file lazily, predicts sequences in chunks, and yields results one sequence at a time, so the memory it needs stays bounded however large the file is.
 #. **More reproducible predictions**\ : Batch predictions are now exactly reproducible from one session to the next, and predictions on NVIDIA GPUs now match CPU predictions much more closely.
 #. **Easier installation**\ : Prebuilt wheels that include the compiled Cython extension are available for Linux, macOS (Apple silicon) and Windows on Python 3.9–3.14, and ``pytorch_lightning`` is no longer a dependency. metapredict now requires PyTorch 2.3, NumPy 2.0 and scipy 1.13 or later.
