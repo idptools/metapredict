@@ -208,6 +208,8 @@ docker run -it --rm -v "$(pwd):/mount" metapredict
 * `release/Dockerfile` installs metapredict from PyPI. It doesn't need anything from the repository, which is why its build only gets handed the `docker/release` directory.
 * `dev/Dockerfile` builds metapredict from the source code it sits in, so its build needs the whole repository (the `.` at the end of the command). The version number comes from git, just like a normal install from source, and has `.dirty` on the end if you have uncommitted changes.
 * `dev/Dockerfile.dockerignore` keeps things like `.tox` and `build` from being sent to Docker during the dev build.
+* `PUBLISHING.md` is the maintainers' guide to updating the images on Docker Hub.
+* `DOCKERHUB_OVERVIEW.md` is the text shown on the Docker Hub page, kept here so there's a record of it.
 
 Both Dockerfiles work in two stages. The first installs metapredict into a virtual environment, with a C compiler on hand to build metapredict's Cython extension. The second copies just that environment into a clean image, so the compiler doesn't end up in what you run. The build then checks the extension loads and runs a prediction, so a broken image fails to build rather than failing later when you use it.
 
@@ -225,47 +227,7 @@ One thing to watch: Docker remembers each step of a build and reuses it next tim
 
 ## Publishing to Docker Hub (for maintainers)
 
-The images on Docker Hub cover two kinds of processor (Intel/AMD and ARM) under a single tag. Docker's default builder usually can't do that, so make one that can. This only needs doing once per machine:
-
-```bash
-docker buildx create --name metapredict-builder --driver docker-container
-```
-
-Then log in with `docker login` and, from the top-level directory of the repository, build and push. Each command builds for both kinds of processor, so the one that isn't your own machine's is emulated and takes a while.
-
-```bash
-# `latest` and the version tag. Do this once the release is on PyPI, and change
-# both version numbers to match it.
-docker buildx build --builder metapredict-builder --no-cache \
-    --platform linux/amd64,linux/arm64 \
-    --build-arg METAPREDICT_VERSION=3.2.0 \
-    -t holehouselab/metapredict:latest \
-    -t holehouselab/metapredict:v3.2.0 \
-    --push docker/release
-
-# `cuda-latest`, which is the same thing with the GPU version of PyTorch
-docker buildx build --builder metapredict-builder --no-cache \
-    --platform linux/amd64 \
-    --build-arg METAPREDICT_VERSION=3.2.0 \
-    --build-arg TORCH_INDEX_URL=https://pypi.org/simple \
-    -t holehouselab/metapredict:cuda-latest \
-    --push docker/release
-
-# `dev`, from whatever you have checked out (so check out master first)
-docker buildx build --builder metapredict-builder \
-    --platform linux/amd64,linux/arm64 \
-    -f docker/dev/Dockerfile \
-    -t holehouselab/metapredict:dev \
-    --push .
-```
-
-`--no-cache` is there so that each release image gets the newest versions of PyTorch and metapredict's other dependencies, rather than whatever Docker had left over from last time.
-
-To check what ended up on Docker Hub, including which kinds of processor a tag covers:
-
-```bash
-docker buildx imagetools inspect holehouselab/metapredict:latest
-```
+[PUBLISHING.md](PUBLISHING.md) has the step-by-step instructions for updating the images on Docker Hub: when to update each tag, the commands to do it, how to check it worked, and how to change the text on the Docker Hub page.
 
 ## Docker in four questions
 
