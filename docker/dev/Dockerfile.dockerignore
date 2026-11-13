@@ -1,0 +1,34 @@
+# Files left out of the build context for docker/dev/Dockerfile (the context is
+# the repository root). Docker picks this file up automatically because it sits
+# next to the Dockerfile and is named <Dockerfile name>.dockerignore.
+#
+# Only list things git does not track. Leaving out a tracked file makes git see
+# it as deleted inside the image, and versioningit then stamps the build with a
+# ".dirty" version even when your working tree is clean. For the same reason
+# .git itself must stay in the context: it is where the version comes from.
+
+# test environments and build output (the .tox directory alone is several GB)
+.tox
+.venvs
+build
+dist
+*.egg-info
+docs/_build
+
+# tool caches and local notes
+.mypy_cache
+.ruff_cache
+.pytest_cache
+.claude
+**/__pycache__
+**/.DS_Store
+
+# anything compiled on the host, which would be for the wrong platform, and the
+# files generated during a build
+**/*.so
+**/*.pyd
+metapredict/backend/cython/domain_definition.c
+metapredict/_version.py
+
+# output written by the test suite
+metapredict/tests/output
