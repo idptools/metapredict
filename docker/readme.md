@@ -208,8 +208,8 @@ docker run -it --rm -v "$(pwd):/mount" metapredict
 * `release/Dockerfile` installs metapredict from PyPI. It doesn't need anything from the repository, which is why its build only gets handed the `docker/release` directory.
 * `dev/Dockerfile` builds metapredict from the source code it sits in, so its build needs the whole repository (the `.` at the end of the command). The version number comes from git, just like a normal install from source, and has `.dirty` on the end if you have uncommitted changes.
 * `dev/Dockerfile.dockerignore` keeps things like `.tox` and `build` from being sent to Docker during the dev build.
-* `PUBLISHING.md` is the maintainers' guide to updating the images on Docker Hub.
-* `DOCKERHUB_OVERVIEW.md` is the text shown on the Docker Hub page, kept here so there's a record of it.
+* `publishing.md` is the maintainers' guide to updating the images on Docker Hub.
+* `dockerhub_update.md` is the text shown on the Docker Hub page, kept here so there's a record of it.
 
 Both Dockerfiles work in two stages. The first installs metapredict into a virtual environment, with a C compiler on hand to build metapredict's Cython extension. The second copies just that environment into a clean image, so the compiler doesn't end up in what you run. The build then checks the extension loads and runs a prediction, so a broken image fails to build rather than failing later when you use it.
 
@@ -227,7 +227,7 @@ One thing to watch: Docker remembers each step of a build and reuses it next tim
 
 ## Publishing to Docker Hub (for maintainers)
 
-[PUBLISHING.md](PUBLISHING.md) has the step-by-step instructions for updating the images on Docker Hub: when to update each tag, the commands to do it, how to check it worked, and how to change the text on the Docker Hub page.
+[publishing.md](publishing.md) has the step-by-step instructions for updating the images on Docker Hub: when to update each tag, the commands to do it, how to check it worked, and how to change the text on the Docker Hub page.
 
 ## Docker in four questions
 

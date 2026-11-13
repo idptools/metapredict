@@ -1,6 +1,6 @@
 # Updating the metapredict images on Docker Hub
 
-This is for whoever looks after [holehouselab/metapredict](https://hub.docker.com/r/holehouselab/metapredict) on Docker Hub. If you just want to *use* metapredict with Docker, you want [README.md](README.md) instead.
+This is for whoever looks after [holehouselab/metapredict](https://hub.docker.com/r/holehouselab/metapredict) on Docker Hub. If you just want to *use* metapredict with Docker, you want [readme.md](readme.md) instead.
 
 ## What's on Docker Hub, and when to update it
 
@@ -156,12 +156,12 @@ docker run --rm holehouselab/metapredict:dev \
 
 ## Updating the text on the Docker Hub page
 
-Pushing an image doesn't touch the description on the [Docker Hub page](https://hub.docker.com/r/holehouselab/metapredict). That text is edited by hand on the website. To keep a record of it, it lives in this directory as [DOCKERHUB_OVERVIEW.md](DOCKERHUB_OVERVIEW.md): change that file, commit it, then paste it in.
+Pushing an image doesn't touch the description on the [Docker Hub page](https://hub.docker.com/r/holehouselab/metapredict). That text is edited by hand on the website. To keep a record of it, it lives in this directory as [dockerhub_update.md](dockerhub_update.md): change that file, commit it, then paste it in.
 
 1. Sign in to [Docker Hub](https://hub.docker.com).
 2. Go to **My Hub**, then **Repositories**, and pick `holehouselab/metapredict`.
 3. Under **Repository overview**, click **Edit**.
-4. On the **Write** tab, delete what's there and paste in the whole of `DOCKERHUB_OVERVIEW.md`. On a Mac, `pbcopy < docker/DOCKERHUB_OVERVIEW.md` puts it on the clipboard.
+4. On the **Write** tab, delete what's there and paste in the whole of `dockerhub_update.md`. On a Mac, `pbcopy < docker/dockerhub_update.md` puts it on the clipboard.
 5. Have a look at the **Preview** tab, then click **Update**.
 
 The page text needs changing when the tags change (a new one appears, or an old one stops being updated) or when the way you run the image changes. A routine release doesn't need it.
