@@ -14,6 +14,13 @@ metapredict is ALSO available via a `webserver for single sequence prediction <h
 Recent metapredict updates and news
 ====================================
 
+November 2026: metapredict 3.2.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In November 2026 we released metapredict 3.2.0, which makes predictions on the CPU much faster. The default networks are unchanged (V3 for disorder and V2 for pLDDT), and predicted scores are identical to those from 3.1.0. The main change is:
+
+#. **Faster CPU predictions**\ : metapredict now runs PyTorch single-threaded while it predicts on the CPU, which is faster for these small networks (on an Apple M3 Max, the human proteome takes ~10 s instead of ~21 s with V2 and ~35 s instead of ~58 s with V3). Scores are unchanged, and your own PyTorch thread setting is restored after each prediction.
+
 October 2026: metapredict 3.1.0
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

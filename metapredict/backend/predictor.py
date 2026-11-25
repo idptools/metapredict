@@ -24,7 +24,7 @@ from metapredict.backend.meta_tools import exceeds_max_length, valid_batch_size,
 from metapredict.backend.data_structures import DisorderObject as _DisorderObject
 from metapredict.backend import domain_definition as _domain_definition
 from metapredict.backend.network_parameters import metapredict_networks, pplddt_networks
-from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT, MAX_CUDA_LENGTH, DEFAULT_BATCH_SIZE_BY_DEVICE
+from metapredict.parameters import DEFAULT_NETWORK, DEFAULT_NETWORK_PLDDT, MAX_CUDA_LENGTH, DEFAULT_BATCH_SIZE_BY_DEVICE, CPU_PREDICTION_THREADS
 from metapredict.backend import encode_sequence
 from metapredict.backend import architectures
 from metapredict.metapredict_exceptions import MetapredictError
@@ -543,8 +543,33 @@ def _without_tf32(func):
 
 
 # ....................................................................................
+#
+def _restore_torch_threads(func):
+    """
+    Decorator that puts PyTorch's intra-op CPU thread count back to the
+    caller's value after func returns (or raises).
+
+    predict() and predict_pLDDT() drop to CPU_PREDICTION_THREADS while they
+    predict on the CPU, because metapredict's small LSTMs get slower with
+    every extra thread (see parameters.py). torch.set_num_threads is a
+    process-wide setting, so the caller's value is put back afterwards to
+    avoid changing the behaviour of any other PyTorch code running in the
+    same process.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        previous = torch.get_num_threads()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            torch.set_num_threads(previous)
+    return wrapper
+
+
+# ....................................................................................
 
 @_without_tf32
+@_restore_torch_threads
 def predict(inputs,
             version=DEFAULT_NETWORK,
             use_device=None,
@@ -838,6 +863,12 @@ def predict(inputs,
 
     # set device
     device=torch.device(device_string)
+
+    # on CPU, predict with CPU_PREDICTION_THREADS (single-threaded is fastest
+    # for these networks); @_restore_torch_threads puts the caller's thread
+    # count back afterwards
+    if device.type == 'cpu':
+        torch.set_num_threads(CPU_PREDICTION_THREADS)
 
     # resolve the batch size to use now that the device is known (an explicit
     # batch_size wins; otherwise use the network/device-dependent default)
@@ -1211,6 +1242,7 @@ def predict(inputs,
 # ....................................................................................
 
 @_without_tf32
+@_restore_torch_threads
 def predict_pLDDT(inputs,
             version=DEFAULT_NETWORK_PLDDT,
             return_decimals=False,
@@ -1442,6 +1474,12 @@ def predict_pLDDT(inputs,
 
     # set device
     device=torch.device(device_string)
+
+    # on CPU, predict with CPU_PREDICTION_THREADS (single-threaded is fastest
+    # for these networks); @_restore_torch_threads puts the caller's thread
+    # count back afterwards
+    if device.type == 'cpu':
+        torch.set_num_threads(CPU_PREDICTION_THREADS)
 
     # resolve the batch size to use now that the device is known (an explicit
     # batch_size wins; otherwise use the network/device-dependent default)

@@ -1,6 +1,14 @@
 ## Changelog
 This section is a log of recent changes to metapredict. My hope is that as I make changes, this section helps you understand why they were made and whether they will break any of your current workflows. The first major changes were made in the 0.56 release, so tracking starts there. Reasons are not provided for bug fixes because the reason can be assumed to be fixing the bug...
 
+#### V3.2.0 (Nov. 2026)
+Version 3.2.0 makes predictions on the CPU much faster. The default networks are unchanged (V3 for disorder and V2 for pLDDT).
+
+Changes:
+
+* CPU predictions are much faster: metapredict now runs PyTorch single-threaded while it predicts on the CPU. The networks are small LSTMs that work through a sequence one residue position at a time, and PyTorch was splitting each step's tiny calculations across every core, where coordinating the threads cost far more than the work itself. This also made CPU speed jump up and down with batch size. On an Apple M3 Max CPU, predicting the human proteome now takes ~10 s instead of ~21 s (V2) and ~35 s instead of ~58 s (V3), and pLDDT prediction is 1.4-2.3x faster. Predicted scores are bit-for-bit identical. Because the thread count is a process-wide PyTorch setting, metapredict restores your own setting as soon as each prediction finishes. GPU (CUDA/MPS) predictions are unchanged.
+
+
 #### V3.1.0 (Oct. 2026)
 Version 3.1.0 is a "major" update that adds new functionality, bug fixes, and performance improvements.
 
